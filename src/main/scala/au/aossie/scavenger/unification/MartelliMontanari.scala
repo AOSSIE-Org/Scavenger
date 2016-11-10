@@ -1,13 +1,13 @@
 package au.aossie.scavenger.unification
 
 import collection.mutable.{ HashMap => MMap, Set => MSet }
-import au.aossie.scavenger.expression.{ E, Var, App, Abs }
+import au.aossie.scavenger.expression.{ E, Sym, App, Abs }
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.expression.substitution.mutable.{ Substitution => MSub }
 
 object MartelliMontanari {
 
-  def apply(equations: Iterable[(E, E)])(implicit variables: MSet[Var]): Option[Substitution] = {
+  def apply(equations: Iterable[(E, E)])(implicit variables: MSet[Sym]): Option[Substitution] = {
     var eqs = equations.toSeq
     val mgu = new MSub
 
@@ -27,8 +27,8 @@ object MartelliMontanari {
       eqs.head match {
         case (App(f1, a1), App(f2, a2)) => eqs = Seq((f1, f2), (a1, a2)) ++ eqs.tail
         case (Abs(v1, e1), Abs(v2, e2)) => eqs = Seq((v1, v2), (e1, e2)) ++ eqs.tail
-        case (v1: Var, v2: Var) if (v1 == v2) => eqs = eqs.tail
-        case (v: Var, e: E) if variables contains v => {
+        case (v1: Sym, v2: Sym) if (v1 == v2) => eqs = eqs.tail
+        case (v: Sym, e: E) if variables contains v => {
           if (v.occursIn(e)) return None
           // without occur-check
           val sub = Substitution(v -> e)
@@ -41,7 +41,7 @@ object MartelliMontanari {
           }
 
         }
-        case (e: E, v: Var) if variables contains v => eqs = Seq((v, e)) ++ eqs.tail
+        case (e: E, v: Sym) if variables contains v => eqs = Seq((v, e)) ++ eqs.tail
         case _ => return {
           None
         }

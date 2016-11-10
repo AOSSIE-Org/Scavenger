@@ -10,7 +10,7 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class ImmutableSubstitutionSpecification extends SpecificationWithJUnit {
 
-  val s = Substitution(Var("a",i) -> Var("b", o))
+  val s = Substitution(Sym("a",i) -> Sym("b", o))
   
   "Substitution" should {
     "return a new collection of type Substitution after a new element is added" in {

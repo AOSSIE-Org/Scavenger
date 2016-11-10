@@ -6,7 +6,7 @@ import akka.util.Timeout
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.prover.actors.messages._
 import au.aossie.scavenger.structure.immutable.Literal
-import au.aossie.scavenger.expression.Var
+import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.sequent.conflictresolution.{Decision, UnitPropagationResolution}
 import au.aossie.scavenger.proof.sequent.lk.Axiom
@@ -66,7 +66,7 @@ class ConflictActor extends Actor with ActorLogging {
         * @param current literal to be proved
         * @return formal proof, which conclusion is the `current`
         */
-      def buildProof(current: Literal)(implicit variables: mutable.Set[Var]): SequentProofNode = {
+      def buildProof(current: Literal)(implicit variables: mutable.Set[Sym]): SequentProofNode = {
         if (allClauses contains current.toClause) {
           Axiom(current.toClause.toSeqSequent)
         } else if (decisions contains current) {
@@ -82,7 +82,7 @@ class ConflictActor extends Actor with ActorLogging {
         }
       }
 
-      val variablesFuture = (unifyingActor ? GetVariables).mapTo[Set[Var]]
+      val variablesFuture = (unifyingActor ? GetVariables).mapTo[Set[Sym]]
       val future = (unifyingActor ? Unify(Seq(leftLiteral.unit), Seq(rightLiteral.unit)))
         .mapTo[Option[(Seq[Substitution], Substitution)]]
 

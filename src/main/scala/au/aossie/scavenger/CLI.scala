@@ -2,7 +2,7 @@ package au.aossie.scavenger
 
 import au.aossie.scavenger.structure.immutable.CNF
 import au.aossie.scavenger.prover.{CNFProblemParser, CR, ConcurrentCR}
-import au.aossie.scavenger.expression.{Abs, App, E, Var}
+import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
 
 import scala.collection.mutable
@@ -67,14 +67,14 @@ object CLI {
       """)
   }
 
-  def getUppercaseVariables(cnf: CNF): mutable.Set[Var] = {
-    def uppercaseVariableInFormula(e: E): Set[Var] = e match {
-      case v: Var if v.name.charAt(0).isUpper => Set(v)
+  def getUppercaseVariables(cnf: CNF): mutable.Set[Sym] = {
+    def uppercaseVariableInFormula(e: E): Set[Sym] = e match {
+      case v: Sym if v.name.charAt(0).isUpper => Set(v)
       case App(l, r) => uppercaseVariableInFormula(l) ++ uppercaseVariableInFormula(r)
       case Abs(_, body) => uppercaseVariableInFormula(body)
       case _ => Set()
     }
-    val variables = mutable.Set.empty[Var]
+    val variables = mutable.Set.empty[Sym]
     cnf.clauses.flatMap(clause => clause.ant ++ clause.suc).foreach(variables ++= uppercaseVariableInFormula(_))
     variables
   }

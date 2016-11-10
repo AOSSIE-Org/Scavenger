@@ -1,6 +1,6 @@
 package au.aossie.scavenger.parser.TPTPParsers
 
-import au.aossie.scavenger.expression.{E, Var}
+import au.aossie.scavenger.expression.{E, Sym}
 import au.aossie.scavenger.parser.BaseParserTPTP
 import au.aossie.scavenger.parser.TPTPParsers.TPTPAST.{AnnotatedFormula, SimpleFormula, TPTPDirective}
 
@@ -52,11 +52,11 @@ trait ProblemParserTHFTPTP
 
 }
 
-class THFProblem(val statements : List[THFProblemStatement], val variables : Set[Var]) {
+class THFProblem(val statements : List[THFProblemStatement], val variables : Set[Sym]) {
   override def toString : String = statements.mkString("\n") + "\nVariables: " + variables.mkString(",")
 }
 object THFProblem {
-  def apply(statements: List[THFProblemStatement],variables : Set[Var]): THFProblem = new THFProblem(statements,variables)
+  def apply(statements: List[THFProblemStatement],variables : Set[Sym]): THFProblem = new THFProblem(statements,variables)
 }
 
 abstract class THFProblemStatement

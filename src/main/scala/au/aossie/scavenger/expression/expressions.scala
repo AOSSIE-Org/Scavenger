@@ -11,9 +11,9 @@ sealed abstract class E {
   
   //alphaEquals
   def =+=(that:E) = {
-    def rec(e1:E,e2:E,map:Map[Var,Var]): Boolean = (e1,e2) match {
-      case (v1:Var, v2:Var) => map.getOrElse(v1,v1)==v2
-      case (Abs(v1@Var(_,t1),b1),Abs(v2@Var(_,t2),b2)) => {
+    def rec(e1:E,e2:E,map:Map[Sym,Sym]): Boolean = (e1,e2) match {
+      case (v1:Sym, v2:Sym) => map.getOrElse(v1,v1)==v2
+      case (Abs(v1@Sym(_,t1),b1),Abs(v2@Sym(_,t2),b2)) => {
         if (v1 == v2) rec(b1, b2, map)
         else if (t1 == t2) rec(b1, b2, map.updated(v1,v2))
         else false
@@ -24,17 +24,18 @@ sealed abstract class E {
     rec(this, that, Map())
   }
   def occursIn(e:E):Boolean = if (this == e) true else e match {
-    case v: Var => false
+    case v: Sym => false
     case App(f,a) => (this occursIn f) || (this occursIn a)
     case Abs(v,g) => (this occursIn v) || (this occursIn g)
   }
 }
-case class Var(val name: String, override val t:T) extends E {
-  def copy = new Var(name,t)
+// TODO: Remove type to gain efficiency
+case class Sym(val name: String, override val t:T) extends E {
+  def copy = new Sym(name,t)
   def logicalSize = 1
   override def toString = name
 }
-case class Abs(val variable: Var, val body: E) extends E {
+case class Abs(val variable: Sym, val body: E) extends E {
   def copy = new Abs(variable.copy,body.copy)
   override lazy val t = variable.t -> body.t 
   def logicalSize = (variable.t.logicalSize + 1) + body.logicalSize + 1
@@ -46,22 +47,22 @@ case class App(val function: E, val argument: E) extends E {
   override lazy val t = function.t.asInstanceOf[Arrow].t2
   def logicalSize = function.logicalSize + argument.logicalSize + 1
   override def toString = this match {
-    case App(App(s:Var with Infix, a), b) => "(" + a + " " + s + " " + b +  ")"
+    case App(App(s:Sym with Infix, a), b) => "(" + a + " " + s + " " + b +  ")"
     case AppRec(f, args) => "(" + f + " " + args.mkString(" ") + ")"
   } 
 }
 
 object AbsRec {
-  def apply(vars : Iterable[Var], body : E) : E =
+  def apply(vars : Iterable[Sym], body : E) : E =
     vars match {
       case List(x) => Abs(x,body)
       case x :: xs => Abs(x,apply(xs,body))
     }
-  def unapply(e : E): Option[(List[Var],E)] = e match {
+  def unapply(e : E): Option[(List[Sym],E)] = e match {
     case e : Abs => Some(unapplyRec(e))
     case _       => None
   }
-  private def unapplyRec(a : Abs) : (List[Var],E) = a match {
+  private def unapplyRec(a : Abs) : (List[Sym],E) = a match {
     case Abs(x,body) => body match {
       case Abs(y,b) =>
         val (vars,b2) = unapplyRec(Abs(y,b))
@@ -74,7 +75,7 @@ object AbsRec {
 object AppRec {
   def apply(p: E, args: Iterable[E]) = (p /: args)((p,a) => App(p,a))
   def unapply(e:E) = e match {
-    case e: Var => Some((e,Nil))
+    case e: Sym => Some((e,Nil))
     case e: App => Some(unapplyRec(e))
     case _ => None
   }
@@ -89,4 +90,4 @@ object AppRec {
 
 
 
-trait Infix extends Var
+trait Infix extends Sym

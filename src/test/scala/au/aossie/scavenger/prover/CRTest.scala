@@ -1,6 +1,6 @@
 package au.aossie.scavenger.prover
 
-import au.aossie.scavenger.expression.{Var, i}
+import au.aossie.scavenger.expression.{Sym, i}
 import au.aossie.scavenger.judgment.immutable.Clause
 import au.aossie.scavenger.parser.TPTPParsers.{CNFAxiomStatement, CNFNegatedConjectureStatement, CNFProblem, ProblemParserCNFTPTP}
 
@@ -24,31 +24,31 @@ object CRTest extends App {
     (System.nanoTime - now) / 1000
   }
 
-  def test(testName: String)(implicit vars: mutable.Set[Var]) {
+  def test(testName: String)(implicit vars: mutable.Set[Sym]) {
     val clauses = problemToClauses(ProblemParserCNFTPTP.problem(s"examples/problems/CNF/$testName.cnfp"))
     val t = time(CR.prove(new CNF(clauses)))
     println(s"Computed $testName in $t microseconds")
   }
 
   {
-    implicit val variables = mutable.Set(Var("V_x", i), Var("V_U", i), Var("T", i), Var("T_a", i))
+    implicit val variables = mutable.Set(Sym("V_x", i), Sym("V_U", i), Sym("T", i), Sym("T_a", i))
     test("ANA013-2")
   }
 
   {
-    implicit val variables = mutable.Set(Var("X", i), Var("Y", i), Var("Z", i))
+    implicit val variables = mutable.Set(Sym("X", i), Sym("Y", i), Sym("Z", i))
     test("ALG002-1")
   }
 
   {
-    implicit val variables = mutable.Set(Var("X1", i), Var("X2", i), Var("X3", i))
+    implicit val variables = mutable.Set(Sym("X1", i), Sym("X2", i), Sym("X3", i))
     test("KRS001-1")
   }
 
   {
-    implicit val variables = mutable.Set(Var("X", i), Var("Y", i), Var("Z", i),
-      Var("V", i), Var("U", i), Var("W", i), Var("A", i), Var("B", i),
-      Var("C", i), Var("D", i))
+    implicit val variables = mutable.Set(Sym("X", i), Sym("Y", i), Sym("Z", i),
+      Sym("V", i), Sym("U", i), Sym("W", i), Sym("A", i), Sym("B", i),
+      Sym("C", i), Sym("D", i))
     test("FLD010-3")
   }
 
@@ -60,39 +60,39 @@ object CRTest extends App {
 //  }
 
   {
-    implicit val variables = mutable.Set(Var("A", i), Var("B", i), Var("C", i),
-      Var("D", i), Var("E", i), Var("F", i),
-      Var("G", i), Var("H", i), Var("I", i))
+    implicit val variables = mutable.Set(Sym("A", i), Sym("B", i), Sym("C", i),
+      Sym("D", i), Sym("E", i), Sym("F", i),
+      Sym("G", i), Sym("H", i), Sym("I", i))
     test("MGT017-1")
   }
 
   {
-    implicit val variables = mutable.Set(Var("A", i), Var("B", i),
-      Var("X", i), Var("Y", i), Var("Z", i))
+    implicit val variables = mutable.Set(Sym("A", i), Sym("B", i),
+      Sym("X", i), Sym("Y", i), Sym("Z", i))
     test("NUM019-1")
   }
 
   {
-    implicit val variables = mutable.Set(Var("A", i), Var("B", i),
-      Var("X", i), Var("Y", i), Var("Z", i))
+    implicit val variables = mutable.Set(Sym("A", i), Sym("B", i),
+      Sym("X", i), Sym("Y", i), Sym("Z", i))
     test("PUZ008-2")
   }
 
   {
-    implicit val variables = mutable.Set(Var("Subset", i), Var("Superset", i),
-      Var("Element", i), Var("Set1", i), Var("Set2", i), Var("Intersection", i))
+    implicit val variables = mutable.Set(Sym("Subset", i), Sym("Superset", i),
+      Sym("Element", i), Sym("Set1", i), Sym("Set2", i), Sym("Intersection", i))
     test("SET006-1")
   }
 
   {
-    implicit val variables = mutable.Set(Var("X", i), Var("Y", i), Var("Z", i))
+    implicit val variables = mutable.Set(Sym("X", i), Sym("Y", i), Sym("Z", i))
     test("ANA002-4")
   }
 
   {
-    implicit val variables = mutable.Set(Var("X", i), Var("Y", i), Var("Z", i),
-      Var("V", i), Var("U", i), Var("W", i), Var("A", i), Var("B", i),
-      Var("C", i), Var("D", i))
+    implicit val variables = mutable.Set(Sym("X", i), Sym("Y", i), Sym("Z", i),
+      Sym("V", i), Sym("U", i), Sym("W", i), Sym("A", i), Sym("B", i),
+      Sym("C", i), Sym("D", i))
     test("FLD041-3")
   }
 }

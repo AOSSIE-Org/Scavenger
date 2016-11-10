@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef}
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.prover.actors.messages._
 import au.aossie.scavenger.structure.immutable.{Literal,Clause,CNF}
-import au.aossie.scavenger.expression.Var
+import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.Proof
 import au.aossie.scavenger.proof.sequent.SequentProofNode
@@ -18,7 +18,7 @@ import scala.util.Random
   * @author Daniyar Itegulov
   */
 class MainActor(cnf: CNF, propagationActor: ActorRef, conflictActor: ActorRef)
-               (implicit variables: mutable.Set[Var]) extends Actor with ActorLogging {
+               (implicit variables: mutable.Set[Sym]) extends Actor with ActorLogging {
   /*
    * All mutable variables (vars) should be marked with @volatile.
    *

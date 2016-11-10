@@ -2,7 +2,7 @@ package au.aossie.scavenger.proof.sequent.conflictresolution
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.structure.immutable.Literal
-import au.aossie.scavenger.expression.Var
+import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.structure.immutable.Clause
 import au.aossie.scavenger.proof.sequent.SequentProofNode
 
@@ -14,7 +14,7 @@ import scala.collection.mutable
   * @author Daniyar Itegulov
   */
 case class UnitPropagationResolution(left: Seq[SequentProofNode], right: SequentProofNode, desired: Literal)
-                                    (implicit variables: mutable.Set[Var]) extends SequentProofNode {
+                                    (implicit variables: mutable.Set[Sym]) extends SequentProofNode {
   require(left.forall(_.conclusion.width == 1), "All left conclusions should be unit")
   require(left.size + 1 == right.conclusion.width, "There should be enough left premises to derive desired")
   val leftLiterals = left.map(_.conclusion.literals.head)
@@ -54,7 +54,7 @@ case class UnitPropagationResolution(left: Seq[SequentProofNode], right: Sequent
 
 object UnitPropagationResolution {
   def apply(left: Seq[SequentProofNode], right: SequentProofNode)
-           (implicit variables: mutable.Set[Var]): UnitPropagationResolution = {
+           (implicit variables: mutable.Set[Sym]): UnitPropagationResolution = {
     val leftLiterals = left.map(_.conclusion.literals.head)
     right.conclusion.literals.indices.map(desiredIndex => { // FIXME: copy-pasted code
       // Find such desired index that remaining right literals will be unifiable with left literals

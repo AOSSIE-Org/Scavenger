@@ -1,6 +1,6 @@
 package au.aossie.scavenger.expression.term
 
-import au.aossie.scavenger.expression.{AppRec, AtomicType, E, T, Var, i, o}
+import au.aossie.scavenger.expression.{AppRec, AtomicType, E, T, Sym, i, o}
 
 /**
   * Objects to facilitate the creation of logical terms.
@@ -10,8 +10,8 @@ import au.aossie.scavenger.expression.{AppRec, AtomicType, E, T, Var, i, o}
   */
 class Term {
   final val conditional = "conditionalTerm"
-  final val ifThenElse  = new Var(conditional,o->(i->(i->i)))
-  def newTerm(name : String, termType : T) = new Var(name,termType)
+  final val ifThenElse  = new Sym(conditional,o->(i->(i->i)))
+  def newTerm(name : String, termType : T) = new Sym(name,termType)
 }
 
 object DistinctObjectTerm extends Term {

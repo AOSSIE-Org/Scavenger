@@ -4,7 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import au.aossie.scavenger.prover.actors.{ConflictActor, MainActor, PropagationActor, UnifyingActor}
-import au.aossie.scavenger.expression.Var
+import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.proof.Proof
 import au.aossie.scavenger.proof.sequent.SequentProofNode
 
@@ -20,7 +20,7 @@ import scala.language.postfixOps
   * @author Daniyar Itegulov
   */
 object ConcurrentCR extends Prover {
-  def prove(cnf: CNF)(implicit variables: mutable.Set[Var]): Option[Proof[SequentProofNode]] = {
+  def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): Option[Proof[SequentProofNode]] = {
     implicit val timeout: Timeout = 2 seconds
     implicit val system = ActorSystem()
     val unifyingActor = system.actorOf(Props(new UnifyingActor()), "unify")

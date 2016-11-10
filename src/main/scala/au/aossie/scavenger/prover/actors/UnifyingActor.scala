@@ -3,14 +3,14 @@ package au.aossie.scavenger.prover.actors
 import akka.actor.{Actor, ActorLogging}
 import au.aossie.scavenger.prover.actors.messages.{GetVariables, Unify}
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.expression.Var
+import au.aossie.scavenger.expression.Sym
 
 import scala.collection.mutable
 
 /**
   * @author Daniyar Itegulov
   */
-class UnifyingActor(implicit variables: mutable.Set[Var]) extends Actor with ActorLogging {
+class UnifyingActor(implicit variables: mutable.Set[Sym]) extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case Unify(left, right) =>

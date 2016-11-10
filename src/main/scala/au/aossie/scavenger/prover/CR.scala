@@ -1,7 +1,7 @@
 package au.aossie.scavenger.prover
 
 import au.aossie.scavenger.structure.immutable.Literal
-import au.aossie.scavenger.expression.Var
+import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.Proof
 import au.aossie.scavenger.proof.sequent.SequentProofNode
@@ -21,7 +21,7 @@ import scala.util.Random
   */
 object CR extends Prover {
 
-  def prove(cnf: CNF)(implicit variables: mutable.Set[Var]): Option[Proof[SequentProofNode]] = {
+  def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): Option[Proof[SequentProofNode]] = {
 
     val depthLiterals = mutable.Map.empty[Int, mutable.Set[Literal]] // Shows literals that were propagated at this depth
     depthLiterals(0) = mutable.Set.empty

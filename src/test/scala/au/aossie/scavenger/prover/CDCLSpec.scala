@@ -1,6 +1,6 @@
 package au.aossie.scavenger.prover
 
-import au.aossie.scavenger.expression.{Var, i}
+import au.aossie.scavenger.expression.{Sym, i}
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
@@ -12,15 +12,15 @@ import scala.collection.mutable.ArrayBuffer
   */
 @RunWith(classOf[JUnitRunner])
 class CDCLSpec extends SpecificationWithJUnit {
-  private val a = new Var("A", i)
-  private val b = new Var("B", i)
-  private val c = new Var("C", i)
-  private val d = new Var("D", i)
-  private val e = new Var("E", i)
-  private val f = new Var("F", i)
-  private val x = new Var("X", i)
-  private val y = new Var("Y", i)
-  private val z = new Var("Z", i)
+  private val a = new Sym("A", i)
+  private val b = new Sym("B", i)
+  private val c = new Sym("C", i)
+  private val d = new Sym("D", i)
+  private val e = new Sym("E", i)
+  private val f = new Sym("F", i)
+  private val x = new Sym("X", i)
+  private val y = new Sym("Y", i)
+  private val z = new Sym("Z", i)
 
   private def test(clauses: Clause*) = CDCL.isSatisfiable(new CNF(ArrayBuffer(clauses:_*)))
 

@@ -76,7 +76,7 @@ class PredicatePosition(val isSearchedExpression: E => Boolean) extends Position
     def rec(e: E): Seq[E] = {
       if (isSearchedExpression(e)) Seq(e)
       else e match {
-        case v: Var => Seq()
+        case v: Sym => Seq()
         case App(g,a) => rec(g) ++ rec(a)
         case Abs(v,g) => rec(v) ++ rec(g)
       }
@@ -88,9 +88,9 @@ class PredicatePosition(val isSearchedExpression: E => Boolean) extends Position
     def rec(e: E): E = {
       if (isSearchedExpression(e)) f(e)
       else e match {
-        case v: Var => v
+        case v: Sym => v
         case App(g,a) => App(rec(g),rec(a))
-        case Abs(v,g) => Abs(rec(v).asInstanceOf[Var],rec(g))
+        case Abs(v,g) => Abs(rec(v).asInstanceOf[Sym],rec(g))
       }     
     } 
     rec(expression)

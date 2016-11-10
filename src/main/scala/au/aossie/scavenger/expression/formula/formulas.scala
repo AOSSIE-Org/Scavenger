@@ -8,7 +8,7 @@ abstract class Formula {
   def ?:(f: E) = unapply(f).isInstanceOf[Some[_]]
 }
 
-abstract class BinaryFormula(connective: Var) extends Formula {
+abstract class BinaryFormula(connective: Sym) extends Formula {
   def apply(): E = connective
   def apply(f1: E, f2: E) = App(App(connective,f1),f2)
   def unapply(e:E) = e match {
@@ -17,7 +17,7 @@ abstract class BinaryFormula(connective: Var) extends Formula {
   }  
 }
 
-abstract class UnaryFormula(connective: Var) extends Formula {
+abstract class UnaryFormula(connective: Sym) extends Formula {
   def apply() : E = connective
   def apply(f: E) = App(connective,f)
   def unapply(e:E) = e match {
@@ -27,14 +27,14 @@ abstract class UnaryFormula(connective: Var) extends Formula {
 }
 
 abstract class QuantifierFormula(quantifierC:T=>E) extends Formula {
-  def apply(v:Var, f:E) = App(quantifierC(v.t), Abs(v,f))
-  def apply(f:E, v:Var, p:Position) = {
+  def apply(v:Sym, f:E) = App(quantifierC(v.t), Abs(v,f))
+  def apply(f:E, v:Sym, p:Position) = {
     val h = (( (_:E) => v.copy) @: p)(f)
     App(quantifierC(v.t), Abs(v,h))
   }
-  def apply(f:E, v:Var, t:E): E = apply(f, v, new PredicatePosition(_ == t))
+  def apply(f:E, v:Sym, t:E): E = apply(f, v, new PredicatePosition(_ == t))
 
-  def apply(vars : List[Var], f : E) : E = {
+  def apply(vars : List[Sym], f : E) : E = {
     require(vars.nonEmpty)
     val (head,tail) = (vars.head, vars.tail)
     if (vars.length == 1) apply(head,f)
@@ -71,7 +71,7 @@ object Atom extends Formula {
       case Nil   => o
       case e::es => e.t -> createType(es)
     }
-    val p    = Var(name,createType(args))
+    val p    = Sym(name,createType(args))
     val atom = AppRec(p,args)
     require(atom.t == o)
     atom
@@ -85,7 +85,7 @@ object Atom extends Formula {
 object ConditionalFormula extends Formula{
   def apply(cond : E, f1 : E, f2 : E) : E = AppRec(conditionalConnectiveC,List(cond,f1,f2))
   override def unapply(f: E): Option[_] = f match {
-    case AppRec(Var(n,_),List(cond,f1,f2)) if n == conditionalConnectiveS => Some((cond,f1,f2))
+    case AppRec(Sym(n,_),List(cond,f1,f2)) if n == conditionalConnectiveS => Some((cond,f1,f2))
     case _                                                    => None
   }
 }
@@ -98,10 +98,6 @@ object FormulaEquality extends BinaryFormula(eqC(i)){
 
 object Equivalence extends BinaryFormula(equivC)
 
-object True {
-  def apply() : E = new Var("true",o)
-}
+object True extends Sym("true", o)
 
-object False {
-  def apply() : E = new Var("false",o)
-}
+object False extends Sym("false",o)

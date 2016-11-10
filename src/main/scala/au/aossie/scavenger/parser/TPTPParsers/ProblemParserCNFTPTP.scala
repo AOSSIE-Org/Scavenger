@@ -1,6 +1,6 @@
 package au.aossie.scavenger.parser.TPTPParsers
 
-import au.aossie.scavenger.expression.{E, Var}
+import au.aossie.scavenger.expression.{E, Sym}
 import au.aossie.scavenger.parser.BaseParserTPTP
 import au.aossie.scavenger.parser.TPTPParsers.TPTPAST.{AnnotatedFormula, SimpleSequent, TPTPDirective}
 
@@ -52,11 +52,11 @@ extends BaseParserTPTP {
 
 }
 
-class CNFProblem(val statements : List[CNFProblemStatement],val variables : Set[Var]) {
+class CNFProblem(val statements : List[CNFProblemStatement],val variables : Set[Sym]) {
   override def toString : String = statements.mkString("\n") + "\nVariables: " + variables.mkString(",")
 }
 object CNFProblem {
-  def apply(statements: List[CNFProblemStatement], variables : Set[Var]): CNFProblem = new CNFProblem(statements,variables)
+  def apply(statements: List[CNFProblemStatement], variables : Set[Sym]): CNFProblem = new CNFProblem(statements,variables)
 }
 
 abstract class CNFProblemStatement

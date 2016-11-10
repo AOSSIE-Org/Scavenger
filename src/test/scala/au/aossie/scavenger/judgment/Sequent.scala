@@ -12,8 +12,8 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class SequentSpec extends SpecificationWithJUnit {
 
-  val a = Var("a", o)
-  val x = Var("x", o)
+  val a = Sym("a", o)
+  val x = Sym("x", o)
   val s = immutable.Clause(a,x)(a,x,a,x)
   
   "Sequent" should {

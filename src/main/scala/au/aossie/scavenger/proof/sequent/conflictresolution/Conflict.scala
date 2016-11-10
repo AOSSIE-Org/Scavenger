@@ -1,7 +1,7 @@
 package au.aossie.scavenger.proof.sequent.conflictresolution
 
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.expression.Var
+import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.structure.immutable.Clause
 import au.aossie.scavenger.proof.sequent.{Binary, SequentProofNode}
 
@@ -12,7 +12,7 @@ import scala.collection.mutable
   *
   * @author Daniyar Itegulov
   */
-case class Conflict(leftPremise: SequentProofNode, rightPremise: SequentProofNode)(implicit variables: mutable.Set[Var])
+case class Conflict(leftPremise: SequentProofNode, rightPremise: SequentProofNode)(implicit variables: mutable.Set[Sym])
   extends SequentProofNode with Binary {
   require(leftPremise.conclusion.width == 1, "Left premise should be a unit clause")
   require(rightPremise.conclusion.width == 1, "Right premise should be a unit clause")

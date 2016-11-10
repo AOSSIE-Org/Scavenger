@@ -3,7 +3,7 @@ package au.aossie.scavenger
 import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.unification.{MartelliMontanari => unify}
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.expression.{Abs, App, E, Var, i}
+import au.aossie.scavenger.expression.{Abs, App, E, Sym, i}
 import au.aossie.scavenger.structure.immutable.Clause
 
 import scala.collection.mutable
@@ -46,13 +46,13 @@ package object prover {
     * @param exps where unifiable variables should be found
     * @return unifiable variables contained at least once in exps
     */
-  def unifiableVars(exps: E*)(implicit variables: mutable.Set[Var]): Set[Var] = exps.flatMap {
+  def unifiableVars(exps: E*)(implicit variables: mutable.Set[Sym]): Set[Sym] = exps.flatMap {
     case App(e1, e2) =>
       unifiableVars(e1) union unifiableVars(e2)
     case Abs(v, e1) =>
       unifiableVars(v) union unifiableVars(e1)
-    case v: Var =>
-      if (variables contains v) Set(v) else Set.empty[Var]
+    case v: Sym =>
+      if (variables contains v) Set(v) else Set.empty[Sym]
   }.toSet
 
   /**
@@ -64,7 +64,7 @@ package object prover {
     * @param usedVars already used variables
     * @return proper substitution to rename without variable collisions
     */
-  def renameVars(left: E, usedVars: Set[Var])(implicit variables: mutable.Set[Var]): Substitution = {
+  def renameVars(left: E, usedVars: Set[Sym])(implicit variables: mutable.Set[Sym]): Substitution = {
     val sharedVars = unifiableVars(left) intersect usedVars // Variables which should be renamed
 
     // Unification variables which can be reused for new variables
@@ -73,9 +73,9 @@ package object prover {
     val kvs = for (v <- sharedVars) yield {
       val replacement = notUsedVars.headOption getOrElse { // Use some variable from unification variables
       // Or create a new one
-      var newVar = Var(v + "'", i)
+      var newVar = Sym(v + "'", i)
         while (sharedVars contains newVar) {
-          newVar = Var(newVar + "'", i)
+          newVar = Sym(newVar + "'", i)
         }
         variables += newVar // It will be available for unification from now
         newVar
@@ -104,7 +104,7 @@ package object prover {
     *         None if there is no substitution.
     */
   def unifyWithRename(left: Seq[E], right: Seq[E])
-                     (implicit variables: mutable.Set[Var]): Option[(Seq[Substitution], Substitution)] = {
+                     (implicit variables: mutable.Set[Sym]): Option[(Seq[Substitution], Substitution)] = {
     var usedVars = unifiableVars(right: _*)
     val newLeftWithSub = for (oneLeft <- left) yield {
       val substitution = renameVars(oneLeft, usedVars)
@@ -135,7 +135,7 @@ package object prover {
     * @return true, if there exists some unification for what and from according to rules
     *         false, otherwise
     */
-  def isInstantiation(what: E, from: E)(implicit variables: mutable.Set[Var]): Boolean = {
+  def isInstantiation(what: E, from: E)(implicit variables: mutable.Set[Sym]): Boolean = {
     val usedVars = unifiableVars(what)
     val sub = renameVars(from, usedVars)
     val newFrom = sub(from)

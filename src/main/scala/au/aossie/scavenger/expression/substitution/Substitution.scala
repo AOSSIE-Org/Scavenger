@@ -5,14 +5,14 @@ import au.aossie.scavenger.structure.immutable.Literal
 
 //ToDo: (B) Take care of bound variable renaming, in order to avoid variable capture. 
 abstract class AbstractSubstitution {
-  protected def m: Map[Var,E]
+  protected def m: Map[Sym,E]
   def apply(e: E) = {
-    def rec(f:E,boundVars:Set[Var]):E = f match {
+    def rec(f:E,boundVars:Set[Sym]):E = f match {
       case App(e1, e2) => App(rec(e1,boundVars),rec(e2,boundVars))
       case Abs(v,e) => Abs(v.copy, rec(e, boundVars + v))
-      case v: Var if (boundVars contains v) => v.copy 
-      case v: Var if (m contains v) => m(v).copy
-      case v: Var => v.copy
+      case v: Sym if (boundVars contains v) => v.copy 
+      case v: Sym if (m contains v) => m(v).copy
+      case v: Sym => v.copy
     }
     rec(e, Set())
   }
