@@ -3,6 +3,9 @@ import Keys._
 import sys.process._
 import com.github.retronym.SbtOneJar._
 
+import language.postfixOps
+
+
 object ScavengerBuild extends Build {
   
   private def major(version: String) = version.split("[.]").take(2).mkString(".")
@@ -26,7 +29,7 @@ object ScavengerBuild extends Build {
                               traceLevel in scavenger := 0)
   
   
-  val allSettings = Defaults.defaultSettings ++ 
+  val allSettings = Defaults.coreDefaultSettings ++ 
                     jarSettings ++
                     scavengerSettings
                         
