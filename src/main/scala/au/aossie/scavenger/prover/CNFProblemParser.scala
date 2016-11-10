@@ -1,7 +1,7 @@
 package au.aossie.scavenger.prover
 
 import au.aossie.scavenger.structure.immutable.Clause
-import au.aossie.scavenger.parser.TPTPParsers.{CNFAxiomStatement, CNFNegatedConjectureStatement, ProblemParserCNFTPTP}
+import au.aossie.scavenger.parser.TPTP.{CNFAxiomStatement, CNFNegatedConjectureStatement, ProblemParserCNFTPTP}
 
 import au.aossie.scavenger.structure.immutable.CNF
 

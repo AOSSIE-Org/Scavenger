@@ -2,6 +2,8 @@ package au.aossie.scavenger.expression
 
 import au.aossie.scavenger.util.unicode._
   
+// TODO: implement sharing of expressions
+
 sealed abstract class E {
   def t: T
     

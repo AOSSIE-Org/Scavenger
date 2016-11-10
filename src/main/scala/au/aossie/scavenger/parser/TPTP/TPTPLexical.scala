@@ -1,4 +1,4 @@
-package au.aossie.scavenger.parser.TPTPParsers
+package au.aossie.scavenger.parser.TPTP
 
 import scala.util.parsing.combinator.lexical.Lexical
 import scala.util.parsing.input.CharArrayReader._

@@ -1,8 +1,6 @@
 package au.aossie.scavenger.expression
 package formula
 
-import au.aossie.scavenger.expression.position.{Position,PredicatePosition}
-
 abstract class Formula {
   def unapply(f:E):Option[_]
   def ?:(f: E) = unapply(f).isInstanceOf[Some[_]]
@@ -28,11 +26,6 @@ abstract class UnaryFormula(connective: Sym) extends Formula {
 
 abstract class QuantifierFormula(quantifierC:T=>E) extends Formula {
   def apply(v:Sym, f:E) = App(quantifierC(v.t), Abs(v,f))
-  def apply(f:E, v:Sym, p:Position) = {
-    val h = (( (_:E) => v.copy) @: p)(f)
-    App(quantifierC(v.t), Abs(v,h))
-  }
-  def apply(f:E, v:Sym, t:E): E = apply(f, v, new PredicatePosition(_ == t))
 
   def apply(vars : List[Sym], f : E) : E = {
     require(vars.nonEmpty)

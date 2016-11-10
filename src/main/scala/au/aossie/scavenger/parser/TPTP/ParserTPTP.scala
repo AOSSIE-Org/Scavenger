@@ -1,20 +1,23 @@
-package au.aossie.scavenger.parser
+package au.aossie.scavenger.parser.TPTP
 
 import au.aossie.scavenger.expression._
 import au.aossie.scavenger.expression.formula.{All, And, Atom, ConditionalFormula, Equivalence, Ex, False, FormulaEquality, Imp, Neg, Or, True}
 import au.aossie.scavenger.expression.term._
-import au.aossie.scavenger.parser.TPTPParsers.TPTPAST._
-import au.aossie.scavenger.parser.TPTPParsers.{TPTPLexical, TPTPTokens}
-
+import au.aossie.scavenger.parser.TPTP.TPTPAST._
 import scala.collection.immutable.Nil
 import scala.collection.mutable.{Set, HashMap => MMap, HashSet => MSet}
 import scala.util.parsing.combinator.syntactical.TokenParsers
 import scala.util.parsing.combinator.PackratParsers
 import scala.util.parsing.input.Reader
+import scala.Left
+import scala.Right
+import scala.annotation.migration
+import scala.collection.mutable.{HashMap => MMap}
+import scala.collection.mutable.{HashSet => MSet}
 
 
 /**
-  * This modules describe the TPTP syntax as descrobed in
+  * This modules describe the TPTP syntax as described in
   * www.cs.miami.edu/~tptp/TPTP/SyntaxBNF.html
   *
   * The non terminals don't follow camelcase convention to
@@ -34,7 +37,7 @@ class TPTPExtractException extends Exception("Unexpected Extract Exception")
   * The BaseParserTPTP trait implements the common parsers shared
   * both by problems and proof objects described by the TPTP syntax.
   * They return an AST representation of the syntax, logic formulas
-  * are translated to their Skeptik internal representation.
+  * are translated to their corresponding representation in Scavenger.
   */
 
 // TODO: CHECK EQUALITY TYPE
@@ -502,7 +505,7 @@ extends TokenParsers with PackratParsers {
 
   // There are many issues to represent let expressions, but they are almost never used in real problems' description.
   // Only 2 files in over 20000 present in the TPTP problem library use let expressions so we decided not to support them.
-  def tff_let: Parser[E] = failure("TFF let is not defined")
+  def tff_let: Parser[E] = failure("TFF's 'let' expressions are not supported")
 
   def tff_sequent: Parser[RepresentedFormula] = (
     tff_tuple ~ gentzen_arrow ~ tff_tuple ^^ {case t1 ~ _ ~ t2 => SimpleSequent(t1,t2)}
@@ -525,7 +528,7 @@ extends TokenParsers with PackratParsers {
       ||| elem(LeftParenthesis) ~> tff_top_level_type <~ elem(RightParenthesis)
     )
 
-  // Skeptik's type system does not support quantified types. So we don't support this part of the grammar.
+  // Scavenger's type system does not support quantified types. So we don't support this part of the grammar.
   // IMPORTANT: The TPTP library contains around 711 problems written in the TFF language and around 540 use
   //            quantified types.
   def tff_quantified_type: Parser[T] = failure("Quantified types currently undefined")
@@ -545,7 +548,7 @@ extends TokenParsers with PackratParsers {
       | elem(LeftParenthesis) ~> tff_xprod_type <~ elem(RightParenthesis)
     )
 
-  // Skeptik's tyoe system does not support the parametrized types of the TPTP syntax, so they are not supported.
+  // Scavenger's type system does not support the parameterized types of the TPTP syntax, so they are not supported.
   def tff_atomic_type: Parser[T] = (
     (atomic_word | defined_type | variable) ^^ {t => if(t == "$i") i else if(t == "$o") o else AtomicType(t)}
       | failure("Unsupported type structure")
@@ -567,7 +570,7 @@ extends TokenParsers with PackratParsers {
     }
   }
 
-  // NOTE: Skeptik does not support product types, but according to the syntax this types are used only
+  // NOTE: Scavenger does not support product types, but according to the syntax this types are used only
   //       in the domain of mapping types, so we translate them curryfied.
   lazy val tff_xprod_type: PackratParser[T] = (
     tff_unitary_type ~ elem(Star) ~ tff_atomic_type       ^^ {case l ~ _ ~ r => addToEnd(l,r)}
@@ -756,7 +759,7 @@ extends TokenParsers with PackratParsers {
     )*/
 
   def subtype_sign: Parser[String] = repN(2,elem(LessSign)) ^^ { _  => ""}
-  // Subtypes can't be represented in Skeptik's type sysntem, we left this unsupported for now.
+  // Subtypes can't be represented in Scavenger's type sysntem, we left this unsupported for now.
   def thf_subtype: Parser[SimpleType] = failure("Subtypes are not supported")/*constant ~ subtype_sign ~ constant ^^ {
     case l ~ _ ~ r => ???
   }*/
@@ -779,7 +782,7 @@ extends TokenParsers with PackratParsers {
       ||| thf_xprod_type   ~ elem(Star) ~ thf_unitary_type ^^ {case typ ~ _ ~ r => addToEnd(typ,r)}
     )
 
-  // Type union can't be represented in Skeptik's type system so we left this undefined.
+  // Type union can't be represented in Scavenger's type system so we left this undefined.
   lazy val thf_union_type: PackratParser[T] = failure("Union types are not supported")/*(
     thf_unitary_type ~ elem(Plus) ~ thf_unitary_type ^^ {case l ~ _ ~ r => +(l,r)}
       ||| thf_union_type   ~ elem(Plus) ~ thf_unitary_type ^^ {case typ ~ _ ~ r => +(typ,r)}

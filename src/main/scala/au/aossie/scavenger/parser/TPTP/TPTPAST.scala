@@ -1,4 +1,4 @@
-package au.aossie.scavenger.parser.TPTPParsers
+package au.aossie.scavenger.parser.TPTP
 
 import au.aossie.scavenger.expression.{E, T}
 

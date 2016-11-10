@@ -3,7 +3,7 @@ package substitution
 
 import au.aossie.scavenger.structure.immutable.Literal
 
-//ToDo: (B) Take care of bound variable renaming, in order to avoid variable capture. 
+//TODO: (B) Take care of bound variable renaming, in order to avoid variable capture. 
 abstract class AbstractSubstitution {
   protected def m: Map[Sym,E]
   def apply(e: E) = {

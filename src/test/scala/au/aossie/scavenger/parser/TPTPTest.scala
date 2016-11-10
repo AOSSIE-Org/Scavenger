@@ -9,6 +9,7 @@ import au.aossie.scavenger.parser.TPTPParsers._
 import scala.collection.mutable
 import scala.collection.mutable.HashSet
 import scala.io.Source
+import au.aossie.scavenger.parser.TPTPParsers.BaseParserTPTP
 
 object TPTPTest {
   def main(args: Array[String]):Unit = {

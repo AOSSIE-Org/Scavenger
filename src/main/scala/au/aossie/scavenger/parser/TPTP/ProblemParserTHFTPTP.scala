@@ -1,8 +1,7 @@
-package au.aossie.scavenger.parser.TPTPParsers
+package au.aossie.scavenger.parser.TPTP
 
 import au.aossie.scavenger.expression.{E, Sym}
-import au.aossie.scavenger.parser.BaseParserTPTP
-import au.aossie.scavenger.parser.TPTPParsers.TPTPAST.{AnnotatedFormula, SimpleFormula, TPTPDirective}
+import au.aossie.scavenger.parser.TPTP.TPTPAST.{AnnotatedFormula, SimpleFormula, TPTPDirective}
 
 import collection.mutable.Set
 
