@@ -10,7 +10,7 @@ import scala.collection.mutable
 /**
   * @author Daniyar Itegulov
   */
-object ProveCLI {
+object CLI {
 
   case class Config(inputs: Seq[String] = Seq(),
                     algorithm: String = "CR",
