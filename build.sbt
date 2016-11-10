@@ -1,8 +1,8 @@
-name := "Skeptik"
+name := "Scavenger"
 
-organization := "at.logic"
+organization := "au.aossie"
 
-version := "1.1"
+version := "0.1"
 
 scalaVersion := "2.11.6"
 
@@ -21,91 +21,12 @@ libraryDependencies ++= Seq(
   "org.specs2" %% "specs2" % "2.4.15" % "test",
   "com.github.scopt" %% "scopt" % "3.3.0",
   "org.scala-lang" % "scala-library" % "2.11.6", // apparently needed because of timeout and deprecated actors library
-  //"org.scala-lang" % "scala-xml" % "2.11.4",
   "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3",
   "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3-1", // seems inactive
-	"com.typesafe.akka" %% "akka-actor" % "2.4.9"
+  "com.typesafe.akka" %% "akka-actor" % "2.4.9"
 )
 
 
-licenses := Seq("CC BY-NC-SA" -> url("http://creativecommons.org/licenses/by-nc-sa/3.0/"))
+licenses := Seq("CC BY-NC-SA" -> url("http://creativecommons.org/licenses/by-nc-sa/4.0/"))
 
-homepage := Some(url("http://github.com/Paradoxika/Skeptik"))
-
-publishMavenStyle := true
-
-publishTo <<= version { (v: String) =>
-  val nexus = "https://oss.sonatype.org/"
-  if (v.trim.endsWith("SNAPSHOT")) 
-    Some("snapshots" at nexus + "content/repositories/snapshots") 
-  else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
-}
-
-publishArtifact in Test := false
-
-pomIncludeRepository := { _ => false }
-
-pomExtra := (
-  <scm>
-    <url>git@github.com:Paradoxika/Skeptik.git</url>
-    <connection>scm:git:git@github.com:Paradoxika/Skeptik.git</connection>
-  </scm>
-  <developers>
-    <developer>
-      <id>bruno.wp</id>
-      <name>Bruno Woltzenlogel Paleo</name>
-      <url>http://www.logic.at/People/Bruno/</url>
-    </developer>
-  </developers>
-  <contributors>
-  </contributors>
-  <properties>
-	<encoding>UTF-8</encoding>
-  </properties>
-  <build>
-	<sourceDirectory>src/main/scala</sourceDirectory>
-	<testSourceDirectory>src/test/scala</testSourceDirectory>
-    <plugins>
-			<plugin>
-				<groupId>net.alchim31.maven</groupId>
-				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.1.0</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>compile</goal>
-							<goal>testCompile</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.7</version>
-				<configuration>
-					<useFile>false</useFile>
-					<disableXmlReport>true</disableXmlReport>
-					<!-- If you have classpath issue like NoDefClassError,... -->
-					<!-- useManifestOnlyJar>false</useManifestOnlyJar -->
-					<includes>
-						<include>**/*</include>
-					</includes>
-					<excludes>
-						<exclude>**/*.off</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>	
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>net.alchim31.maven</groupId>
-				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.1.0</version>
-			</plugin>
-		</plugins>
-	</reporting>
-)
+homepage := Some(url("https://gitlab.com/AOSSIE/Scav"))

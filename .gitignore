@@ -30,3 +30,4 @@ examples/proofs/VeriT/bad
 examples/proofs/VeriT/eq_diamond9-(D-RPI-LU).smt2
 examples/proofs/VeriT/eq_diamond9-RP.smt2
 skeptik.jar
+/bin/
