@@ -2,7 +2,7 @@ package au.aossie.scavenger.proof
 package sequent
 
 import collection.mutable.{HashMap => MMap, HashSet => MSet}
-import au.aossie.scavenger.judgment.immutable.{SeqSequent => Sequent}
+import au.aossie.scavenger.structure.immutable.{Clause => Sequent}
 import au.aossie.scavenger.expression.E
 
 abstract class SequentProofNode

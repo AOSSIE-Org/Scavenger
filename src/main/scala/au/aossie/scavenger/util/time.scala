@@ -1,7 +1,7 @@
 package au.aossie.scavenger.util
 
 object time {
-  // ToDo: Use Duration for time
+  // TODO: Use Duration for time
 
   case class Timed[+R](result:R, time: Double)
   def timed[R](f: => R): Timed[R] = {

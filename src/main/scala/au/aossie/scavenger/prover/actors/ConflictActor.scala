@@ -5,12 +5,14 @@ import akka.pattern.ask
 import akka.util.Timeout
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.prover.actors.messages._
-import au.aossie.scavenger.prover.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.expression.Var
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.sequent.conflictresolution.{Decision, UnitPropagationResolution}
 import au.aossie.scavenger.proof.sequent.lk.Axiom
 import au.aossie.scavenger.proof.sequent.{SequentProofNode, conflictresolution}
+
+import au.aossie.scavenger.structure.immutable.Clause
 
 import scala.collection.mutable
 import scala.concurrent.Await
@@ -44,14 +46,14 @@ class ConflictActor extends Actor with ActorLogging {
         */
       def findConflictClause(current: Literal, substitution: Substitution = Substitution.empty): Clause = {
         if (allClauses contains current.toClause) {
-          Clause.empty
+          Clause()()
         } else if (decisions contains current) {
           !substitution(current)
         } else if (reverseImpGraph contains current) {
           val conflictClauses = for ((clause, unifier) <- reverseImpGraph(current))
             yield unifier.map {
               case (lit, mgu) => findConflictClause(lit, mgu(substitution))
-            }.fold(Clause.empty)(_ union _)
+            }.fold(Clause()() )(_ union _)
           conflictClauses.toSeq.sortBy(_.width).head
         } else {
           throw new IllegalStateException(s"Literal $current was propagated, but there is no history in implication graph")

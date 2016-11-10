@@ -1,6 +1,6 @@
 package au.aossie.scavenger.prover.conflict
 
-import au.aossie.scavenger.prover.Clause
+import au.aossie.scavenger.structure.immutable.Clause
 import au.aossie.scavenger.prover.util.DecisionLevel
 
 /**

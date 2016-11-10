@@ -1,4 +1,4 @@
-package au.aossie.scavenger.algorithm.unifier
+package au.aossie.scavenger.unification
 
 import collection.mutable.{ HashMap => MMap, Set => MSet }
 import au.aossie.scavenger.expression.{ E, Var, App, Abs }

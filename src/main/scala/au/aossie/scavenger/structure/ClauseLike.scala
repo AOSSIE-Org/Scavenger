@@ -1,4 +1,4 @@
-package au.aossie.scavenger.judgment 
+package au.aossie.scavenger.structure 
 
 
 import au.aossie.scavenger.expression.E
@@ -13,7 +13,7 @@ import language.implicitConversions
  *  @version 0.2
  *  @since   0.2
  */
-trait SequentLike[+Repr <: SequentLike[Repr]] {
+trait ClauseLike[+Repr <: ClauseLike[Repr]] {
   def ant: Iterable[E]
   def suc: Iterable[E]  
 

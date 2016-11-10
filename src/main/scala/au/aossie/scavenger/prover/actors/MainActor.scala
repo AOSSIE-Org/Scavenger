@@ -3,7 +3,7 @@ package au.aossie.scavenger.prover.actors
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.prover.actors.messages._
-import au.aossie.scavenger.prover.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.{Literal,Clause,CNF}
 import au.aossie.scavenger.expression.Var
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.Proof

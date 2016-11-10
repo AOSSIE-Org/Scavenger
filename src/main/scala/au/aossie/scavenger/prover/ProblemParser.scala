@@ -1,5 +1,7 @@
 package au.aossie.scavenger.prover
 
+import au.aossie.scavenger.structure.immutable.CNF
+
 /**
   * @author Daniyar Itegulov
   */

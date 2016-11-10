@@ -1,6 +1,6 @@
 package au.aossie.scavenger.prover.choosing
 
-import au.aossie.scavenger.prover.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.prover.structure.mutable.CNF
 
 /**

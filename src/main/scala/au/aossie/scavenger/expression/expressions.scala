@@ -1,9 +1,8 @@
 package au.aossie.scavenger.expression
 
-import au.aossie.scavenger.judgment.Judgment
 import au.aossie.scavenger.util.unicode._
   
-sealed abstract class E extends Judgment {
+sealed abstract class E {
   def t: T
     
   def copy: E

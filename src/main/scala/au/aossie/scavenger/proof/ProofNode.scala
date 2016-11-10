@@ -3,9 +3,9 @@ package au.aossie.scavenger.proof
 import annotation.tailrec
 import collection.mutable.{HashSet => MSet, Stack}
 
-import au.aossie.scavenger.judgment.Judgment
+import au.aossie.scavenger.structure.Sequent
 
-abstract class ProofNode[+J <: Judgment, +P <: ProofNode[J,P]] 
+abstract class ProofNode[+J <: Sequent, +P <: ProofNode[J,P]] 
 {
   def name = {val fullName = getClass.getName; fullName.substring(fullName.lastIndexOf('.' : Int) + 1)}
   private val self = asInstanceOf[P]
@@ -43,14 +43,14 @@ abstract class ProofNode[+J <: Judgment, +P <: ProofNode[J,P]]
       
 }
 
-trait GenNullary[+J <: Judgment, +P <: ProofNode[J,P]] extends ProofNode[J,P] { def premises = Seq() }
+trait GenNullary[+J <: Sequent, +P <: ProofNode[J,P]] extends ProofNode[J,P] { def premises = Seq() }
 
-trait GenUnary[+J <: Judgment, +P <: ProofNode[J,P]] extends ProofNode[J,P] {
+trait GenUnary[+J <: Sequent, +P <: ProofNode[J,P]] extends ProofNode[J,P] {
   def premise: P
   def premises = Seq(premise)
 }
 
-trait GenBinary[+J <: Judgment, +P <: ProofNode[J,P]] extends ProofNode[J,P] {
+trait GenBinary[+J <: Sequent, +P <: ProofNode[J,P]] extends ProofNode[J,P] {
   def leftPremise: P
   def rightPremise: P
   def premises = Seq(leftPremise, rightPremise)

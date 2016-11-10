@@ -1,7 +1,7 @@
 package au.aossie.scavenger.prover
 
 import au.aossie.scavenger.expression.{Var, i}
-import au.aossie.scavenger.judgment.immutable.SeqSequent
+import au.aossie.scavenger.judgment.immutable.Clause
 import au.aossie.scavenger.parser.TPTPParsers._
 
 import scala.collection.mutable
@@ -13,8 +13,8 @@ object ConcurrentCRTest extends App {
 
   def problemToClauses(problem: CNFProblem): Seq[Clause] = {
     problem.statements.map {
-      case axiom: CNFAxiomStatement => new SeqSequent(axiom.ant, axiom.suc)
-      case negConj: CNFNegatedConjectureStatement => new SeqSequent(negConj.ant, negConj.suc)
+      case axiom: CNFAxiomStatement => new Clause(axiom.ant, axiom.suc)
+      case negConj: CNFNegatedConjectureStatement => new Clause(negConj.ant, negConj.suc)
     }
   }
 

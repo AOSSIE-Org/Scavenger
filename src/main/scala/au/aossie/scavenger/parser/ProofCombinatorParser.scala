@@ -4,9 +4,9 @@ import scala.util.parsing.combinator._
 
 import java.io.FileReader
 import au.aossie.scavenger.proof.{Proof,ProofNode}
-import au.aossie.scavenger.judgment.Judgment
+import au.aossie.scavenger.structure.Sequent
 
-abstract class ProofCombinatorParser[N <: ProofNode[Judgment,N]] extends ProofParser[N] with RegexParsers {
+abstract class ProofCombinatorParser[N <: ProofNode[Sequent,N]] extends ProofParser[N] with RegexParsers {
   def proof : Parser[Proof[N]]
   
   def reset() : Unit // resets any internal state of the parser

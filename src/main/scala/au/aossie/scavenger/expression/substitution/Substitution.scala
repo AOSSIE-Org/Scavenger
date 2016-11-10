@@ -1,7 +1,7 @@
 package au.aossie.scavenger.expression
 package substitution
 
-import au.aossie.scavenger.prover.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.Literal
 
 //ToDo: (B) Take care of bound variable renaming, in order to avoid variable capture. 
 abstract class AbstractSubstitution {

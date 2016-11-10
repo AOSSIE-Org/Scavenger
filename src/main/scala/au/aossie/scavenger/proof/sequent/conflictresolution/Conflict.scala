@@ -2,7 +2,7 @@ package au.aossie.scavenger.proof.sequent.conflictresolution
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.Var
-import au.aossie.scavenger.judgment.immutable.SeqSequent
+import au.aossie.scavenger.structure.immutable.Clause
 import au.aossie.scavenger.proof.sequent.{Binary, SequentProofNode}
 
 import scala.collection.mutable
@@ -25,11 +25,11 @@ case class Conflict(leftPremise: SequentProofNode, rightPremise: SequentProofNod
     case Some(u) => u
   }
 
-  override def mainFormulas: SeqSequent = SeqSequent()()
+  override def mainFormulas: Clause = Clause()()
 
-  override def conclusionContext: SeqSequent = SeqSequent()()
+  override def conclusionContext: Clause = Clause()()
 
-  override def leftAuxFormulas: SeqSequent = leftPremise.conclusion
+  override def leftAuxFormulas: Clause = leftPremise.conclusion
 
-  override def rightAuxFormulas: SeqSequent = rightPremise.conclusion
+  override def rightAuxFormulas: Clause = rightPremise.conclusion
 }

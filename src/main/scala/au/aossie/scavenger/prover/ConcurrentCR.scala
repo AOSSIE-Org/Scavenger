@@ -8,6 +8,8 @@ import au.aossie.scavenger.expression.Var
 import au.aossie.scavenger.proof.Proof
 import au.aossie.scavenger.proof.sequent.SequentProofNode
 
+import au.aossie.scavenger.structure.immutable.CNF
+
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Promise}

@@ -1,7 +1,9 @@
 package au.aossie.scavenger.prover.conflict
 
-import au.aossie.scavenger.prover.{Clause, _}
+import au.aossie.scavenger.prover._
 import au.aossie.scavenger.prover.util.DecisionLevel
+
+import au.aossie.scavenger.structure.immutable.Clause
 
 /**
   * Very dumb algorithm, which just unions all literals on each decision level.
@@ -10,5 +12,5 @@ import au.aossie.scavenger.prover.util.DecisionLevel
   */
 object SimpleConflictAnalyser extends ConflictAnalyser{
   override def learnConflictClause(levels: Seq[DecisionLevel]): Clause =
-    (Clause.empty /: levels.map(!_.literal)) (_ union _.toClause)
+    (Clause()() /: levels.map(!_.literal)) (_ union _.toClause)
 }

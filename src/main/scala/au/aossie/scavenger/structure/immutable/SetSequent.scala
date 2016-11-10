@@ -1,4 +1,4 @@
-package au.aossie.scavenger.judgment
+package au.aossie.scavenger.structure
 package immutable
 
 import au.aossie.scavenger.expression.E
@@ -24,7 +24,7 @@ import au.aossie.scavenger.expression.E
  *  @version 0.2
  *  @since   0.2
  */
-class SetSequent(val ant: Set[E], val suc: Set[E]) extends Sequent with SequentLike[SetSequent] { 
+class SetSequent(val ant: Set[E], val suc: Set[E]) extends Sequent with ClauseLike[SetSequent] { 
   def +(f:E) = new SetSequent(ant, suc + f)
   def +:(f:E) = new SetSequent(ant + f, suc)
   def -(f:E) =  new SetSequent(ant, suc - f)

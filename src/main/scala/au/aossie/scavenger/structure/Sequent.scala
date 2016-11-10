@@ -1,4 +1,4 @@
-package au.aossie.scavenger.judgment 
+package au.aossie.scavenger.structure 
 
 import au.aossie.scavenger.util.unicode._
 
@@ -9,10 +9,10 @@ import au.aossie.scavenger.util.unicode._
  *  @version 0.2
  *  @since   0.2
  */
-abstract class Sequent extends Judgment with SequentLike[Sequent] {
+abstract class Sequent extends ClauseLike[Sequent] {
 
   def toSetSequent = new immutable.SetSequent(ant.toSet, suc.toSet)
-  def toSeqSequent = new immutable.SeqSequent(ant.toSeq, suc.toSeq)
+  def toSeqSequent = new immutable.Clause(ant.toSeq, suc.toSeq)
   
   override def equals(v: Any) = v match {    
       case that: Sequent => (that canEqual this) && (ant == that.ant) && (suc == that.suc) 

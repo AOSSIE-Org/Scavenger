@@ -2,8 +2,10 @@ package au.aossie.scavenger.prover
 
 import au.aossie.scavenger.prover.choosing.{LiteralChooser, SimpleLiteralChooser}
 import au.aossie.scavenger.prover.conflict.{ConflictAnalyser, SimpleConflictAnalyser}
-import au.aossie.scavenger.prover.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.prover.util.DecisionLevel
+
+import au.aossie.scavenger.structure.immutable.CNF
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

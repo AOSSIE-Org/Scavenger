@@ -1,12 +1,15 @@
 package au.aossie.scavenger.prover
 
-import au.aossie.scavenger.prover.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.expression.Var
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.Proof
 import au.aossie.scavenger.proof.sequent.SequentProofNode
 import au.aossie.scavenger.proof.sequent.conflictresolution._
 import au.aossie.scavenger.proof.sequent.lk._
+
+import au.aossie.scavenger.structure.immutable.CNF
+import au.aossie.scavenger.structure.immutable.Clause
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -30,7 +33,7 @@ object CR extends Prover {
     val propagatedLiterals = mutable.Set.empty[Literal]
     var depth = 0 // Current depth
     val decision = ArrayBuffer.empty[Literal] // Literals, which were decided
-    val conflictClauses = mutable.Set.empty[Clause]
+    val conflictClauses: mutable.Set[Clause] = mutable.Set.empty[Clause]
     val clauseProof = mutable.Map.empty[Clause, SequentProofNode] // Stores axioms for initial clauses and conflict proof for cdcl clauses
 
     cnf.clauses.foreach(clause => clauseProof(clause) = Axiom(clause.toSeqSequent))

@@ -1,9 +1,7 @@
-package au.aossie.scavenger.prover.structure.immutable
+package au.aossie.scavenger.structure.immutable
 
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.prover.Clause
 import au.aossie.scavenger.prover.structure.mutable
-
 import scala.collection.mutable.ArrayBuffer
 
 /**

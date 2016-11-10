@@ -1,44 +1,30 @@
 package au.aossie.scavenger
 
-import au.aossie.scavenger.prover.structure.immutable.Literal
-import au.aossie.scavenger.algorithm.unifier.{MartelliMontanari => unify}
+import au.aossie.scavenger.structure.immutable.Literal
+import au.aossie.scavenger.unification.{MartelliMontanari => unify}
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.expression.{Abs, App, E, Var, i}
-import au.aossie.scavenger.judgment.immutable.SeqSequent
+import au.aossie.scavenger.structure.immutable.Clause
 
 import scala.collection.mutable
 import scala.language.implicitConversions
+
+import au.aossie.scavenger.structure.immutable.CNF
 
 /**
   * @author Daniyar Itegulov
   */
 package object prover {
-  type Clause = SeqSequent
-  type CNF = structure.immutable.CNF
-
-  object Clause {
-    def apply(a: E*)(b: E*) = new SeqSequent(a, b)
-    def empty = SeqSequent()()
-  }
 
   implicit def varToLit(variable: E): Literal = Literal(variable, negated = false)
 
   implicit def literalToClause(literal: Literal): Clause = literal.toClause
 
-  implicit class ClauseOperations(val clause: SeqSequent) extends AnyVal {
-    def literals: Seq[Literal] =
-      clause.ant.map(Literal(_, negated = true)) ++ clause.suc.map(Literal(_, negated = false))
+//  implicit class ClauseOperations(val clause: Clause) extends AnyVal {
+//
+//  }
 
-    def apply(pos: Int): Literal = literals(pos)
-
-    def first: Literal = apply(0)
-
-    def last: Literal = apply(literals.length - 1)
-
-    def isUnit: Boolean = clause.width == 1
-  }
-
-  implicit class UnitSequent(val sequent: SeqSequent) extends AnyVal {
+  implicit class UnitSequent(val sequent: Clause) extends AnyVal {
     def literal: Literal =
       if (sequent.ant.size == 1 && sequent.suc.isEmpty) Literal(sequent.ant.head, negated = true)
       else if (sequent.ant.isEmpty && sequent.suc.size == 1) Literal(sequent.suc.head, negated = false)
@@ -46,10 +32,10 @@ package object prover {
   }
 
   implicit class LiteralsAreSequent(val literals: Iterable[Literal]) extends AnyVal {
-    def toSequent: SeqSequent = {
+    def toSequent: Clause = {
       val ant = literals.flatMap(l => if (l.negated) Some(l.unit) else None)
       val suc = literals.flatMap(l => if (l.negated) None else Some(l.unit))
-      new SeqSequent(ant.toSeq, suc.toSeq)
+      new Clause(ant.toSeq, suc.toSeq)
     }
   }
 
@@ -169,7 +155,7 @@ package object prover {
     * @param sequent initial sequent
     * @return initial sequent, where duplicate literals were removed
     */
-  def unique(sequent: SeqSequent) = {
+  def unique(sequent: Clause) = {
     def loop(set: Set[Literal], literals: Seq[Literal]): Seq[Literal] = literals match {
       case hd :: tail if set contains hd => loop(set, tail)
       case hd :: tail => hd +: loop(set + hd, tail)

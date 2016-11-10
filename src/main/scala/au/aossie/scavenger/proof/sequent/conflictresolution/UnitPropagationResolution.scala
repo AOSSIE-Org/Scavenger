@@ -1,9 +1,9 @@
 package au.aossie.scavenger.proof.sequent.conflictresolution
 
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.prover.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.expression.Var
-import au.aossie.scavenger.judgment.immutable.SeqSequent
+import au.aossie.scavenger.structure.immutable.Clause
 import au.aossie.scavenger.proof.sequent.SequentProofNode
 
 import scala.collection.mutable
@@ -42,12 +42,12 @@ case class UnitPropagationResolution(left: Seq[SequentProofNode], right: Sequent
     case Some(u) => u
   }
 
-  override def auxFormulasMap: Map[SequentProofNode, SeqSequent] =
+  override def auxFormulasMap: Map[SequentProofNode, Clause] =
     (left.map(spn => spn -> spn.conclusion) :+ (right -> rightLiterals.toSequent.toSeqSequent)).toMap
 
-  override def conclusionContext: SeqSequent = rightMgu(right.conclusion.literals(desiredIndex)).toSeqSequent
+  override def conclusionContext: Clause = rightMgu(right.conclusion.literals(desiredIndex)).toSeqSequent
 
-  override def mainFormulas: SeqSequent = SeqSequent()()
+  override def mainFormulas: Clause = Clause()()
 
   override def premises: Seq[SequentProofNode] = left :+ right
 }

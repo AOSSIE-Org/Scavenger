@@ -3,6 +3,7 @@ package au.aossie.scavenger.util
 import language.implicitConversions
 
 object rich {
+  @deprecated("This will be removed. It is inefficient.","Scavenger 0.1")
   class RichIterable[T](val c: Iterable[T]) extends AnyVal {
     def contains(e: T) = if (c.isInstanceOf[Set[_]]) c.asInstanceOf[Set[T]].contains(e)
                          else if (c.isInstanceOf[Seq[_]]) c.asInstanceOf[Seq[T]].contains(e)

@@ -1,6 +1,6 @@
 package au.aossie.scavenger
 
-import au.aossie.scavenger.prover.structure.immutable.CNF
+import au.aossie.scavenger.structure.immutable.CNF
 import au.aossie.scavenger.prover.{CNFProblemParser, CR, ConcurrentCR}
 import au.aossie.scavenger.expression.{Abs, App, E, Var}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}

@@ -1,7 +1,6 @@
 package au.aossie.scavenger.prover.actors.messages
 
-import au.aossie.scavenger.prover.Clause
-import au.aossie.scavenger.prover.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.{Literal,Clause}
 
 /**
   * @author Daniyar Itegulov

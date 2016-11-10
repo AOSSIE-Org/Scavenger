@@ -14,7 +14,7 @@ class SequentSpec extends SpecificationWithJUnit {
 
   val a = Var("a", o)
   val x = Var("x", o)
-  val s = immutable.SeqSequent(a,x)(a,x,a,x)
+  val s = immutable.Clause(a,x)(a,x,a,x)
   
   "Sequent" should {
     "give a nicely formated string when toString is called" in {
