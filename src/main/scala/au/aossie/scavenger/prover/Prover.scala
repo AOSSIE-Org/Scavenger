@@ -1,10 +1,14 @@
 package au.aossie.scavenger.prover
 
-import au.aossie.scavenger.proof.ProofNode
-import au.aossie.scavenger.judgment.Judgment
+import au.aossie.scavenger.expression.Var
+import au.aossie.scavenger.proof.Proof
+import au.aossie.scavenger.proof.sequent.SequentProofNode
 
-abstract class Prover[J <: Judgment, P <: ProofNode[J,P]] {
-  def calculus: Calculus[J,P]
-  
-  def prove(goal: J): Option[P]
+import scala.collection.mutable
+
+/**
+  * @author Daniyar Itegulov
+  */
+trait Prover {
+  def prove(cnf: CNF)(implicit variables: mutable.Set[Var]): Option[Proof[SequentProofNode]]
 }

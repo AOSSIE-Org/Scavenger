@@ -1,6 +1,6 @@
 package au.aossie.scavenger.proof.sequent.conflictresolution
 
-import au.aossie.scavenger.algorithm.prover.structure.immutable.Literal
+import au.aossie.scavenger.prover.structure.immutable.Literal
 import au.aossie.scavenger.judgment.immutable.SeqSequent
 import au.aossie.scavenger.proof.sequent.SequentProofNode
 
