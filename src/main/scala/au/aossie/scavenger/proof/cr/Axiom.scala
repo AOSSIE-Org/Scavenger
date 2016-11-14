@@ -5,7 +5,9 @@ import au.aossie.scavenger.structure.immutable.{Clause => Sequent}
 
 
 class Axiom(override val mainFormulas: Sequent) extends SequentProofNode
-with Nullary with NoImplicitContraction
+with Nullary {
+  override def conclusionContext: Sequent = Sequent()()
+}
 
 object Axiom {
   def apply(conclusion: Sequent) = new Axiom(conclusion)
