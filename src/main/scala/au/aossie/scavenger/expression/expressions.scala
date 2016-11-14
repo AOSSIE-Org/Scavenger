@@ -31,14 +31,13 @@ sealed abstract class E {
 }
 // TODO: Remove type to gain efficiency
 case class Sym(val name: String, override val t:T) extends E {
-  def copy = new Sym(name,t)
   def logicalSize = 1
   override def toString = name
 }
 
-//case class SymB(val name: String) extends E {
-//  
-//}
+case class SymB(val name: String) extends E {
+  
+}
 
 case class Abs(val variable: Sym, val body: E) extends E {
   override lazy val t = variable.t -> body.t 
