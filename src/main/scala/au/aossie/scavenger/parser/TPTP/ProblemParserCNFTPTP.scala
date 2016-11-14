@@ -9,7 +9,7 @@ import collection.mutable.Set
   * @since   24.05.2016
   * @version 1.0
   * @note    This version accepts only CNF formulas that are taken as axioms
-  *          except for a conjeture or negated conjeture. No derivation nodes
+  *          except for a conjecture or negated conjecture. No derivation nodes
   *          or other TPTP annotated formulas are accepted.
   */
 object ProblemParserCNFTPTP extends ProblemParserCNFTPTP
@@ -19,7 +19,7 @@ object ProblemParserCNFTPTP extends ProblemParserCNFTPTP
   * in the TPTP CNF syntax. We assume that there are no derivation nodes in
   * the parsed file, i.e. that we only have our axioms and a final conjecture.
   *
-  * TODO: Add (if needed) the treatment for FOF formulas and skolemnization steps
+  * TODO: Add (if needed) the treatment for FOF formulas and skolemization steps
   */
 trait ProblemParserCNFTPTP
 extends BaseParserTPTP {

@@ -29,14 +29,11 @@ sealed abstract class E {
     case Abs(v,g) => (this occursIn v) || (this occursIn g)
   }
 }
+
 // TODO: Remove type to gain efficiency
 case class Sym(val name: String, override val t:T) extends E {
   def logicalSize = 1
   override def toString = name
-}
-
-case class SymB(val name: String) extends E {
-  
 }
 
 case class Abs(val variable: Sym, val body: E) extends E {
@@ -45,7 +42,7 @@ case class Abs(val variable: Sym, val body: E) extends E {
   override def toString = unicodeOrElse("\u03BB","@") + variable.name + ":" + variable.t + "." + body
 }
 case class App(val function: E, val argument: E) extends E {
-  require(function.t.asInstanceOf[Arrow].t1 == argument.t)
+  // require(function.t.asInstanceOf[Arrow].t1 == argument.t) // This is commented out for efficiency
   override lazy val t = function.t.asInstanceOf[Arrow].t2
   def logicalSize = function.logicalSize + argument.logicalSize + 1
   override def toString = this match {
