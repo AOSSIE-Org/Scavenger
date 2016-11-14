@@ -1,7 +1,7 @@
 package au.aossie.scavenger.prover.structure.mutable
 
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.structure.immutable.{Literal,Clause}
+import au.aossie.scavenger.structure.immutable.{Literal,SeqClause}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
   *
   * @author Daniyar Itegulov
   */
-class CNF(val clauses: ArrayBuffer[Clause]) {
+class CNF(val clauses: ArrayBuffer[SeqClause]) {
   /**
     * Shows which literals are set to be true.
     */
@@ -27,11 +27,11 @@ class CNF(val clauses: ArrayBuffer[Clause]) {
     * for each literal we know what clauses have watchers set
     * to this literal.
     */
-  val sentinels: Map[Literal, mutable.Set[Clause]] = {
+  val sentinels: Map[Literal, mutable.Set[SeqClause]] = {
     val sentinels = variables.flatMap(variable =>
       Seq(
-        varToLit(variable) -> mutable.Set.empty[Clause],
-        !varToLit(variable) -> mutable.Set.empty[Clause]
+        varToLit(variable) -> mutable.Set.empty[SeqClause],
+        !varToLit(variable) -> mutable.Set.empty[SeqClause]
       )
     ).toMap
     for (clause <- clauses) if (clause.width >= 2) {
@@ -41,7 +41,7 @@ class CNF(val clauses: ArrayBuffer[Clause]) {
     sentinels
   }
 
-  def +=(that: Clause): CNF = {
+  def +=(that: SeqClause): CNF = {
     if (that.width >= 1) {
       sentinels(that.first) += that
       sentinels(that.last) += that
@@ -50,7 +50,7 @@ class CNF(val clauses: ArrayBuffer[Clause]) {
     this
   }
 
-  def -=(that: Clause): CNF = {
+  def -=(that: SeqClause): CNF = {
     if (clauses.contains(that) && that.width >= 1) {
       sentinels(that.first) -= that
       sentinels(that.last) -= that
@@ -59,7 +59,7 @@ class CNF(val clauses: ArrayBuffer[Clause]) {
     this
   }
 
-  private def clauseIsSatisfied(clause: Clause): Boolean = clause.literals.exists(assignment.contains)
+  private def clauseIsSatisfied(clause: SeqClause): Boolean = clause.literals.exists(assignment.contains)
 
   /**
     * Ensures that provided literal is true and returns sequence

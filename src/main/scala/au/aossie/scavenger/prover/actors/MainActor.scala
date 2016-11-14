@@ -3,11 +3,11 @@ package au.aossie.scavenger.prover.actors
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.prover.actors.messages._
-import au.aossie.scavenger.structure.immutable.{Literal,Clause,CNF}
+import au.aossie.scavenger.structure.immutable.{Literal,SeqClause,CNF}
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.Proof
-import au.aossie.scavenger.proof.cr.SequentProofNode
+import au.aossie.scavenger.proof.cr.CRProofNode
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -39,9 +39,9 @@ class MainActor(cnf: CNF, propagationActor: ActorRef, conflictActor: ActorRef)
   // All literals (as a part of initial clause or as a propagated literal)
   val literals = mutable.Set.empty[Literal]
   // Clauses to be added on this level
-  val newClauses = ArrayBuffer.empty[Clause]
+  val newClauses = ArrayBuffer.empty[SeqClause]
   // Initial clauses, which already have been used
-  val usedAncestors = mutable.Set.empty[Clause]
+  val usedAncestors = mutable.Set.empty[SeqClause]
 
   literals ++= allClauses.flatMap(_.literals)
 
@@ -58,9 +58,9 @@ class MainActor(cnf: CNF, propagationActor: ActorRef, conflictActor: ActorRef)
   var clauseResolving = 0
 
   // Promise for result of alrogithm
-  val promise = Promise[Option[Proof[SequentProofNode]]]()
+  val promise = Promise[Option[Proof[CRProofNode]]]()
 
-  def propagate(reverseImpGraph: Map[Literal, Set[(Clause, Seq[(Literal, Substitution)])]]): Unit = {
+  def propagate(reverseImpGraph: Map[Literal, Set[(SeqClause, Seq[(Literal, Substitution)])]]): Unit = {
     for (decisionLiteral <- decisions) {
       // Check for a conflict
       if (unifiableUnits(decisionLiteral).nonEmpty) {

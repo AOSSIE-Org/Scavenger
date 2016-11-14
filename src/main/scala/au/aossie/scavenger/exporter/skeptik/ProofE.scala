@@ -2,7 +2,7 @@ package au.aossie.scavenger.exporter
 package skeptik
 
 import au.aossie.scavenger.proof.Proof
-import au.aossie.scavenger.proof.cr.{SequentProofNode => N}
+import au.aossie.scavenger.proof.cr.{CRProofNode => N}
 //import au.aossie.scavenger.proof.cr.lk.{R, Axiom, UncheckedInference}
 import au.aossie.scavenger.proof.cr.Axiom
 import collection.mutable.{HashMap => MMap}

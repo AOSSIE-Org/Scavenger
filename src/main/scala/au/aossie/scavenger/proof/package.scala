@@ -1,12 +1,12 @@
 package au.aossie.scavenger
 
-import au.aossie.scavenger.structure.Sequent
+import au.aossie.scavenger.structure.AbstractClause
 import au.aossie.scavenger.util.math.max
 import scala.collection.mutable.{HashMap => MMap,HashSet => MSet}
-import au.aossie.scavenger.proof.cr.SequentProofNode
+import au.aossie.scavenger.proof.cr.CRProofNode
 
 package object proof {
-  def measure[N <: ProofNode[Sequent,N]](p: Proof[N]) = {
+  def measure[N <: ProofNode[AbstractClause,N]](p: Proof[N]) = {
     var length = 0
     var coreSize = 0
     val childrenVisited = MMap[N,Int]()

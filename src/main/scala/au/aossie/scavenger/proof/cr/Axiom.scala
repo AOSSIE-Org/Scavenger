@@ -1,17 +1,17 @@
 package au.aossie.scavenger.proof.cr
 
-import au.aossie.scavenger.structure.immutable.{Clause => Sequent}
+import au.aossie.scavenger.structure.immutable.{SeqClause => Sequent}
 
 
 
-class Axiom(override val conclusion: Sequent) extends SequentProofNode {
+class Axiom(override val conclusion: Sequent) extends CRProofNode {
   def auxFormulasMap = Map()
   def premises = Seq()
 }
 
 object Axiom {
   def apply(conclusion: Sequent) = new Axiom(conclusion)
-  def unapply(p: SequentProofNode) = p match {
+  def unapply(p: CRProofNode) = p match {
     case p: Axiom => Some(p.conclusion)
     case _ => None
   }

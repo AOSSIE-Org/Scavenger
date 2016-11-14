@@ -1,14 +1,14 @@
 package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.structure.immutable.Literal
-import au.aossie.scavenger.structure.immutable.Clause
+import au.aossie.scavenger.structure.immutable.SeqClause
 
 /**
   * @author Daniyar Itegulov
   */
-case class Decision(literal: Literal) extends SequentProofNode {
+case class Decision(literal: Literal) extends CRProofNode {
 
-  override def conclusion: Clause = literal.toClause
+  override def conclusion: SeqClause = literal.toClause
 
-  override def premises: Seq[SequentProofNode] = Seq.empty
+  override def premises: Seq[CRProofNode] = Seq.empty
 }

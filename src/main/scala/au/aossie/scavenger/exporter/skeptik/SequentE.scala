@@ -1,8 +1,8 @@
 package au.aossie.scavenger.exporter
 package skeptik
 
-import au.aossie.scavenger.structure.Sequent
+import au.aossie.scavenger.structure.AbstractClause
 
 trait SequentE extends ExpressionE {
-  def write(s: Sequent): Unit = write(s.toString)
+  def write(s: AbstractClause): Unit = write(s.toString)
 }

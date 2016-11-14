@@ -3,9 +3,9 @@ package au.aossie.scavenger.proof
 import annotation.tailrec
 import collection.mutable.{HashSet => MSet, Stack}
 
-import au.aossie.scavenger.structure.Sequent
+import au.aossie.scavenger.structure.AbstractClause
 
-abstract class ProofNode[+J <: Sequent, +P <: ProofNode[J,P]] 
+abstract class ProofNode[+J <: AbstractClause, +P <: ProofNode[J,P]] 
 {
   def name = {val fullName = getClass.getName; fullName.substring(fullName.lastIndexOf('.' : Int) + 1)}
   private val self = asInstanceOf[P]
@@ -45,12 +45,12 @@ abstract class ProofNode[+J <: Sequent, +P <: ProofNode[J,P]]
 
 //trait GenNullary[+J <: Sequent, +P <: ProofNode[J,P]] extends ProofNode[J,P] { def premises = Seq() }
 
-trait GenUnary[+J <: Sequent, +P <: ProofNode[J,P]] extends ProofNode[J,P] {
+trait GenUnary[+J <: AbstractClause, +P <: ProofNode[J,P]] extends ProofNode[J,P] {
   def premise: P
   def premises = Seq(premise)
 }
 
-trait GenBinary[+J <: Sequent, +P <: ProofNode[J,P]] extends ProofNode[J,P] {
+trait GenBinary[+J <: AbstractClause, +P <: ProofNode[J,P]] extends ProofNode[J,P] {
   def leftPremise: P
   def rightPremise: P
   def premises = Seq(leftPremise, rightPremise)

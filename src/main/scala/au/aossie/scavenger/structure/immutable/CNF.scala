@@ -7,7 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * @author Daniyar Itegulov
   */
-case class CNF(clauses: Seq[Clause]) {
+case class CNF(clauses: Seq[SeqClause]) {
   lazy val variables = clauses.flatMap(_.literals.map(_.unit))
 
   def +(that: CNF): CNF = new CNF(clauses ++ that.clauses)

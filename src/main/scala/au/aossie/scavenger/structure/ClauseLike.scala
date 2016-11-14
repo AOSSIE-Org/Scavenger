@@ -26,7 +26,7 @@ trait ClauseLike[+Repr <: ClauseLike[Repr]] {
   def sucContains(f:E) = suc.contains(f)
   def contains(f:E) = antContains(f) || sucContains(f)
   
-  def subsequentOf(that: Sequent) = ant.forall(f => that.ant contains f) && suc.forall(f => that.suc contains f)
+  def subsequentOf(that: AbstractClause) = ant.forall(f => that.ant contains f) && suc.forall(f => that.suc contains f)
   
   def isTautological = ant.exists(f => suc contains f)
   
@@ -35,7 +35,8 @@ trait ClauseLike[+Repr <: ClauseLike[Repr]] {
   def -(f:E): Repr
   def -:(f:E): Repr
   
-  def union(that: Sequent): Repr
-  def diff(that: Sequent): Repr
-  def intersect(that: Sequent): Repr
+  def union(that: AbstractClause): Repr
+  def diff(that: AbstractClause): Repr
+  def intersect(that: AbstractClause): Repr
+ 
 }

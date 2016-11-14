@@ -3,7 +3,7 @@ package au.aossie.scavenger.proof.cr
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.expression.Sym
-import au.aossie.scavenger.structure.immutable.Clause
+import au.aossie.scavenger.structure.immutable.SeqClause
 
 import scala.collection.mutable
 
@@ -12,8 +12,8 @@ import scala.collection.mutable
   *
   * @author Daniyar Itegulov
   */
-case class UnitPropagationResolution(left: Seq[SequentProofNode], right: SequentProofNode, desired: Literal)
-                                    (implicit variables: mutable.Set[Sym]) extends SequentProofNode {
+case class UnitPropagationResolution(left: Seq[CRProofNode], right: CRProofNode, desired: Literal)
+                                    (implicit variables: mutable.Set[Sym]) extends CRProofNode {
   require(left.forall(_.conclusion.width == 1), "All left conclusions should be unit")
   require(left.size + 1 == right.conclusion.width, "There should be enough left premises to derive desired")
   val leftLiterals = left.map(_.conclusion.literals.head)
@@ -41,13 +41,13 @@ case class UnitPropagationResolution(left: Seq[SequentProofNode], right: Sequent
     case Some(u) => u
   }
 
-  override def conclusion: Clause = rightMgu(right.conclusion.literals(desiredIndex)).toSeqSequent
+  override def conclusion: SeqClause = rightMgu(right.conclusion.literals(desiredIndex)).toSeqSequent
 
-  override def premises: Seq[SequentProofNode] = left :+ right
+  override def premises: Seq[CRProofNode] = left :+ right
 }
 
 object UnitPropagationResolution {
-  def apply(left: Seq[SequentProofNode], right: SequentProofNode)
+  def apply(left: Seq[CRProofNode], right: CRProofNode)
            (implicit variables: mutable.Set[Sym]): UnitPropagationResolution = {
     val leftLiterals = left.map(_.conclusion.literals.head)
     right.conclusion.literals.indices.map(desiredIndex => { // FIXME: copy-pasted code

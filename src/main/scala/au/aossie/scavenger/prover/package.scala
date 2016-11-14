@@ -4,7 +4,7 @@ import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.unification.{MartelliMontanari => unify}
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.expression.{Abs, App, E, Sym, i}
-import au.aossie.scavenger.structure.immutable.Clause
+import au.aossie.scavenger.structure.immutable.SeqClause
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -18,13 +18,13 @@ package object prover {
 
   implicit def varToLit(variable: E): Literal = Literal(variable, negated = false)
 
-  implicit def literalToClause(literal: Literal): Clause = literal.toClause
+  implicit def literalToClause(literal: Literal): SeqClause = literal.toClause
 
 //  implicit class ClauseOperations(val clause: Clause) extends AnyVal {
 //
 //  }
 
-  implicit class UnitSequent(val sequent: Clause) extends AnyVal {
+  implicit class UnitSequent(val sequent: SeqClause) extends AnyVal {
     def literal: Literal =
       if (sequent.ant.size == 1 && sequent.suc.isEmpty) Literal(sequent.ant.head, negated = true)
       else if (sequent.ant.isEmpty && sequent.suc.size == 1) Literal(sequent.suc.head, negated = false)
@@ -32,10 +32,10 @@ package object prover {
   }
 
   implicit class LiteralsAreSequent(val literals: Iterable[Literal]) extends AnyVal {
-    def toSequent: Clause = {
+    def toSequent: SeqClause = {
       val ant = literals.flatMap(l => if (l.negated) Some(l.unit) else None)
       val suc = literals.flatMap(l => if (l.negated) None else Some(l.unit))
-      new Clause(ant.toSeq, suc.toSeq)
+      new SeqClause(ant.toSeq, suc.toSeq)
     }
   }
 
@@ -155,7 +155,7 @@ package object prover {
     * @param sequent initial sequent
     * @return initial sequent, where duplicate literals were removed
     */
-  def unique(sequent: Clause) = {
+  def unique(sequent: SeqClause) = {
     def loop(set: Set[Literal], literals: Seq[Literal]): Seq[Literal] = literals match {
       case hd :: tail if set contains hd => loop(set, tail)
       case hd :: tail => hd +: loop(set + hd, tail)

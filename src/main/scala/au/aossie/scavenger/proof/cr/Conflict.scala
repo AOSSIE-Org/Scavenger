@@ -2,7 +2,7 @@ package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.Sym
-import au.aossie.scavenger.structure.immutable.Clause
+import au.aossie.scavenger.structure.immutable.SeqClause
 
 import scala.collection.mutable
 
@@ -11,8 +11,8 @@ import scala.collection.mutable
   *
   * @author Daniyar Itegulov
   */
-case class Conflict(leftPremise: SequentProofNode, rightPremise: SequentProofNode)(implicit variables: mutable.Set[Sym])
-  extends SequentProofNode {
+case class Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)(implicit variables: mutable.Set[Sym])
+  extends CRProofNode {
   require(leftPremise.conclusion.width == 1, "Left premise should be a unit clause")
   require(rightPremise.conclusion.width == 1, "Right premise should be a unit clause")
 
@@ -26,7 +26,7 @@ case class Conflict(leftPremise: SequentProofNode, rightPremise: SequentProofNod
   
   override def premises = Seq(leftPremise, rightPremise)
 
-  override def conclusion: Clause = Clause()()
+  override def conclusion: SeqClause = SeqClause()()
 
   //override def leftAuxFormulas: Clause = leftPremise.conclusion
 
