@@ -41,7 +41,6 @@ class TPTPExtractException extends Exception("Unexpected Extract Exception")
   */
 
 // TODO: CHECK EQUALITY TYPE
-// TODO: Maybe it would make sense to split this huge trait into smaller traits
 trait Base
 extends TokenParsers with PackratParsers {
 
