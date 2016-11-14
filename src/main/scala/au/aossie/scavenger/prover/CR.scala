@@ -3,8 +3,7 @@ package au.aossie.scavenger.prover
 import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.proof.Proof
-import au.aossie.scavenger.proof.cr._
+import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 
 import au.aossie.scavenger.structure.immutable.CNF
 import au.aossie.scavenger.structure.immutable.SeqClause
@@ -19,7 +18,7 @@ import scala.util.Random
   */
 object CR extends Prover {
 
-  def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): Option[Proof[CRProofNode]] = {
+  def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): Option[Proof] = {
 
     val depthLiterals = mutable.Map.empty[Int, mutable.Set[Literal]] // Shows literals that were propagated at this depth
     depthLiterals(0) = mutable.Set.empty
