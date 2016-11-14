@@ -43,7 +43,7 @@ abstract class ProofNode[+J <: Sequent, +P <: ProofNode[J,P]]
       
 }
 
-trait GenNullary[+J <: Sequent, +P <: ProofNode[J,P]] extends ProofNode[J,P] { def premises = Seq() }
+//trait GenNullary[+J <: Sequent, +P <: ProofNode[J,P]] extends ProofNode[J,P] { def premises = Seq() }
 
 trait GenUnary[+J <: Sequent, +P <: ProofNode[J,P]] extends ProofNode[J,P] {
   def premise: P

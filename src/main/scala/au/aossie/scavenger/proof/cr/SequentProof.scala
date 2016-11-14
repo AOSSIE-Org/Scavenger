@@ -7,30 +7,20 @@ import au.aossie.scavenger.expression.E
 
 abstract class SequentProofNode
 extends ProofNode[Sequent, SequentProofNode] {
-  def auxFormulasMap: Map[SequentProofNode, Sequent]
-  def mainFormulas : Sequent
-  def conclusionContext : Sequent
+  //def auxFormulasMap: Map[SequentProofNode, Sequent]
+  //def mainFormulas : Sequent
+  //def conclusionContext : Sequent
   // The lazy modifier for "conclusion" is very important,
   // because "conclusion" calls methods that will only be overriden by subtraits and subclasses.
-  override lazy val conclusion: Sequent = mainFormulas union conclusionContext
-  override def toString():String = {
-    this.conclusion.toString
-  }
+  //override lazy val conclusion: Sequent = mainFormulas union conclusionContext
+  //override def toString():String = {
+  //  this.conclusion.toString
+  //}
 }
 
-trait Nullary extends SequentProofNode with GenNullary[Sequent,SequentProofNode] {
-  def auxFormulasMap = Map()
-}
-
-trait Unary extends SequentProofNode with GenUnary[Sequent,SequentProofNode] {
-  def auxFormulas: Sequent
-  def auxFormulasMap = Map(premise -> auxFormulas)
-}
-
-
-trait Binary extends SequentProofNode with GenBinary[Sequent,SequentProofNode] {  
-  def leftAuxFormulas: Sequent
-  def rightAuxFormulas: Sequent
-  def auxFormulasMap = Map(leftPremise -> leftAuxFormulas, rightPremise -> rightAuxFormulas)
-}
+//trait Binary extends SequentProofNode with GenBinary[Sequent,SequentProofNode] {  
+//  def leftAuxFormulas: Sequent
+//  def rightAuxFormulas: Sequent
+//  def auxFormulasMap = Map(leftPremise -> leftAuxFormulas, rightPremise -> rightAuxFormulas)
+//}
 

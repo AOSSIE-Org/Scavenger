@@ -12,7 +12,7 @@ import scala.collection.mutable
   * @author Daniyar Itegulov
   */
 case class Conflict(leftPremise: SequentProofNode, rightPremise: SequentProofNode)(implicit variables: mutable.Set[Sym])
-  extends SequentProofNode with Binary {
+  extends SequentProofNode {
   require(leftPremise.conclusion.width == 1, "Left premise should be a unit clause")
   require(rightPremise.conclusion.width == 1, "Right premise should be a unit clause")
 
@@ -23,12 +23,12 @@ case class Conflict(leftPremise: SequentProofNode, rightPremise: SequentProofNod
     case None => throw new Exception("Conflict: given premise clauses are not resolvable")
     case Some(u) => u
   }
+  
+  override def premises = Seq(leftPremise, rightPremise)
 
-  override def mainFormulas: Clause = Clause()()
+  override def conclusion: Clause = Clause()()
 
-  override def conclusionContext: Clause = Clause()()
+  //override def leftAuxFormulas: Clause = leftPremise.conclusion
 
-  override def leftAuxFormulas: Clause = leftPremise.conclusion
-
-  override def rightAuxFormulas: Clause = rightPremise.conclusion
+  //override def rightAuxFormulas: Clause = rightPremise.conclusion
 }

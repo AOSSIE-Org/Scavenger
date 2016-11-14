@@ -27,11 +27,7 @@ case class ConflictDrivenClauseLearning(conflict: Conflict) extends SequentProof
 
   val conflictDrivenClause = unique(findDecisions(conflict, Substitution.empty))
 
-  override def auxFormulasMap: Map[SequentProofNode, Clause] = Map.empty
-
-  override def mainFormulas: Clause = Clause()()
-
-  override def conclusionContext: Clause = conflictDrivenClause.toSeqSequent
+  override def conclusion: Clause = conflictDrivenClause.toSeqSequent
 
   override def premises: Seq[SequentProofNode] = Seq(conflict)
 }
