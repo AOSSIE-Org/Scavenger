@@ -7,8 +7,6 @@ import au.aossie.scavenger.util.unicode._
 sealed abstract class E {
   def t: T
     
-  def copy: E
-    
   def logicalSize: Int
   
   //alphaEquals
@@ -37,15 +35,18 @@ case class Sym(val name: String, override val t:T) extends E {
   def logicalSize = 1
   override def toString = name
 }
+
+//case class SymB(val name: String) extends E {
+//  
+//}
+
 case class Abs(val variable: Sym, val body: E) extends E {
-  def copy = new Abs(variable.copy,body.copy)
   override lazy val t = variable.t -> body.t 
   def logicalSize = (variable.t.logicalSize + 1) + body.logicalSize + 1
   override def toString = unicodeOrElse("\u03BB","@") + variable.name + ":" + variable.t + "." + body
 }
 case class App(val function: E, val argument: E) extends E {
   require(function.t.asInstanceOf[Arrow].t1 == argument.t)
-  def copy = new App(function.copy,argument.copy)
   override lazy val t = function.t.asInstanceOf[Arrow].t2
   def logicalSize = function.logicalSize + argument.logicalSize + 1
   override def toString = this match {
