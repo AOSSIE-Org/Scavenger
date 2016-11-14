@@ -25,11 +25,6 @@ class SeqClause(val ant: Seq[E], val suc: Seq[E]) extends AbstractClause with Cl
   def diff(that: AbstractClause) = new SeqClause(ant diff that.ant.toSeq, suc diff that.suc.toSeq)
   def intersect(that: AbstractClause) = new SeqClause(ant intersect that.ant.toSeq, suc intersect that.suc.toSeq)  
   
-  // ToDo: Think about what to do with these methods
-  def -*(f:E) = new SeqClause(ant, suc.filterNot(_ eq f)) 
-  def -*:(f:E) = new SeqClause(ant.filterNot(_ eq f), suc)  
-  def --*(s:SeqClause) = new SeqClause(ant.filterNot(f => s.ant.exists(_ eq f)), suc.filterNot(f => s.suc.exists(_ eq f)))
-  
 }
 
 object SeqClause {

@@ -22,6 +22,8 @@ trait ClauseLike[+Repr <: ClauseLike[Repr]] {
   def logicalSize = ((ant ++ suc).map(_.logicalSize) :\ 0)(_ + _ + 1) 
  
   def isEmpty = ant.isEmpty && suc.isEmpty
+  def isUnit: Boolean = { width == 1 }
+  
   def antContains(f:E) = ant.contains(f)
   def sucContains(f:E) = suc.contains(f)
   def contains(f:E) = antContains(f) || sucContains(f)
