@@ -14,6 +14,7 @@ import au.aossie.scavenger.expression.formula.Neg
  *  @version 0.2
  *  @since   0.2
  */
+@deprecated("Use SetClause instead", "Scavenger")
 class SeqClause(val ant: Seq[E], val suc: Seq[E]) extends AbstractClause with ClauseLike[SeqClause] { 
   def +(f:E) = new SeqClause(ant, suc :+ f)
   def +:(f:E) = new SeqClause(ant :+ f, suc)
@@ -29,17 +30,6 @@ class SeqClause(val ant: Seq[E], val suc: Seq[E]) extends AbstractClause with Cl
   def -*:(f:E) = new SeqClause(ant.filterNot(_ eq f), suc)  
   def --*(s:SeqClause) = new SeqClause(ant.filterNot(f => s.ant.exists(_ eq f)), suc.filterNot(f => s.suc.exists(_ eq f)))
   
-  def literals: Seq[Literal] =
-    ant.map(Literal(_, negated = true)) ++ suc.map(Literal(_, negated = false))
-
-  // TODO: this is inefficient
-  def apply(pos: Int): Literal = literals(pos)
-
-  def first: Literal = apply(0)
-
-  def last: Literal = apply(literals.length - 1)
-
-  def isUnit: Boolean = { width == 1 }
 }
 
 object SeqClause {
