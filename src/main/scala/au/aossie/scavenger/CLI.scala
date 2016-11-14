@@ -2,7 +2,7 @@ package au.aossie.scavenger
 
 import au.aossie.scavenger.structure.immutable.CNF
 import au.aossie.scavenger.prover.{CR, ConcurrentCR}
-import au.aossie.scavenger.parser.TPTP.CNFProblemParser
+import au.aossie.scavenger.parser.TPTPCNFParser
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
 import scala.collection.mutable
@@ -22,8 +22,8 @@ object CLI {
     "ConcurrentCR" -> ConcurrentCR
   )
   val parsers = Map(
-    "cnf" -> CNFProblemParser,
-    "cnfp" -> CNFProblemParser
+    "cnf" -> TPTPCNFParser,
+    "cnfp" -> TPTPCNFParser
   )
   val knownFormats = Seq("cnf", "cnfp")
 
@@ -92,8 +92,8 @@ object CLI {
     parser.parse(args, Config()) foreach { c =>
       val algorithm = algorithms(c.algorithm)
       for (input <- c.inputs) {
-        val problemParser = parsers(c.format.getOrElse(input.split(".").last))
-        val cnf = problemParser.parse(input)
+        val parser = parsers(c.format.getOrElse(input.split(".").last))
+        val cnf = parser.parse(input)
         implicit val variables = getUppercaseVariables(cnf)
         println("Unification variables are: " + variables)
         c.output.write(algorithm.prove(cnf).getOrElse("Satisfiable"))

@@ -12,7 +12,7 @@ import collection.mutable.Set
   *          except for a conjecture or negated conjecture. No derivation nodes
   *          or other TPTP annotated formulas are accepted.
   */
-object ProblemParserCNFTPTP extends ProblemParserCNFTPTP
+object CNF extends CNF
 
 /**
   * The ProblemParserFOFTPTP trait implements a parser for problems written
@@ -21,8 +21,8 @@ object ProblemParserCNFTPTP extends ProblemParserCNFTPTP
   *
   * TODO: Add (if needed) the treatment for FOF formulas and skolemization steps
   */
-trait ProblemParserCNFTPTP
-extends BaseParserTPTP {
+trait CNF
+extends Base {
 
   def problemParser : Parser[CNFProblem] = TPTP_file ^^ generateProblem
 

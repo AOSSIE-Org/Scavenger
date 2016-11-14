@@ -7,15 +7,15 @@ import collection.mutable.Set
 /**
   * Created by eze on 2016.05.25..
   */
-object ProblemParserFOFTPTP extends ProblemParserFOFTPTP
+object FOF extends FOF
 
 /**
   * The ProblemParserFOFTPTP trait implements a parser for problems written
   * in the TPTP FOF syntax. We assume that there are no derivation nodes in
   * the parsed file, i.e. that we only have our axioms and conjectures.
   */
-trait ProblemParserFOFTPTP
-extends BaseParserTPTP {
+trait FOF
+extends Base {
 
   def problemParser : Parser[FOFProblem] = TPTP_file ^^ generateProblem
 

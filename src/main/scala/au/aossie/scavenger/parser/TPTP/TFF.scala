@@ -8,7 +8,7 @@ import collection.mutable.Set
 /**
   * Created by eze on 2016.07.05..
   */
-object ProblemParserTFFTPTP extends ProblemParserTFFTPTP
+object TFF extends TFF
 
 
 /**
@@ -16,8 +16,8 @@ object ProblemParserTFFTPTP extends ProblemParserTFFTPTP
   * in the TPTP TFF syntax. We assume that there are no derivation nodes in
   * the parsed file, i.e. that we only have our axioms and conjectures.
   */
-trait ProblemParserTFFTPTP
-  extends BaseParserTPTP {
+trait TFF
+  extends Base {
 
   def problemParser : Parser[TFFProblem] = TPTP_file ^^ generateProblem
 
