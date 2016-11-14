@@ -46,7 +46,7 @@ object FunctionTerm extends Term {
 }
 
 object TypedNumberTerm extends Term {
-  def apply(number : String, numberType : String) : E = newTerm(number,new AtomicType(numberType))
+  def apply(number : String, numberType : String) : E = newTerm(number, AtomicType(numberType))
 }
 
 object TypedConstant extends Term {
