@@ -9,10 +9,10 @@ abstract class AbstractSubstitution {
   def apply(e: E) = {
     def rec(f:E,boundVars:Set[Sym]):E = f match {
       case App(e1, e2) => App(rec(e1,boundVars),rec(e2,boundVars))
-      case Abs(v,e) => Abs(v.copy, rec(e, boundVars + v))
-      case v: Sym if (boundVars contains v) => v.copy 
-      case v: Sym if (m contains v) => m(v).copy
-      case v: Sym => v.copy
+      case Abs(v,e) => Abs(v, rec(e, boundVars + v))
+      case v: Sym if (boundVars contains v) => v 
+      case v: Sym if (m contains v) => m(v)
+      case v: Sym => v
     }
     rec(e, Set())
   }
