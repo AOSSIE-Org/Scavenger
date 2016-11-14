@@ -6,7 +6,7 @@ import akka.util.Timeout
 import au.aossie.scavenger.prover.actors.{ConflictActor, MainActor, PropagationActor, UnifyingActor}
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.proof.Proof
-import au.aossie.scavenger.proof.sequent.SequentProofNode
+import au.aossie.scavenger.proof.cr.SequentProofNode
 
 import au.aossie.scavenger.structure.immutable.CNF
 

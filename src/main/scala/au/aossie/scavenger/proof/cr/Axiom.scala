@@ -1,9 +1,7 @@
-package au.aossie.scavenger.proof
-package sequent
-package lk
+package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.structure.immutable.{Clause => Sequent}
-import au.aossie.scavenger.expression.E
+
 
 
 class Axiom(override val mainFormulas: Sequent) extends SequentProofNode

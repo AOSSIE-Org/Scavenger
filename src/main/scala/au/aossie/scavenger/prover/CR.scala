@@ -4,9 +4,7 @@ import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.Proof
-import au.aossie.scavenger.proof.sequent.SequentProofNode
-import au.aossie.scavenger.proof.sequent.conflictresolution._
-import au.aossie.scavenger.proof.sequent.lk._
+import au.aossie.scavenger.proof.cr._
 
 import au.aossie.scavenger.structure.immutable.CNF
 import au.aossie.scavenger.structure.immutable.Clause

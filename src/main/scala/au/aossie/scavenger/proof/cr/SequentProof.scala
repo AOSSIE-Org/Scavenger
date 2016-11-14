@@ -1,5 +1,5 @@
 package au.aossie.scavenger.proof
-package sequent
+package cr
 
 import collection.mutable.{HashMap => MMap, HashSet => MSet}
 import au.aossie.scavenger.structure.immutable.{Clause => Sequent}

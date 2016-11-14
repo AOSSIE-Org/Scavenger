@@ -2,7 +2,7 @@ package au.aossie.scavenger.prover
 
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.proof.Proof
-import au.aossie.scavenger.proof.sequent.SequentProofNode
+import au.aossie.scavenger.proof.cr.SequentProofNode
 
 import au.aossie.scavenger.structure.immutable.CNF
 

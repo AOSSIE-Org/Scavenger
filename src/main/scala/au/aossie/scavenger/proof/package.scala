@@ -3,7 +3,7 @@ package au.aossie.scavenger
 import au.aossie.scavenger.structure.Sequent
 import au.aossie.scavenger.util.math.max
 import scala.collection.mutable.{HashMap => MMap,HashSet => MSet}
-import au.aossie.scavenger.proof.sequent.SequentProofNode
+import au.aossie.scavenger.proof.cr.SequentProofNode
 
 package object proof {
   def measure[N <: ProofNode[Sequent,N]](p: Proof[N]) = {

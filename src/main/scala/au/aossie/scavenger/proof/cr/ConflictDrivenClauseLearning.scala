@@ -1,9 +1,8 @@
-package au.aossie.scavenger.proof.sequent.conflictresolution
+package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.structure.immutable.Clause
-import au.aossie.scavenger.proof.sequent.SequentProofNode
 
 /**
   * @author Daniyar Itegulov

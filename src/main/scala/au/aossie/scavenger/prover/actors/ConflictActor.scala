@@ -8,9 +8,9 @@ import au.aossie.scavenger.prover.actors.messages._
 import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.proof.sequent.conflictresolution.{Decision, UnitPropagationResolution}
-import au.aossie.scavenger.proof.sequent.lk.Axiom
-import au.aossie.scavenger.proof.sequent.{SequentProofNode, conflictresolution}
+import au.aossie.scavenger.proof.cr.{Axiom, Decision, UnitPropagationResolution}
+import au.aossie.scavenger.proof.cr.SequentProofNode
+import au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.structure.immutable.Clause
 
@@ -92,8 +92,8 @@ class ConflictActor extends Actor with ActorLogging {
           val conflictClauseLeft = findConflictClause(leftLiteral, leftMgu)
           val conflictClauseRight = findConflictClause(rightLiteral, rightMgu)
           val newClause = unique(conflictClauseLeft union conflictClauseRight)
-          val conflictProof = conflictresolution.Conflict(buildProof(leftLiteral), buildProof(rightLiteral))
-          clauseProof(newClause) = conflictresolution.ConflictDrivenClauseLearning(conflictProof)
+          val conflictProof = cr.Conflict(buildProof(leftLiteral), buildProof(rightLiteral))
+          clauseProof(newClause) = cr.ConflictDrivenClauseLearning(conflictProof)
           log.info(s"Derived conflict clause $newClause")
           mainActor ! Derived(newClause, reverseImpGraph, conflictProof)
         case _ =>
