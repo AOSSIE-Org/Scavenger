@@ -41,6 +41,10 @@ abstract class QuantifierFormula(quantifierC:T=>E) extends Formula {
 }
 
 
+object True extends Sym("true", o)
+
+object False extends Sym("false",o)
+
 object Neg extends UnaryFormula(negC)
 
 object And extends BinaryFormula(andC)
@@ -49,6 +53,8 @@ object Or extends BinaryFormula(orC)
 
 object Imp extends BinaryFormula(impC)
   
+object Equivalence extends BinaryFormula(equivC)
+
 object All extends QuantifierFormula(allC)  
 
 object Ex extends QuantifierFormula(exC)
@@ -88,9 +94,3 @@ object FormulaEquality extends BinaryFormula(eqC(i)){
   def apply(t:T)(left : E, right : E) = App(App(eqC(t),left),right)
 }
 
-
-object Equivalence extends BinaryFormula(equivC)
-
-object True extends Sym("true", o)
-
-object False extends Sym("false",o)
