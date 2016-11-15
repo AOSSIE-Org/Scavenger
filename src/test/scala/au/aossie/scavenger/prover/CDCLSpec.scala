@@ -1,64 +1,63 @@
 package au.aossie.scavenger.prover
 
-import au.aossie.scavenger.expression.{Sym, i}
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import au.aossie.scavenger.structure.immutable._
+import au.aossie.scavenger.expression._
+
+import org.specs2.mutable.Specification
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * @author Daniyar Itegulov
   */
-@RunWith(classOf[JUnitRunner])
-class CDCLSpec extends SpecificationWithJUnit {
-  private val a = new Sym("A", i)
-  private val b = new Sym("B", i)
-  private val c = new Sym("C", i)
-  private val d = new Sym("D", i)
-  private val e = new Sym("E", i)
-  private val f = new Sym("F", i)
-  private val x = new Sym("X", i)
-  private val y = new Sym("Y", i)
-  private val z = new Sym("Z", i)
+class CDCLSpec extends Specification {
+  private val a = new Sym("A")
+  private val b = new Sym("B")
+  private val c = new Sym("C")
+  private val d = new Sym("D")
+  private val e = new Sym("E")
+  private val f = new Sym("F")
+  private val x = new Sym("X")
+  private val y = new Sym("Y")
+  private val z = new Sym("Z")
 
-  private def test(clauses: Clause*) = CDCL.isSatisfiable(new CNF(ArrayBuffer(clauses:_*)))
+  private def test(SeqClauses: SeqClause*) = CDCL.isSatisfiable(new CNF(ArrayBuffer(SeqClauses:_*)))
 
   "CDCL" should {
     "find satisfiable" in {
       test(
-        Clause(a, b)(),
-        Clause()(b, c),
-        Clause(c)(d),
-        Clause()(a)
+        SeqClause(a, b)(),
+        SeqClause()(b, c),
+        SeqClause(c)(d),
+        SeqClause()(a)
       ) shouldEqual true
 
       test(
-        Clause(a)(b),
-        Clause(b, c)(),
-        Clause(d)(c)
+        SeqClause(a)(b),
+        SeqClause(b, c)(),
+        SeqClause(d)(c)
       ) shouldEqual true
 
       test(
-        Clause(b)(a, x),
-        Clause(c)(a),
-        Clause()(b, c, d)
+        SeqClause(b)(a, x),
+        SeqClause(c)(a),
+        SeqClause()(b, c, d)
       ) shouldEqual true
 
       test(
-        Clause(b)(a, x),
-        Clause(c)(a),
-        Clause()(b, c, d),
-        Clause(d, e)(),
-        Clause(d, f)(y),
-        Clause()(e, f)
+        SeqClause(b)(a, x),
+        SeqClause(c)(a),
+        SeqClause()(b, c, d),
+        SeqClause(d, e)(),
+        SeqClause(d, f)(y),
+        SeqClause()(e, f)
       ) shouldEqual true
     }
 
     "find unsatisfiable" in {
       test(
-        Clause(a)(),
-        Clause()(a)
+        SeqClause(a)(),
+        SeqClause()(a)
       ) shouldEqual false
     }
   }

@@ -2,20 +2,20 @@ package au.aossie.scavenger.parser
 
 import java.io.PrintWriter
 
-import au.aossie.scavenger.parser.TPTPParsers.TPTPAST.{IncludeDirective, TPTPDirective}
-import au.aossie.scavenger.parser.TPTPParsers.TPTPTokens
-import au.aossie.scavenger.parser.TPTPParsers._
+import au.aossie.scavenger.parser.TPTP.TPTPAST.{IncludeDirective, TPTPDirective}
+import au.aossie.scavenger.parser.TPTP.TPTPTokens
+import au.aossie.scavenger.parser.TPTP._
 
 import scala.collection.mutable
 import scala.collection.mutable.HashSet
 import scala.io.Source
-import au.aossie.scavenger.parser.TPTPParsers.BaseParserTPTP
+import au.aossie.scavenger.parser.TPTP.Base
 
 object TPTPTest {
   def main(args: Array[String]):Unit = {
-    val problem1 = ProblemParserFOFTPTP.problem("examples/problems/FOF/AGT001+1.fofp")
+    val problem1 = FOF.problem("examples/problems/FOF/AGT001+1.fofp")
     println(problem1)
-    ProblemParserFOFTPTP.resetVarsSeen()
+    FOF.resetVarsSeen()
 
     /*
     val problem1 = ProblemParserCNFTPTP.problem("examples/problems/CNF/CNF.cnfp")
@@ -63,7 +63,7 @@ object TPTPTest {
 // This test uses local files not included in the project. It was used to test the parsers over most
 // parts of the TPTP problem library. If you need to run this test feel free to contact Ezequiel Postan
 // at ezequiel_postan [at] hotmail [dot] com
-object TPTPExtensiveTest extends BaseParserTPTP {
+object TPTPExtensiveTest extends Base {
 
   import lexical._
 
