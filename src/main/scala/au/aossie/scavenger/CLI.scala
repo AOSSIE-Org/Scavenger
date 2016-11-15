@@ -75,6 +75,8 @@ object CLI {
       scavenger -a ConcurrentCR -f cnfp -o refutation.proof examples/problems/CNF/SET006-1.cnfp
       """)
   }
+  
+  // TODO: Add help command.
 
   // TODO: This is not the right place for this function
   def getUppercaseVariables(cnf: CNF): mutable.Set[Sym] = {
