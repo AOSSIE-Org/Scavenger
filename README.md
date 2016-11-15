@@ -1,6 +1,3 @@
-
-![Logo](https://raw.github.com/Paradoxika/Skeptik/develop/res/logo150.png)
-
 Scavenger is an automated theorem prover based on the new **conflict resolution** calculus,
 which lifts some aspects of the conflict-drive clause learning approach used by sat-solvers to
 logics with quantifiers. 
@@ -42,6 +39,10 @@ The generated jar file can be deployed and used like any other java jar file:
 ```
 
 
+### Documentation
+
+The calculus behind Scavenger is described in the [Conflict Resolution paper](https://arxiv.org/abs/1602.04568).
+
 
 
 ### Stats
@@ -52,14 +53,7 @@ The generated jar file can be deployed and used like any other java jar file:
 [![OpenHub](https://www.ohloh.net/p/ScavengerProver/widgets/project_partner_badge.gif)](https://www.openhub.net/p/ScavengerProver)
 
 
-
-### Documentation
-
-The calculus behind Scavenger is described in the [Conflict Resolution paper](https://arxiv.org/abs/1602.04568).
-
-
-
-### Active Developers
+### Currently Active Developers
 
  * [Bruno Woltzenlogel Paleo](https://github.com/Ceilican/)
  * [Daniyar Itegulov](https://github.com/itegulov)
@@ -69,17 +63,10 @@ The calculus behind Scavenger is described in the [Conflict Resolution paper](ht
 ### Job Opportunities
 
  * [Google Summer of Code]() grants may be available in 2017. If you would like to apply, it is never too early to contact us. 
- * If you would like to do a project, M.Sc. thesis or Ph.D. thesis related to Scavenger, please [contact us](mailto:bruno.wp@gmail.com)
+ * If you would like to do a project, M.Sc. thesis or Ph.D. thesis related to Scavenger, please [contact us](mailto:bruno.wp@gmail.com).
 
 
 ### Communication Channels
 
  * [Scavenger's Mailinglist for Developers](https://groups.google.com/forum/?fromgroups#!forum/skeptik-dev)
-
-
-### Licenses
- 
-* GNU-GPL-3.0
-
-* CC-By-NC-SA [![License](https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 
