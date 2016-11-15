@@ -28,7 +28,7 @@ object MartelliMontanari {
 
       eqs.head match {
         case (App(f1, a1), App(f2, a2)) => eqs = Seq((f1, f2), (a1, a2)) ++ eqs.tail
-        case (Abs(v1, e1), Abs(v2, e2)) => eqs = Seq((v1, v2), (e1, e2)) ++ eqs.tail
+        case (Abs(v1, t1, e1), Abs(v2, t2, e2)) => if (t1 == t2) eqs = Seq((v1, v2), (e1, e2)) ++ eqs.tail else return None
         case (v1: Sym, v2: Sym) if (v1 == v2) => eqs = eqs.tail
         case (v: Sym, e: E) if variables contains v => {
           if (v.occursIn(e)) return None
@@ -44,9 +44,7 @@ object MartelliMontanari {
 
         }
         case (e: E, v: Sym) if variables contains v => eqs = Seq((v, e)) ++ eqs.tail
-        case _ => return {
-          None
-        }
+        case _ => return None
       }
     }
     return Some(mgu.toImmutable)

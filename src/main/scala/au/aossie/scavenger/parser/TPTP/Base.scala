@@ -50,8 +50,8 @@ extends TokenParsers with PackratParsers {
    * members.
    */
   private var varSet : Set[Sym] = new MSet[Sym]()
-  private def recordVar(v : String) {varSet += new Sym(v,i)}
-  private def recordVar(v : String,t : T) {varSet += new Sym(v,t)}
+  private def recordVar(v : String) {varSet += new Sym(v)}
+  private def recordVar(v : String,t : T) {varSet += new Sym(v)} // Critical point where type information was lost during refactoring
   def getSeenVars : Set[Sym] = varSet.clone()
   def resetVarsSeen() : Unit = { varSet.clear(); typedExpressions.clear() }
 
@@ -297,18 +297,18 @@ extends TokenParsers with PackratParsers {
   def atomic_formula: Parser[E] =
     plain_atomic_formula ||| defined_plain_formula ||| defined_infix_formula ||| system_atomic_formula
 
-  def plain_atomic_formula :  Parser[E] = plain_term         ^^ {case (name,args) => Atom(name,args)}
+  def plain_atomic_formula :  Parser[E] = plain_term         ^^ {case (name,args) => Atom(Sym(name),args)}
   def defined_plain_formula : Parser[E] = defined_plain_term ^^ {case (name,args) => if(args.isEmpty && name == "$true") True
                                                                                      else if(args.isEmpty && name == "$false") False
-                                                                                     else Atom(name,args)
+                                                                                     else Atom(Sym(name),args)
                                                                 }
 
 
   def defined_infix_formula : Parser[E] =
     term ~ elem(Equals) ~ term ^^ {
-      case t1 ~ _ ~ t2 => FormulaEquality(t1.t)(t1,t2)
+      case t1 ~ _ ~ t2 => FormulaEquality(t1,t2)
     }
-  def system_atomic_formula: Parser[E] = system_term ^^ {case (name,args) => Atom(name,args)}
+  def system_atomic_formula: Parser[E] = system_term ^^ {case (name,args) => Atom(Sym(name),args)}
 
 
 
@@ -365,8 +365,8 @@ extends TokenParsers with PackratParsers {
 
   def fof_quantified_formula: Parser[E] =
     fol_quantifier ~ elem(LeftBracket) ~ rep1sep(variable^^{x => {recordVar(x);Variable(x).asInstanceOf[Sym]}},elem(Comma)) ~ elem(RightBracket) ~ elem(Colon) ~ fof_unitary_formula ^^ {
-      case Exclamationmark ~ _ ~ vars ~ _ ~ _ ~ matrix => All(vars,matrix)
-      case Questionmark    ~ _ ~ vars ~ _ ~ _ ~ matrix => Ex(vars,matrix)
+      case Exclamationmark ~ _ ~ vars ~ _ ~ _ ~ matrix => All(vars map {x => (x,i)} ,matrix)
+      case Questionmark    ~ _ ~ vars ~ _ ~ _ ~ matrix => Ex(vars map {x => (x,i)},matrix)
     }
 
   def fol_quantifier: Parser[Token] = elem(Exclamationmark) | elem(Questionmark)
@@ -381,7 +381,7 @@ extends TokenParsers with PackratParsers {
 
   def fof_unary_formula: Parser[E] = (
     unary_connective ~ fof_unitary_formula ^^ {case Tilde ~ formula => Neg(formula)}
-      | fol_infix_unary                    ^^ {case left  ~ right   => Neg(FormulaEquality(left.t)(left,right))}
+      | fol_infix_unary                    ^^ {case left  ~ right   => Neg(FormulaEquality(left,right))}
     )
 
   def unary_connective: Parser[Token] = elem(Tilde)
@@ -428,7 +428,7 @@ extends TokenParsers with PackratParsers {
   def literal: Parser[Either[E,E]] = (
     atomic_formula                      ^^ {Right(_)}
       ||| elem(Tilde) ~> atomic_formula ^^ {Left(_)}
-      ||| fol_infix_unary               ^^ {case left ~ right => Left(FormulaEquality(left.t)(left,right))}
+      ||| fol_infix_unary               ^^ {case left ~ right => Left(FormulaEquality(left,right))}
     )
 
   ////////////////////////////////////////////////////
@@ -482,19 +482,19 @@ extends TokenParsers with PackratParsers {
       case Questionmark    ~ _ ~ vars ~ _ ~ _ ~ matrix => Ex(vars,matrix)
     }
 
-  def tff_variable: Parser[Sym] = (
+  def tff_variable: Parser[(Sym,T)] = (
     tff_typed_variable
       | failure("Expected type not found for quantified variable")
     // Here the failure is replacing the option of an untyped variable.
-    // We don't allow the absence of type because we can't infer the type.
+    // We don't allow the absence of type because we can't infer the type.  // TODO: Now that the type system has been refactored, we could support this case more easily, perhaps.
     )
 
-  def tff_typed_variable: Parser[Sym] =
-    variable ~ elem(Colon) ~ tff_atomic_type ^^ {case variable ~ _ ~ typ  => recordVar(variable,typ); typedExpressions += (variable -> typ);  TypedVariable(variable, typ).asInstanceOf[Sym] }
+  def tff_typed_variable: Parser[(Sym,T)] =
+    variable ~ elem(Colon) ~ tff_atomic_type ^^ {case variable ~ _ ~ typ  => recordVar(variable,typ); typedExpressions += (variable -> typ);  (Sym(variable), typ) }
 
   def tff_unary_formula: Parser[E] = (
     unary_connective ~ tff_unitary_formula ^^ {case Tilde ~ formula => Neg(formula)}
-      | fol_infix_unary                    ^^ {case left  ~ right   => Neg(FormulaEquality(left.t)(left, right))}
+      | fol_infix_unary                    ^^ {case left  ~ right   => Neg(FormulaEquality(left, right))} // Critical point where type information was lost during refactoring
     )
 
   def tff_conditional: Parser[E] =
@@ -615,8 +615,8 @@ extends TokenParsers with PackratParsers {
     )
 
   def thf_binary_pair:Parser[E] = thf_unitary_formula ~ thf_pair_connective ~ thf_unitary_formula ^^ {
-    case left ~ Equals              ~ right => FormulaEquality(left.t)(left,right)
-    case left ~ NotEquals           ~ right => Neg(FormulaEquality(left.t)(left, right))
+    case left ~ Equals              ~ right => FormulaEquality(left,right) // Critical point where type information was lost during refactoring
+    case left ~ NotEquals           ~ right => Neg(FormulaEquality(left, right)) // Critical point where type information was lost during refactoring
     case left ~ Leftrightarrow      ~ right => Equivalence(left, right)
     case left ~ Rightarrow          ~ right => Imp(left, right)
     case left ~ Leftarrow           ~ right => Imp(right,left)
@@ -674,14 +674,14 @@ extends TokenParsers with PackratParsers {
     )
 
 
-  def thf_variable: Parser[Sym] =(
+  def thf_variable: Parser[(Sym,T)] =(
     thf_typed_variable
       | failure("Expected type not found for quantified variable")
     )
 
-  def thf_typed_variable: Parser[Sym] =
+  def thf_typed_variable: Parser[(Sym,T)] =
     variable ~ elem(Colon) ~ thf_top_level_type ^^ {
-      case vari ~ _ ~ typ => recordVar(vari,typ); typedExpressions += (vari -> typ);TypedVariable(vari, typ).asInstanceOf[Sym]
+      case vari ~ _ ~ typ => recordVar(vari,typ); typedExpressions += (vari -> typ); (Sym(vari), typ)
     }
 
   def thf_unary_formula: Parser[E] = thf_unary_connective ~ elem(LeftParenthesis) ~ thf_logic_formula <~ elem(RightParenthesis) ^^ {
@@ -716,11 +716,11 @@ extends TokenParsers with PackratParsers {
     )
 
   private def etaExpand(conective : Token) : E = conective match {
-    case NotEquals            => Abs(new Sym("NEW_1",o),Abs(new Sym("NEW_2",o),Neg(FormulaEquality(o)(new Sym("NEW_1",o),new Sym("NEW_2",o)))))
-    case Leftarrow            => Abs(new Sym("NEW_1",o),Abs(new Sym("NEW_2",o),Imp(new Sym("NEW_2",o),new Sym("NEW_1",o))))
-    case Leftrighttildearrow  => Abs(new Sym("NEW_1",o),Abs(new Sym("NEW_2",o),Neg(Equivalence(new Sym("NEW_1",o),new Sym("NEW_2",o)))))
-    case TildePipe            => Abs(new Sym("NEW_1",o),Abs(new Sym("NEW_2",o),Neg(Or(new Sym("NEW_1",o),new Sym("NEW_2",o)))))
-    case TildeAmpersand       => Abs(new Sym("NEW_1",o),Abs(new Sym("NEW_2",o),Neg(And(new Sym("NEW_1",o),new Sym("NEW_2",o)))))
+    case NotEquals            => Abs(Sym("NEW_1"), o, Abs(Sym("NEW_2"), o, Neg(FormulaEquality(Sym("NEW_1"),Sym("NEW_2")))))  // Critical point where type information was lost during refactoring
+    case Leftarrow            => Abs(Sym("NEW_1"), o, Abs(Sym("NEW_2"), o, Imp(Sym("NEW_2"),Sym("NEW_1"))))  // Critical point where type information was lost during refactoring
+    case Leftrighttildearrow  => Abs(Sym("NEW_1"), o, Abs(Sym("NEW_2"), o, Neg(Equivalence(Sym("NEW_1"),Sym("NEW_2")))))  // Critical point where type information was lost during refactoring
+    case TildePipe            => Abs(Sym("NEW_1"), o, Abs(Sym("NEW_2"), o, Neg(Or(Sym("NEW_1"),Sym("NEW_2")))))  // Critical point where type information was lost during refactoring
+    case TildeAmpersand       => Abs(Sym("NEW_1"), o, Abs(Sym("NEW_2"), o, Neg(And(Sym("NEW_1"),Sym("NEW_2")))))  // Critical point where type information was lost during refactoring
   }
 
   def assoc_connective: Parser[Token] = elem(VLine) | elem(Ampersand)

@@ -81,7 +81,7 @@ object CLI {
     def uppercaseVariableInFormula(e: E): Set[Sym] = e match {
       case v: Sym if v.name.charAt(0).isUpper => Set(v)
       case App(l, r) => uppercaseVariableInFormula(l) ++ uppercaseVariableInFormula(r)
-      case Abs(_, body) => uppercaseVariableInFormula(body)
+      case Abs(_,_, body) => uppercaseVariableInFormula(body)
       case _ => Set()
     }
     val variables = mutable.Set.empty[Sym]

@@ -10,8 +10,9 @@ import au.aossie.scavenger.expression.{AppRec, AtomicType, E, T, Sym, i, o}
   */
 class Term {
   final val conditional = "conditionalTerm"
-  final val ifThenElse  = new Sym(conditional,o->(i->(i->i)))
-  def newTerm(name : String, termType : T) = new Sym(name,termType)
+  final val ifThenElse  = new Sym(conditional)
+  @deprecated("use Sym instead.", "Scavenger")
+  def newTerm(name: String, i: T) = new Sym(name)
 }
 
 object DistinctObjectTerm extends Term {
@@ -34,13 +35,13 @@ object FunctionTerm extends Term {
   def apply(name : String, args : List[E]) : E = {
     def createType(list : List[E]) : T = list match {
       case Nil   => i
-      case e::es => e.t -> createType(es)
+      case e::es => i -> createType(es)
     }
     AppRec(newTerm(name,createType(args)),args)
   }
   def apply(name : String,typ : T , args : List[E]) : E = AppRec(newTerm(name,typ),args)
   def unapply(e:E) = e match {
-    case AppRec(f,args) if e.t == i && args.nonEmpty => Some((f,args))
+    case AppRec(f,args) if args.nonEmpty => Some((f,args))
     case _ => None
   }
 }

@@ -37,6 +37,6 @@ object ConcurrentCR extends Prover {
     val promise = Await.result(future, duration)
     val result = Await.result(promise.future, duration)
     Await.ready(system.terminate(), Duration.Inf)
-    Unsatisfiable(result)
+    Unsatisfiable(result) // TODO: what happens when the problem is satisfiable?
   }
 }

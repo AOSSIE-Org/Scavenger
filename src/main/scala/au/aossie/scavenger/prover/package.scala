@@ -49,7 +49,7 @@ package object prover {
   def unifiableVars(exps: E*)(implicit variables: mutable.Set[Sym]): Set[Sym] = exps.flatMap {
     case App(e1, e2) =>
       unifiableVars(e1) union unifiableVars(e2)
-    case Abs(v, e1) =>
+    case Abs(v, t, e1) =>
       unifiableVars(v) union unifiableVars(e1)
     case v: Sym =>
       if (variables contains v) Set(v) else Set.empty[Sym]
@@ -73,9 +73,9 @@ package object prover {
     val kvs = for (v <- sharedVars) yield {
       val replacement = notUsedVars.headOption getOrElse { // Use some variable from unification variables
       // Or create a new one
-      var newVar = Sym(v + "'", i)
+      var newVar = Sym(v + "'") // Critical point where type information was lost during refactoring
         while (sharedVars contains newVar) {
-          newVar = Sym(newVar + "'", i)
+          newVar = Sym(newVar + "'") // Critical point where type information was lost during refactoring
         }
         variables += newVar // It will be available for unification from now
         newVar
