@@ -54,7 +54,9 @@ The generated jar file can be deployed and used like any other java jar file:
 
 ### Stats
 
-[![Build Status](https://buildhive.cloudbees.com/job/Paradoxika/job/Skeptik/badge/icon)](https://buildhive.cloudbees.com/job/Paradoxika/job/Skeptik/)
+[![Build Status](https://gitlab.com/AOSSIE/Scavenger/badges/develop/build.svg)](https://gitlab.com/AOSSIE/Scavenger/commits/develop)
+[![Coverage Report](https://gitlab.com/AOSSIE/Scavenger/badges/develop/coverage.svg)](https://gitlab.com/AOSSIE/Scavenger/commits/develop)
+
 [![OpenHub](https://www.ohloh.net/p/ScavengerProver/widgets/project_partner_badge.gif)](https://www.openhub.net/p/ScavengerProver)
 
 
