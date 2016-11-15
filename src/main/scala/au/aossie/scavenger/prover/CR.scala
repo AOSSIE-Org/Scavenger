@@ -18,7 +18,7 @@ import scala.util.Random
   */
 object CR extends Prover {
 
-  def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): Option[Proof] = {
+  def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): ProblemStatus = {
 
     val depthLiterals = mutable.Map.empty[Int, mutable.Set[Literal]] // Shows literals that were propagated at this depth
     depthLiterals(0) = mutable.Set.empty
@@ -58,6 +58,8 @@ object CR extends Prover {
       }
     }
 
+    
+    // TODO: try to avoid nested function definitions when possible (i.e. when they do not depend on local variables). Prefer private defs in the class body instead.
     /**
       * Try to resolve given non-unit clause with some propagated literals.
       *
@@ -277,16 +279,18 @@ object CR extends Prover {
         val conflict = Conflict(buildProof(conflictLiteral), buildProof(otherLiteral))
         clauseProof(newClause) = ConflictDrivenClauseLearning(conflict)
         println(s"Derived $newClause")
-        if (newClause == SeqClause.empty) return Some(Proof(conflict))
+        if (newClause == SeqClause.empty) return Unsatisfiable(Some(Proof(conflict)))
         conflictLearnedClauses += newClause
       }
 
       if (conflictLearnedClauses.nonEmpty) {
         reset(conflictLearnedClauses)
       } else if (result.isEmpty) {
-        return None
+        return Satisfiable(None) // TODO: Check that 'Satisfiable' is really the correct ProblemStatus to return here. 
+        // Consider the possibility of returning 'Some(assignment)' where assignment is a model built with the new classes Model or Assignment,
+        // containing decision literals and propagated literals.
       }
     }
-    None
+    Error // this line is unreachable.
   }
 }

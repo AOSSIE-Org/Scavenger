@@ -11,5 +11,5 @@ import scala.collection.mutable
   * @author Daniyar Itegulov
   */
 trait Prover {
-  def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): Option[Proof]
+  def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): ProblemStatus
 }

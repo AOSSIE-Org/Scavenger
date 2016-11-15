@@ -2,6 +2,7 @@ package au.aossie.scavenger
 
 import au.aossie.scavenger.structure.immutable.CNF
 import au.aossie.scavenger.prover.{CR, ConcurrentCR}
+import au.aossie.scavenger.prover.{Unsatisfiable, Satisfiable}
 import au.aossie.scavenger.parser.TPTPCNFParser
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
@@ -96,7 +97,11 @@ object CLI {
         val cnf = parser.parse(input)
         implicit val variables = getUppercaseVariables(cnf)
         println("Unification variables are: " + variables)
-        c.output.write(algorithm.prove(cnf).getOrElse("Satisfiable"))
+        algorithm.prove(cnf) match {
+          case Unsatisfiable(p) => c.output.write("Unsatisfiable\n\nRefutation:\n" +  p)
+          case Satisfiable(m) => c.output.write("Satisfiable\n\nModel:\n" + m)
+          case s => c.output.write(s) 
+        }
       }
     }
   }
