@@ -14,3 +14,4 @@ object SimpleConflictAnalyser extends ConflictAnalyser{
   override def learnConflictClause(levels: Seq[DecisionLevel]): SeqClause =
     (SeqClause()() /: levels.map(!_.literal)) (_ union _.toClause)
 }
+

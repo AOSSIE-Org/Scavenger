@@ -18,3 +18,4 @@ trait LiteralChooser {
     */
   def chooseLiteral(cnf: CNF): Option[Literal]
 }
+

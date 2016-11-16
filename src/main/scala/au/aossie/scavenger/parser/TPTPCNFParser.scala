@@ -20,3 +20,4 @@ object TPTPCNFParser extends Parser {
     new CNF(clauses)
   }
 }
+

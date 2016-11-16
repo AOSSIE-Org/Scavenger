@@ -17,3 +17,4 @@ trait ConflictAnalyser {
     */
   def learnConflictClause(levels: Seq[DecisionLevel]): SeqClause
 }
+

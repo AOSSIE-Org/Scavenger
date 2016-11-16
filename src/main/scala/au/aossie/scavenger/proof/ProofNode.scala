@@ -55,3 +55,4 @@ trait GenBinary[+J <: AbstractClause, +P <: ProofNode[J,P]] extends ProofNode[J,
   def rightPremise: P
   def premises = Seq(leftPremise, rightPremise)
 }
+

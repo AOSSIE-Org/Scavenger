@@ -42,3 +42,4 @@ trait ClauseLike[+Repr <: ClauseLike[Repr]] {
   def intersect(that: AbstractClause): Repr
 
 }
+

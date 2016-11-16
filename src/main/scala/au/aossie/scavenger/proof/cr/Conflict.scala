@@ -32,3 +32,4 @@ case class Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)(implici
 
   //override def rightAuxFormulas: Clause = rightPremise.conclusion
 }
+

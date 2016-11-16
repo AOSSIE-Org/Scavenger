@@ -18,3 +18,4 @@ final case class Arrow(t1:T, t2:T) extends T {
   override def toString = "(" + t1 + unicodeOrElse("\u2192","->") + t2 + ")"
   def logicalSize = t1.logicalSize + t2.logicalSize + 1
 }
+

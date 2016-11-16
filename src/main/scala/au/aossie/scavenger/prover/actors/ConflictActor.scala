@@ -103,3 +103,4 @@ class ConflictActor extends Actor with ActorLogging {
       log.warning(s"Didn't expect, but got $other")
   }
 }
+

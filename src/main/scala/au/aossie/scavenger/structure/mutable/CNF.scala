@@ -87,3 +87,4 @@ class CNF(val clauses: ArrayBuffer[SeqClause]) {
     result
   }
 }
+

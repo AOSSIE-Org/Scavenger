@@ -168,3 +168,4 @@ class MainActor(cnf: CNF, propagationActor: ActorRef, conflictActor: ActorRef)
       log.warning(s"Didn't expect, but got $other")
   }
 }
+

@@ -18,3 +18,4 @@ case class CNF(clauses: Seq[SeqClause]) {
 
   def toMutableCNF: mutable.CNF = new mutable.CNF(clauses.to[ArrayBuffer])
 }
+

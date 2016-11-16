@@ -127,3 +127,4 @@ class TPTPLexical extends Lexical with TPTPTokens {
     case (d: Real) ~ _ ~ exp => Real(d.coeff, exp.value)
   }
 }
+

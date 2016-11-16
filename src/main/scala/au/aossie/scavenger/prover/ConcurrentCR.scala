@@ -40,3 +40,4 @@ object ConcurrentCR extends Prover {
     Unsatisfiable(result) // TODO: what happens when the problem is satisfiable?
   }
 }
+

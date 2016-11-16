@@ -17,3 +17,4 @@ package object time {
     Timed(r, averageTime)
   }
 }
+

@@ -49,3 +49,4 @@ object TPTPAST {
   case class GFormulaDataFormula(override val language: Language,
                                  formula : RepresentedFormula)           extends FormulaData(language)
 }
+

@@ -21,3 +21,4 @@ class UnifyingActor(implicit variables: mutable.Set[Sym]) extends Actor with Act
       log.warning(s"Didn't expect, but got $other")
   }
 }
+

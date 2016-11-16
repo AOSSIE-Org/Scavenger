@@ -146,3 +146,4 @@ trait TPTPTokens extends Tokens {
     override def chars = value.toString
   }
 }
+

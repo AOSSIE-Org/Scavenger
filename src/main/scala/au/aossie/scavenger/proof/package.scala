@@ -29,3 +29,4 @@ package object proof {
     //, "transLength" -> transLength) for Congruence algorithm
   }
 }
+

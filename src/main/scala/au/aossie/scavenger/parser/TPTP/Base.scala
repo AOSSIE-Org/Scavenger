@@ -29,7 +29,7 @@ import scala.collection.mutable.{HashSet => MSet}
   * @note    This version does not support let expressions
   */
 
-// scalastyle:off method.name
+// scalastyle:off
 
 class UnexpectedEmptyTPTPFileException extends Exception("Unexpected Empty File")
 class TPTPExtractException extends Exception("Unexpected Extract Exception")
@@ -797,4 +797,4 @@ extends TokenParsers with PackratParsers {
 
 }
 
-// scalastyle:on method.name
+// scalastyle:on

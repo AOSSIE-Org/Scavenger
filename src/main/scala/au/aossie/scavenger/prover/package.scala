@@ -176,3 +176,4 @@ package object prover {
   def combinations[A](xss: Seq[Seq[A]]): Seq[Seq[A]] =
     xss.foldLeft(Seq(Seq.empty[A])) { (x, y) => for (a <- x.view; b <- y) yield a :+ b }
 }
+

@@ -13,3 +13,4 @@ import scala.collection.mutable
 trait Prover {
   def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): ProblemStatus
 }
+

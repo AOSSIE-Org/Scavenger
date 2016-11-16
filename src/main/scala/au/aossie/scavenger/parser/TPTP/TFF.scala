@@ -68,3 +68,4 @@ case class TFFConjectureStatement(name : String, formula : E) extends TFFProblem
 case class TFFNegatedConjectureStatement(name : String, formula : E) extends TFFProblemStatement {
   override def toString : String = "tff("+name + ",negated_conjecture," + formula.toString + ")"
 }
+

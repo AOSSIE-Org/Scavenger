@@ -8,3 +8,4 @@ import au.aossie.scavenger.structure.immutable.CNF
 trait Parser {
   def parse(filename: String): CNF
 }
+

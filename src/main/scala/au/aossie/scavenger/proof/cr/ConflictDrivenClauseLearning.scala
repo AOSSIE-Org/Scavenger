@@ -31,3 +31,4 @@ case class ConflictDrivenClauseLearning(conflict: Conflict) extends CRProofNode 
 
   override def premises: Seq[CRProofNode] = Seq(conflict)
 }
+

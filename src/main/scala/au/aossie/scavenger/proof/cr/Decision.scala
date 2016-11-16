@@ -12,3 +12,4 @@ case class Decision(literal: Literal) extends CRProofNode {
 
   override def premises: Seq[CRProofNode] = Seq.empty
 }
+

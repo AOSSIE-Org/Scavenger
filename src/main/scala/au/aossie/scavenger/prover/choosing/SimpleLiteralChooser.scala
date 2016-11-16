@@ -18,3 +18,4 @@ object SimpleLiteralChooser extends LiteralChooser {
       !cnf.assignment.contains(variable) && !cnf.assignment.contains(!variable)
     ).map(varToLit)
 }
+

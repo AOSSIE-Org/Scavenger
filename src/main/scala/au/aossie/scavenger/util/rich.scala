@@ -24,3 +24,4 @@ package object rich {
   }
   //scalastyle:on
 }
+

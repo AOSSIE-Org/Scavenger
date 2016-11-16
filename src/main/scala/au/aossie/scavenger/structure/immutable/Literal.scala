@@ -16,3 +16,4 @@ case class Literal(unit: E, negated: Boolean) {
 
   override def toString: String = if (negated) s"$unit ⊢" else s"⊢ $unit"
 }
+

@@ -12,3 +12,4 @@ abstract class Exporter extends Writer {
   def write(s: AbstractClause)
   def write(p: Proof[N])
 }
+
