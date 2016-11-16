@@ -63,6 +63,8 @@ object CLI {
     arg[String]("<problem-file>...") unbounded() optional() action { (v, c) =>
       c.copy(inputs = c.inputs :+ v)
     } text "solve <problem-file>\n"
+    
+    help("help") text("print this usage text")
 
     note(
       """
@@ -76,7 +78,6 @@ object CLI {
       """)
   }
 
-  // TODO: Add help command.
 
   // TODO: This is not the right place for this function
   def getUppercaseVariables(cnf: CNF): mutable.Set[Sym] = {
