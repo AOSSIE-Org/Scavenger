@@ -60,12 +60,12 @@ object THFProblem {
 
 abstract class THFProblemStatement
 case class THFAxiomStatement(name : String, formula : E) extends THFProblemStatement {
-  override def toString : String = "thf("+name + ",axiom," + formula.toString + ")"
+  override def toString : String = "thf(" + name + ",axiom," + formula.toString + ")"
 }
 case class THFConjectureStatement(name : String, formula : E) extends THFProblemStatement {
-  override def toString : String = "thf("+name + ",conjecture," + formula.toString + ")"
+  override def toString : String = "thf(" + name + ",conjecture," + formula.toString + ")"
 }
 case class THFNegatedConjectureStatement(name : String, formula : E) extends THFProblemStatement {
-  override def toString : String = "thf("+name + ",negated_conjecture," + formula.toString + ")"
+  override def toString : String = "thf(" + name + ",negated_conjecture," + formula.toString + ")"
 }
 

@@ -60,12 +60,12 @@ object TFFProblem {
 
 abstract class TFFProblemStatement
 case class TFFAxiomStatement(name : String, formula : E) extends TFFProblemStatement {
-  override def toString : String = "tff("+name + ",axiom," + formula.toString + ")"
+  override def toString : String = "tff(" + name + ",axiom," + formula.toString + ")"
 }
 case class TFFConjectureStatement(name : String, formula : E) extends TFFProblemStatement {
-  override def toString : String = "tff("+name + ",conjecture," + formula.toString + ")"
+  override def toString : String = "tff(" + name + ",conjecture," + formula.toString + ")"
 }
 case class TFFNegatedConjectureStatement(name : String, formula : E) extends TFFProblemStatement {
-  override def toString : String = "tff("+name + ",negated_conjecture," + formula.toString + ")"
+  override def toString : String = "tff(" + name + ",negated_conjecture," + formula.toString + ")"
 }
 

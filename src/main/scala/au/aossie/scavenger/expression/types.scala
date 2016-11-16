@@ -9,8 +9,11 @@ abstract class T {
 trait Atomic {
   def logicalSize = 1
 }
+
+// scalastyle:off object.name
 case object i extends T with Atomic
 case object o extends T with Atomic
+// scalastyle:on object.name
 final case class AtomicType(name: String) extends T with Atomic {
   override def toString = name
 }

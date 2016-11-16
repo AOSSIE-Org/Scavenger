@@ -2,6 +2,8 @@ package au.aossie.scavenger.parser.TPTP
 
 import scala.util.parsing.combinator.token.Tokens
 
+// scalastyle:off number.of.types
+// scalastyle:off number.of.methods
 /**
   * Created by eze on 2016.05.23..
   */
@@ -146,4 +148,5 @@ trait TPTPTokens extends Tokens {
     override def chars = value.toString
   }
 }
-
+// scalastyle:on number.of.types
+// scalastyle:on number.of.methods

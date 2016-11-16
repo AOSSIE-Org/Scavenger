@@ -4,16 +4,14 @@ import scalax.io.{Resource,Seekable}
 //import scalax.io.Codec
 import scalax.io.JavaConverters._
 
-
-
-object io {
+package object io {
   abstract class Output {
     def write(s: Any): Unit
   }
   object Output {
     def apply(path: String) = if (path contains "stdout://") StandardOutput
-                    else if (path contains "void://") NoOutput
-                    else new FileOutput(path)
+                              else if (path contains "void://") NoOutput
+                              else new FileOutput(path)
   }
 
   object NoOutput extends Output { def write(s:Any) = {} }

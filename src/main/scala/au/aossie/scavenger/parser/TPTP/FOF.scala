@@ -53,11 +53,11 @@ object FOFProblem {
 
 abstract class FOFProblemStatement
 case class FOFAxiomStatement(name : String, formula : E) extends FOFProblemStatement {
-  override def toString : String = "fof("+name + ",axiom," + formula.toString + ")"
+  override def toString : String = "fof(" + name + ",axiom," + formula.toString + ")"
 }
 case class FOFConjectureStatement(name : String, formula : E) extends FOFProblemStatement {
-  override def toString : String = "fof("+name + ",conjecture," + formula.toString + ")"
+  override def toString : String = "fof(" + name + ",conjecture," + formula.toString + ")"
 }
 case class FOFNegatedConjectureStatement(name : String, formula : E) extends FOFProblemStatement {
-  override def toString : String = "fof("+name + ",negated_conjecture," + formula.toString + ")"
+  override def toString : String = "fof(" + name + ",negated_conjecture," + formula.toString + ")"
 }

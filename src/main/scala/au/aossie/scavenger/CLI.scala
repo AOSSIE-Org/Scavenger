@@ -98,7 +98,6 @@ object CLI {
         val parser = parsers(c.format.getOrElse(input.split(".").last))
         val cnf = parser.parse(input)
         implicit val variables = getUppercaseVariables(cnf)
-        println("Unification variables are: " + variables)
         algorithm.prove(cnf) match {
           case Unsatisfiable(p) => c.output.write("Unsatisfiable\n\nRefutation:\n" +  p)
           case Satisfiable(m) => c.output.write("Satisfiable\n\nModel:\n" + m)

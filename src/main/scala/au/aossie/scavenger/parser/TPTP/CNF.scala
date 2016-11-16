@@ -62,7 +62,7 @@ abstract class CNFProblemStatement
 case class CNFAxiomStatement(name : String, ant : List[E], suc : List[E]) extends CNFProblemStatement {
   override def toString : String = {
     val initialNegation = if (ant.isEmpty) "" else "~ "
-    "cnf("+name + ",axiom,{ " + initialNegation + ant.mkString(", ~ ") + " --> " + suc.mkString(",") +" })"
+    "cnf(" + name + ",axiom,{ " + initialNegation + ant.mkString(", ~ ") + " --> " + suc.mkString(",") + " })"
   }
 }
 case class CNFConjectureStatement(name : String, ant : List[E], suc : List[E]) extends CNFProblemStatement {

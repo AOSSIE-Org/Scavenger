@@ -59,10 +59,11 @@ extends Iterable[P]
   def foldDown[X](f: (P, Seq[X]) => X): X = {
     val resultFrom = MMap[P,X]()
     @tailrec def iterate(pos:Int):Unit = {
-      if (pos < 0) return
-      val node = nodes(pos)
-      resultFrom(node) = f(node, node.premises.map(resultFrom))
-      iterate(pos-1)
+      if (pos >= 0) {
+        val node = nodes(pos)
+        resultFrom(node) = f(node, node.premises.map(resultFrom))
+        iterate(pos-1)
+      }
     }
     iterate(nodes.length - 1)
     resultFrom(nodes(0))
@@ -71,11 +72,11 @@ extends Iterable[P]
   def foldDown2[X](f: (P, Seq[X]) => X,permutation: Seq[Int]): X = {
     val resultFrom = MMap[P,X]()
     @tailrec def iterate(pos:Int):Unit = {
-      if (pos < 0) return
-      val node = nodes(permutation(pos))
-//      println("foldDown visits " + node + " at pos: " + pos + " permutation at pos: " + permutation(pos))
-      resultFrom(node) = f(node, node.premises.map(resultFrom))
-      iterate(pos-1)
+      if (pos >= 0) {
+        val node = nodes(permutation(pos))
+        resultFrom(node) = f(node, node.premises.map(resultFrom))
+        iterate(pos-1)
+      }
     }
     iterate(nodes.length - 1)
     resultFrom(nodes(permutation(0)))
@@ -94,12 +95,13 @@ extends Iterable[P]
   def bottomUp[X](f:(P, Seq[X])=>X):Unit = {
     val resultsFromChildren = MMap[P, Seq[X]]()
     @tailrec def iterate(pos:Int):Unit = {
-      if (pos >= size) return
-      val node = nodes(pos)
-      val result = f(node, resultsFromChildren.getOrElse(node,Nil))
-      resultsFromChildren -= node
-      node.premises.foreach(premise => resultsFromChildren(premise) = (result +: resultsFromChildren.getOrElse(premise, Seq())))
-      iterate(pos + 1)
+      if (pos < size) {
+        val node = nodes(pos)
+        val result = f(node, resultsFromChildren.getOrElse(node,Nil))
+        resultsFromChildren -= node
+        node.premises.foreach(premise => resultsFromChildren(premise) = (result +: resultsFromChildren.getOrElse(premise, Seq())))
+        iterate(pos + 1)
+      }
     }
     iterate(0)
   }
@@ -107,12 +109,13 @@ extends Iterable[P]
   def bottomUp2[X](f:(P, Seq[X])=>X, permutation: Seq[Int]):Unit = {
     val resultsFromChildren = MMap[P, Seq[X]]()
     @tailrec def iterate(pos:Int):Unit = {
-      if (pos >= size) return
-      val node = nodes(permutation(pos))
-      val result = f(node, resultsFromChildren.getOrElse(node,Nil))
-      resultsFromChildren -= node
-      node.premises.foreach(premise => resultsFromChildren(premise) = (result +: resultsFromChildren.getOrElse(premise, Seq())))
-      iterate(pos + 1)
+      if (pos < size) {
+        val node = nodes(permutation(pos))
+        val result = f(node, resultsFromChildren.getOrElse(node,Nil))
+        resultsFromChildren -= node
+        node.premises.foreach(premise => resultsFromChildren(premise) = (result +: resultsFromChildren.getOrElse(premise, Seq())))
+        iterate(pos + 1)
+      }
     }
     iterate(0)
   }
@@ -130,12 +133,13 @@ extends Iterable[P]
   def topDown[X](f: (P, Seq[X]) => X): Unit = {
     val resultsFromParents = MMap[P, Seq[X]]()
     @tailrec def iterate(pos: Int): Unit = {
-      if (pos < 0) return
-      val node = nodes(pos)
-      val result = f(node, resultsFromParents.getOrElse(node, Nil))
-      resultsFromParents -= node
-      node.premises.foreach(premise => resultsFromParents(premise) = (result +: resultsFromParents.getOrElse(premise, Seq())))
-      iterate(pos - 1)
+      if (pos >= 0) {
+        val node = nodes(pos)
+        val result = f(node, resultsFromParents.getOrElse(node, Nil))
+        resultsFromParents -= node
+        node.premises.foreach(premise => resultsFromParents(premise) = (result +: resultsFromParents.getOrElse(premise, Seq())))
+        iterate(pos - 1)
+      }
     }
     iterate(nodes.length - 1)
   }

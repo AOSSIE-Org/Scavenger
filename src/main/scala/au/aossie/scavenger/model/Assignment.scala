@@ -8,6 +8,7 @@ import au.aossie.scavenger.unification.{MartelliMontanari => unify}
 // TODO: write the boilerplate to make this a collection class
 class Assignment(trueFacts: Set[E]) extends Model {
 
+  // scalastyle:off cyclomatic.complexity
   def truthValue(e: E): Option[Boolean] = {
     if (trueFacts contains e) Some(true)
     else {
@@ -46,6 +47,8 @@ class Assignment(trueFacts: Set[E]) extends Model {
       }
     }
   }
+  // scalastyle:on cyclomatic.complexity
 
   override def toString = "Model: " + trueFacts.mkString(", ")
 }
+

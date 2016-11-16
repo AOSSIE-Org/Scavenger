@@ -91,4 +91,12 @@ Some(1: {(subset d a) ⊢ } 	: Axiom()[]
 3: { ⊢ (subset Subset Superset), (member (member_of_1_not_of_2 Subset Superset) Subset)} 	: Axiom()[]
 4: { ⊢ (subset d a)} 	: UnitPropagationResolution(2, 3)[]
 5: { ⊢ } 	: Conflict(1, 4)[]
+)Unsatisfiable
+
+Refutation:
+Some(1: {(member (member_of_1_not_of_2 d a) d) ⊢ } 	: Axiom()[]
+2: {(subset d a) ⊢ } 	: Axiom()[]
+3: { ⊢ (subset Subset Superset), (member (member_of_1_not_of_2 Subset Superset) Subset)} 	: Axiom()[]
+4: { ⊢ (member (member_of_1_not_of_2 d a) d)} 	: UnitPropagationResolution(2, 3)[]
+5: { ⊢ } 	: Conflict(1, 4)[]
 )

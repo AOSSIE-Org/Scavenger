@@ -34,9 +34,6 @@ trait ProofE extends Exporter {
     // Possibly, code could be shared between them.
     proof foldDown {
       (n, premiseResults: Seq[String]) => {
-
-        println("hi")
-
         n match {
           case Axiom(clause) => {
               val name = counter.toString

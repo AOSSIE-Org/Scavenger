@@ -1,6 +1,6 @@
 package au.aossie.scavenger.util
 
-object math {
+package object math {
   def argMax[A](s: Traversable[A], size: A => Int) = genericMinMax(s,size,Int.MinValue, _ > _)._1
   def argMin[A](s: Traversable[A], size: A => Int) = genericMinMax(s,size,Int.MaxValue, _ < _)._1
 
@@ -13,8 +13,7 @@ object math {
       case h::tail => {
         val r @ (bestInTail,max) = rec(tail)
         val hSize = size(h)
-        if (compare(hSize,max)) (Some(h), hSize)
-        else r
+        if (compare(hSize,max)) (Some(h), hSize) else r
       }
     }
     rec(s)

@@ -10,7 +10,7 @@ final class Substitution (override protected val m: Map[Sym, E])
 extends AbstractSubstitution with Map[Sym, E] with MapLike[Sym, E, Substitution] {
   def get(key: Sym) = m.get(key)
   def iterator: Iterator[(Sym, E)] = m.iterator
-  def + [B >: E](kv: (Sym, B)) = {
+  def +[B >: E](kv: (Sym, B)) = {
     if (kv._2.isInstanceOf[E]) new Substitution(m + kv.asInstanceOf[(Sym,E)])
     else m + kv
   }

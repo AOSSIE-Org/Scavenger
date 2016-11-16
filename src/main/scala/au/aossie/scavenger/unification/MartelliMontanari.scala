@@ -9,23 +9,15 @@ object MartelliMontanari {
 
   def apply(a: E, b: E)(implicit variables: MSet[Sym]): Option[Substitution] = apply(List((a,b)))
 
+  // scalastyle:off cyclomatic.complexity
   def apply(equations: Iterable[(E, E)])(implicit variables: MSet[Sym]): Option[Substitution] = {
     var eqs = equations.toSeq
     val mgu = new MSub
 
     var counter = 0
 
+    // scalastyle:off return
     while (!eqs.isEmpty) {
-
-//            println("mgu: " + counter)
-
-//      counter = counter + 1
-//            if (counter > 50) { //10 is too small.
-//              println("counter maxed out")
-//              return None
-//              println("mgu: " + mgu)
-//            }
-
       eqs.head match {
         case (App(f1, a1), App(f2, a2)) => eqs = Seq((f1, f2), (a1, a2)) ++ eqs.tail
         case (Abs(v1, t1, e1), Abs(v2, t2, e2)) => if (t1 == t2) eqs = Seq((v1, v2), (e1, e2)) ++ eqs.tail else return None
@@ -37,7 +29,7 @@ object MartelliMontanari {
           for (p <- mgu) {
             mgu.update(p._1, sub(p._2))
           }
-	      mgu += (v -> e)
+          mgu += (v -> e)
           eqs = for (eq <- eqs.tail) yield {
             (sub(eq._1), sub(eq._2))
           }
@@ -48,6 +40,8 @@ object MartelliMontanari {
       }
     }
     return Some(mgu.toImmutable)
+    // scalastyle:on return
   }
+  // scalastyle:on cyclomatic.complexity
 }
 

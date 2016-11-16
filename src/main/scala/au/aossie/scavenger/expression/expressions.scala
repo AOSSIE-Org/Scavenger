@@ -72,13 +72,11 @@ object AppRec {
   }
   private def unapplyRec(e: App): (E,Iterable[E]) = e.function match {
     case a : App => {
-        val (function, firstArgs) = unapplyRec(a)
-        return (function, firstArgs ++ (e.argument::Nil))
+      val (function, firstArgs) = unapplyRec(a)
+      (function, firstArgs ++ (e.argument::Nil))
     }
-    case _ => return (e.function, e.argument::Nil)
+    case _ => (e.function, e.argument::Nil)
   }
 }
-
-
 
 trait Infix extends Sym

@@ -3,7 +3,7 @@ package au.aossie.scavenger.util
 import au.aossie.scavenger.util.math._
 import annotation.tailrec
 
-object pretty {
+package object pretty {
   def blankString(length: Int): String = repString(" ", "", length)
 
   def mkStringMultiLine(c:Iterable[Any], leftMargin: Int, width: Int, sep: String) = {
