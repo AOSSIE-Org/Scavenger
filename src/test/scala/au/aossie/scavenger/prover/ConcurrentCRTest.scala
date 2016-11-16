@@ -12,7 +12,7 @@ import org.specs2.mutable.Specification
 import scala.collection.mutable
 
 /**
-  * @author Daniyar Itegulovg
+  * @author Daniyar Itegulov
   */
 object ConcurrentCRTest extends App {
 
