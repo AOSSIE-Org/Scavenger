@@ -48,7 +48,7 @@ object CLI {
       if (knownFormats contains v) success
       else failure("unknown problem format: " + v)
     } text s"use <format> for input problem\n" valueName "<format>"
-    
+
     note(
       s"""
         <format> can be any of the following:
@@ -67,15 +67,15 @@ object CLI {
     note(
       """
     Example:
-      The following command solves the problem 'SET006-1.cnfp' 
+      The following command solves the problem 'SET006-1.cnfp'
       using the algorithm 'ConcurrentCR'.
-      The clause set is unsatisfiable and 
+      The clause set is unsatisfiable and
       the refutation is written to 'refutation.proof'.
 
       scavenger -a ConcurrentCR -f cnfp -o refutation.proof examples/problems/CNF/SET006-1.cnfp
       """)
   }
-  
+
   // TODO: Add help command.
 
   // TODO: This is not the right place for this function
@@ -102,7 +102,7 @@ object CLI {
         algorithm.prove(cnf) match {
           case Unsatisfiable(p) => c.output.write("Unsatisfiable\n\nRefutation:\n" +  p)
           case Satisfiable(m) => c.output.write("Satisfiable\n\nModel:\n" + m)
-          case s => c.output.write(s) 
+          case s => c.output.write(s)
         }
       }
     }

@@ -8,7 +8,7 @@ import au.aossie.scavenger.expression.substitution.mutable.{ Substitution => MSu
 object MartelliMontanari {
 
   def apply(a: E, b: E)(implicit variables: MSet[Sym]): Option[Substitution] = apply(List((a,b)))
-  
+
   def apply(equations: Iterable[(E, E)])(implicit variables: MSet[Sym]): Option[Substitution] = {
     var eqs = equations.toSeq
     val mgu = new MSub
@@ -50,4 +50,4 @@ object MartelliMontanari {
     return Some(mgu.toImmutable)
   }
 }
- 
+

@@ -29,18 +29,18 @@ import scala.collection.mutable.{HashSet => MSet}
   * @note    This version does not support let expressions
   */
 
+// scalastyle:off method.name
+
 class UnexpectedEmptyTPTPFileException extends Exception("Unexpected Empty File")
 class TPTPExtractException extends Exception("Unexpected Extract Exception")
 
 
 /**
-  * The BaseParserTPTP trait implements the common parsers shared
+  * The Base trait implements the common parsers shared
   * both by problems and proof objects described by the TPTP syntax.
   * They return an AST representation of the syntax, logic formulas
   * are translated to their corresponding representation in Scavenger.
   */
-
-// TODO: CHECK EQUALITY TYPE
 trait Base
 extends TokenParsers with PackratParsers {
 
@@ -796,3 +796,5 @@ extends TokenParsers with PackratParsers {
   def thf_tuple: Parser[List[E]] = repsep(thf_logic_formula, elem(Comma))
 
 }
+
+// scalastyle:on method.name

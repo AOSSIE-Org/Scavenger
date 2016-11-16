@@ -6,7 +6,7 @@ import au.aossie.scavenger.expression.E
 /**
   * Created by itegulov on 28.07.16.
   */
-// TODO: it would be more intuitive to rename 'negated' to 'polarity' 
+// TODO: it would be more intuitive to rename 'negated' to 'polarity'
 // and make 'polarity' equal to 'true' when the literal is positive
 // and equal to 'false' when the literal is negative
 case class Literal(unit: E, negated: Boolean) {

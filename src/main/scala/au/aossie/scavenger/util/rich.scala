@@ -2,7 +2,8 @@ package au.aossie.scavenger.util
 
 import language.implicitConversions
 
-object rich {
+package object rich {
+  // scalastyle:off
   @deprecated("This will be removed. It is inefficient.","Scavenger 0.1")
   class RichIterable[T](val c: Iterable[T]) extends AnyVal {
     def contains(e: T) = if (c.isInstanceOf[Set[_]]) c.asInstanceOf[Set[T]].contains(e)
@@ -16,9 +17,10 @@ object rich {
                          else throw new Exception("not implemented yet") //ToDo: fix this line
     def union(that: Iterable[T]) = if (c.isInstanceOf[Set[_]]) c.asInstanceOf[Set[T]] union that.toSet
                          else if (c.isInstanceOf[Seq[_]]) c.asInstanceOf[Seq[T]] union that.toSeq
-                         else c ++ that                        
+                         else c ++ that
   }
   object RichIterable {
     implicit def enrichIterable[T](c: Iterable[T]) = new RichIterable(c)
   }
+  //scalastyle:on
 }

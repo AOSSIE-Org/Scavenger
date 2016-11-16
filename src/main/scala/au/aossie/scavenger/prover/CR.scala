@@ -58,7 +58,7 @@ object CR extends Prover {
       }
     }
 
-    
+
     // TODO: try to avoid nested function definitions when possible (i.e. when they do not depend on local variables). Prefer private defs in the class body instead.
     /**
       * Try to resolve given non-unit clause with some propagated literals.
@@ -286,7 +286,7 @@ object CR extends Prover {
       if (conflictLearnedClauses.nonEmpty) {
         reset(conflictLearnedClauses)
       } else if (result.isEmpty) {
-        return Satisfiable(None) // TODO: Check that 'Satisfiable' is really the correct ProblemStatus to return here. 
+        return Satisfiable(None) // TODO: Check that 'Satisfiable' is really the correct ProblemStatus to return here.
         // Consider the possibility of returning 'Some(assignment)' where assignment is a model built with the new classes Model or Assignment,
         // containing decision literals and propagated literals.
       }

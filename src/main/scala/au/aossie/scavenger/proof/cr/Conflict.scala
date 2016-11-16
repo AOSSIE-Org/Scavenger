@@ -23,7 +23,7 @@ case class Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)(implici
     case None => throw new Exception("Conflict: given premise clauses are not resolvable")
     case Some(u) => u
   }
-  
+
   override def premises = Seq(leftPremise, rightPremise)
 
   override def conclusion: SeqClause = SeqClause()()

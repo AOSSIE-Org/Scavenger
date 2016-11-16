@@ -5,7 +5,7 @@ import collection.mutable.{HashSet => MSet, Stack}
 
 import au.aossie.scavenger.structure.AbstractClause
 
-abstract class ProofNode[+J <: AbstractClause, +P <: ProofNode[J,P]] 
+abstract class ProofNode[+J <: AbstractClause, +P <: ProofNode[J,P]]
 {
   def name = {val fullName = getClass.getName; fullName.substring(fullName.lastIndexOf('.' : Int) + 1)}
   private val self = asInstanceOf[P]
@@ -19,7 +19,7 @@ abstract class ProofNode[+J <: AbstractClause, +P <: ProofNode[J,P]]
     // As tail recursion is impossible, the fastest solution is to implement our own stack
     val todo = new Stack[P]()
 
-    def pushPremises(node: P): Unit = 
+    def pushPremises(node: P): Unit =
       for (prem <- node.premises if !visited(prem)) {
         visited += prem
         todo.push(prem)
@@ -40,7 +40,7 @@ abstract class ProofNode[+J <: AbstractClause, +P <: ProofNode[J,P]]
       }
     visit()
   }
-      
+
 }
 
 //trait GenNullary[+J <: Sequent, +P <: ProofNode[J,P]] extends ProofNode[J,P] { def premises = Seq() }

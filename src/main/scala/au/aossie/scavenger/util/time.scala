@@ -1,6 +1,6 @@
 package au.aossie.scavenger.util
 
-object time {
+package object time {
   // TODO: Use Duration for time
 
   case class Timed[+R](result:R, time: Double)
@@ -12,9 +12,8 @@ object time {
     Timed(result, time)
   }
   def timed[R](repetitions: Int)(f: => R): Timed[R] = {
-    val Timed(r,t) = timed { f } 
-    val averageTime = (for (i <- 1 to repetitions - 1) yield timed(f).time).foldLeft(t)(_+_) / repetitions
+    val Timed(r,t) = timed { f }
+    val averageTime = (for (i <- 1 to repetitions - 1) yield timed(f).time).foldLeft(t)(_ + _) / repetitions
     Timed(r, averageTime)
   }
 }
-    

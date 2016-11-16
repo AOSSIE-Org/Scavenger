@@ -7,11 +7,11 @@ import au.aossie.scavenger.proof.cr.{CRProofNode => N}
 import au.aossie.scavenger.proof.cr.Axiom
 import collection.mutable.{HashMap => MMap}
 
-trait ProofE extends Exporter { 
+trait ProofE extends Exporter {
   def deletionInfo: Boolean
   private val childrenVisited = MMap[N,Int]()
   private def deletionInfo(p: Proof[N], n: N, premiseResults: Seq[String]):String = {
-    if (deletionInfo) {  
+    if (deletionInfo) {
       val it = premiseResults.iterator
       var out = ""
       n.premises.foreach(pr => {
@@ -26,17 +26,17 @@ trait ProofE extends Exporter {
     }
     else ""
   }
-  
+
   def write(proof:Proof[N]): Unit = {
     var counter = 0
-    
-    // ToDo: this could be cleaned up, as the SMT exporter. 
+
+    // ToDo: this could be cleaned up, as the SMT exporter.
     // Possibly, code could be shared between them.
-    proof foldDown { 
+    proof foldDown {
       (n, premiseResults: Seq[String]) => {
-         
-        println("hi") 
-         
+
+        println("hi")
+
         n match {
           case Axiom(clause) => {
               val name = counter.toString
@@ -65,8 +65,8 @@ trait ProofE extends Exporter {
 //            write(line)
 //            name
 //          }
-        }  
-      } 
+        }
+      }
     }
   }
 }

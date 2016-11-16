@@ -11,8 +11,8 @@ import au.aossie.scavenger.structure.AbstractClause
 // Traversing "right" is top-down and we ensure that premises of a proof are processed before that proof.
 class Proof[P <: ProofNode[AbstractClause,P]](val root: P, val leftRight: Boolean = true, val permutation: IndexedSeq[P] = IndexedSeq[P]())
 extends Iterable[P]
-{ 
-  
+{
+
   def this(root: P, permutation: IndexedSeq[P]) = this(root,true, permutation)
   def initialize() = {
     val nodes = Stack[P]()
@@ -37,9 +37,9 @@ extends Iterable[P]
     visit(root)
     (nodes.toIndexedSeq, children.toMap)
   }
-  
+
   val (nodes, childrenOf) = initialize()
-    
+
   override def iterator:Iterator[P] = nodes.iterator
   override def isEmpty:Boolean = nodes.isEmpty
   override lazy val size:Int = nodes.length
@@ -67,7 +67,7 @@ extends Iterable[P]
     iterate(nodes.length - 1)
     resultFrom(nodes(0))
   }
-  
+
   def foldDown2[X](f: (P, Seq[X]) => X,permutation: Seq[Int]): X = {
     val resultFrom = MMap[P,X]()
     @tailrec def iterate(pos:Int):Unit = {
@@ -103,7 +103,7 @@ extends Iterable[P]
     }
     iterate(0)
   }
-  
+
   def bottomUp2[X](f:(P, Seq[X])=>X, permutation: Seq[Int]):Unit = {
     val resultsFromChildren = MMap[P, Seq[X]]()
     @tailrec def iterate(pos:Int):Unit = {
@@ -150,7 +150,7 @@ extends Iterable[P]
     }
     result
   }
-  
+
 }
 
 object Proof {

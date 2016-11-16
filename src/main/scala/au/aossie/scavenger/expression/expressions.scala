@@ -1,14 +1,14 @@
 package au.aossie.scavenger.expression
 
 import au.aossie.scavenger.util.unicode._
-  
+
 sealed abstract class E {
   def logicalSize: Int
-  
+
   //alphaEquals
   def =+=(that:E) = {
     def rec(e1:E,e2:E,map:Map[Sym,Sym],typeContext1:Map[Sym,Option[T]],typeContext2:Map[Sym,Option[T]]): Boolean = (e1,e2) match {
-      case (v1:Sym, v2:Sym) => map.getOrElse(v1,v1)==v2 && typeContext1.getOrElse(v1, None) == typeContext2.getOrElse(v2, None)   
+      case (v1:Sym, v2:Sym) => map.getOrElse(v1,v1)==v2 && typeContext1.getOrElse(v1, None) == typeContext2.getOrElse(v2, None)
       case (Abs(v1,t1,b1),Abs(v2,t2,b2)) => {
         if (v1 == v2 && t1 == t2) rec(b1, b2, map, typeContext1.updated(v1, Some(t1)), typeContext2.updated(v2, Some(t2)))
         else if (t1 == t2) rec(b1, b2, map.updated(v1,v2), typeContext1.updated(v1, Some(t1)), typeContext2.updated(v2, Some(t2)))
@@ -40,7 +40,7 @@ case class App(val function: E, val argument: E) extends E {
   override def toString = this match {
     case App(App(s:Sym with Infix, a), b) => "(" + a + " " + s + " " + b +  ")"
     case AppRec(f, args) => "(" + f + " " + args.mkString(" ") + ")"
-  } 
+  }
 }
 
 object AbsRec {
@@ -75,8 +75,8 @@ object AppRec {
         val (function, firstArgs) = unapplyRec(a)
         return (function, firstArgs ++ (e.argument::Nil))
     }
-    case _ => return (e.function, e.argument::Nil) 
-  } 
+    case _ => return (e.function, e.argument::Nil)
+  }
 }
 
 

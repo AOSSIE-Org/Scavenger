@@ -12,7 +12,7 @@ abstract class BinaryFormula(connective: Sym) extends Formula {
   def unapply(e:E) = e match {
     case App(App(c,f1),f2) if c == connective => Some((f1,f2))
     case _ => None
-  }  
+  }
 }
 
 abstract class UnaryFormula(connective: Sym) extends Formula {
@@ -21,7 +21,7 @@ abstract class UnaryFormula(connective: Sym) extends Formula {
   def unapply(e:E) = e match {
     case App(c,f) if c == connective => Some(f)
     case _ => None
-  }  
+  }
 }
 
 abstract class QuantifierFormula(quantifier: Sym) extends Formula {
@@ -37,7 +37,7 @@ abstract class QuantifierFormula(quantifier: Sym) extends Formula {
   def unapply(e:E) = e match {
     case App(q, Abs(v,t,f)) if q == quantifier => Some((v,t,f))
     case _ => None
-  }  
+  }
 }
 
 
@@ -52,10 +52,10 @@ object And extends BinaryFormula(andC)
 object Or extends BinaryFormula(orC)
 
 object Imp extends BinaryFormula(impC)
-  
+
 object Equivalence extends BinaryFormula(equivC)
 
-object All extends QuantifierFormula(allC)  
+object All extends QuantifierFormula(allC)
 
 object Ex extends QuantifierFormula(exC)
 

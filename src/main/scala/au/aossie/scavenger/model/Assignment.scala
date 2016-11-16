@@ -7,7 +7,7 @@ import au.aossie.scavenger.unification.{MartelliMontanari => unify}
 
 // TODO: write the boilerplate to make this a collection class
 class Assignment(trueFacts: Set[E]) extends Model {
-  
+
   def truthValue(e: E): Option[Boolean] = {
     if (trueFacts contains e) Some(true)
     else {
@@ -33,7 +33,7 @@ class Assignment(trueFacts: Set[E]) extends Model {
           case (_, Some(true)) => Some(true)
           case (Some(false), _) => Some(true)
           case _ => None
-        } 
+        }
         case Equivalence(f1,f2) => (truthValue(f1), truthValue(f2)) match {
           case (Some(false),Some(false)) => Some(true)
           case (Some(true),Some(true)) => Some(true)
@@ -46,6 +46,6 @@ class Assignment(trueFacts: Set[E]) extends Model {
       }
     }
   }
-  
+
   override def toString = "Model: " + trueFacts.mkString(", ")
 }

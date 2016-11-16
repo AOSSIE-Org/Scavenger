@@ -23,10 +23,10 @@ object ConcurrentCR extends Prover {
   def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): ProblemStatus = {
     implicit val timeout: Timeout = 2 seconds
     implicit val system = ActorSystem()
-    
+
     // TODO: if we only have one actor of each kind, we don't gain much, because each actor can only process one message at a time.
     // Couldn't we have, for example, several 'UnifyingActors', in order to be able to try several unifications in parallel?
-    
+
     val unifyingActor = system.actorOf(Props(new UnifyingActor()), "unify")
     val conflictActor = system.actorOf(Props(new ConflictActor()), "conflict")
     val propagationActor = system.actorOf(Props(new PropagationActor(unifyingActor)), "propagate")
