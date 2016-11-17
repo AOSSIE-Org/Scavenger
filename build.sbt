@@ -15,7 +15,7 @@ scalacOptions in Test ++= Seq("-Yrangepos")
 resolvers ++= Seq("snapshots", "releases", "public").map(Resolver.sonatypeRepo)
 
 libraryDependencies ++= Seq(
-  "org.specs2" %% "specs2-core" % "3.8.6" % "test",
+  "org.specs2" %% "specs2-core" % "3.8.6" % "test,integration,end-to-end",
   "com.github.scopt" %% "scopt" % "3.5.0",
   "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
   "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3-1", // seems inactive
