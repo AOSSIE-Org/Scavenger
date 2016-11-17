@@ -17,6 +17,9 @@ object CR extends Prover {
 
   def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): ProblemStatus = {
 
+    // TODO: this is a temporal determined random for easier debugging
+    val rnd = new Random(132374)
+
     val depthLiterals = mutable.Map.empty[Int, mutable.Set[Literal]] // Shows literals that were propagated at this depth
     depthLiterals(0) = mutable.Set.empty
     val ancestor = mutable.Map.empty[Literal, mutable.Set[SetClause]] // For each literal what initial clauses produced it
@@ -45,7 +48,7 @@ object CR extends Prover {
      * Filling in the unifiableUnits structure: if there is some unit clauses from initial clauses, then we
      * can use them to propagate something at step 1.
      */
-    literals.foreach(unifiableUnits(_) = mutable.Set.empty)
+    literals.foreach(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty))
     for (literal <- literals) {
       for (other <- allClauses) if (other.isUnit && other.literal.negated != literal.negated) {
         unifyWithRename(Seq(literal.unit), Seq(other.literal.unit)) match {
@@ -130,7 +133,7 @@ object CR extends Prover {
     def updateSystem(result: Traversable[Literal]) = {
       literals ++= result
       propagatedLiterals ++= result
-      result.foreach(unifiableUnits(_) = mutable.Set.empty)
+      result.foreach(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty))
       for (literal <- literals) {
         for (other <- result) if (other.negated != literal.negated) {
           unifyWithRename(Seq(literal.unit), Seq(other.unit)) match {
@@ -160,7 +163,7 @@ object CR extends Prover {
       decision.clear()
       reverseImplicationGraph.clear()
 
-      literals.foreach(unifiableUnits(_) = mutable.Set.empty)
+      literals.foreach(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty))
       for (literal <- literals) {
         for (other <- allClauses) if (other.isUnit && other.literal.negated != literal.negated) {
           unifyWithRename(Seq(literal.unit), Seq(other.literal.unit)) match {
@@ -235,9 +238,9 @@ object CR extends Prover {
 
       // If there is a literal in clause, which is contained either in `clauses` or `result`
       def satisfied = cnf.clauses.filter(_.literals.exists(lit => (propagatedLiterals contains lit) || (result contains lit)))
-
-      def usedAncestors = result.map(ancestor(_)).fold(mutable.Set.empty)(_ union _) ++ satisfied
-      def notUsedAncestors = Random.shuffle((cnf.clauses.toSet diff usedAncestors).toSeq)
+      def unitClauses = cnf.clauses.filter(_.literals.size == 1)
+      def usedAncestors = result.map(ancestor(_)).fold(mutable.Set.empty)(_ union _) ++ satisfied ++ unitClauses
+      def notUsedAncestors = rnd.shuffle((cnf.clauses.toSet diff usedAncestors).toSeq)
       while (notUsedAncestors.nonEmpty) {
         // If at least one ancestor wasn't used
         val clause = notUsedAncestors.head
@@ -245,7 +248,7 @@ object CR extends Prover {
         // So we retrieve all possible candidates for unifying of each literal and also add this
         // negated literal (we will make appropriate decision to justify this) so we can always choose
         // at least one candidate for resolution.
-        val decisionLiteral = Random.shuffle(clause.literals).head
+        val decisionLiteral = rnd.shuffle(clause.literals).head
         decision += decisionLiteral
         ancestor(decisionLiteral) = mutable.Set.empty
         depthLiterals(depth) += decisionLiteral
@@ -280,8 +283,9 @@ object CR extends Prover {
         conflictLearnedClauses += newClause
       }
 
-      if (conflictLearnedClauses.nonEmpty) {
-        reset(conflictLearnedClauses)
+      if (!conflictLearnedClauses.forall(allClauses.contains(_))) {
+        val toAdd = conflictLearnedClauses.filterNot(allClauses.contains(_)).toSet
+        reset(toAdd)
       } else if (result.isEmpty) {
         return Satisfiable(None) // TODO: Check that 'Satisfiable' is really the correct ProblemStatus to return here.
         // Consider the possibility of returning 'Some(assignment)' where assignment is a model built with the new classes Model or Assignment,

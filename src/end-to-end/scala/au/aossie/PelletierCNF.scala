@@ -1,7 +1,7 @@
 package au.aossie.scavenger
 
 
-import au.aossie.scavenger.prover.CR
+import au.aossie.scavenger.prover.{ CR, ProblemStatus, Unsatisfiable, Satisfiable }
 import au.aossie.scavenger.expression._
 
 import scala.collection.mutable
@@ -12,19 +12,16 @@ import au.aossie.scavenger.structure.immutable.{CNF, SeqClause => Clause}
 import au.aossie.scavenger.parser.TPTP.{CNFAxiomStatement, CNFNegatedConjectureStatement, CNFProblem, CNF => TPTPCNF}
 
 import au.aossie.scavenger.parser.TPTPCNFParser
-
-import au.aossie.scavenger.prover.{ProblemStatus,Unsatisfiable}
-
 import org.specs2.mutable.Specification
 
 /**
   * This class executes the prover on Pelletier's CNF problems that are currently available in the TPTP library.
   * Pelletier's problems are described in: http://www.sfu.ca/~jeffpell/papers/75ATPproblems86.pdf
-  * 
+  *
   */
 class PelletierCNF extends Specification {
 
-  
+
   // TODO: This is not the right place for this function
   // TODO: remove this function from here once we have a better way to distinguish constants and variables
   def getUppercaseVariables(cnf: CNF): mutable.Set[Sym] = {
@@ -46,11 +43,11 @@ class PelletierCNF extends Specification {
   }
 
   // TODO: Implement a timeout as described here: https://etorreborre.github.io/specs2/guide/SPECS2-3.5/org.specs2.guide.TimeoutExamples.html
-  
+
   "Scavenger" should {
     "prove SYN040-1" in { test("SYN040-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN041-1" in { test("SYN041-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-//    "prove SYN044-1" in { test("SYN044-1").isInstanceOf[Unsatisfiable] shouldEqual true } // The prover is not terminating on this example.
+    "prove SYN044-1" in { test("SYN044-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN045-1" in { test("SYN040-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN046-1" in { test("SYN040-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN047-1" in { test("SYN040-1").isInstanceOf[Unsatisfiable] shouldEqual true }
@@ -62,10 +59,10 @@ class PelletierCNF extends Specification {
     "prove SYN053-1" in { test("SYN053-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN054-1" in { test("SYN054-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN055-1" in { test("SYN055-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-//    "prove SYN056-1" in { test("SYN056-1").isInstanceOf[Unsatisfiable] shouldEqual true } // The prover is not terminating on this example.
+    "prove SYN056-1" in { test("SYN056-1").isInstanceOf[Satisfiable] shouldEqual true }
     "prove SYN057-1" in { test("SYN057-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN058-1" in { test("SYN058-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-//    "prove SYN059-1" in { test("SYN059-1").isInstanceOf[Unsatisfiable] shouldEqual true } // The prover is not terminating on this example.
+//    "prove SYN059-1" in { test("SYN059-1").isInstanceOf[Satisfiable] shouldEqual true } // The prover is not terminating on this example.
     "prove SYN060-1" in { test("SYN060-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN061-1" in { test("SYN061-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN062-1" in { test("SYN062-1").isInstanceOf[Unsatisfiable] shouldEqual true }
@@ -77,9 +74,9 @@ class PelletierCNF extends Specification {
     "prove SYN068-1" in { test("SYN068-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN069-1" in { test("SYN069-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN070-1" in { test("SYN070-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    
+
       // The following problems require equality
-    
+
 //    "prove SYN071-1" in { test("SYN071-1").isInstanceOf[Unsatisfiable] shouldEqual true }
 //    "prove SYN072-1" in { test("SYN072-1").isInstanceOf[Unsatisfiable] shouldEqual true }
 //    "prove SYN073-1" in { test("SYN073-1").isInstanceOf[Unsatisfiable] shouldEqual true }
