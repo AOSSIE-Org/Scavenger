@@ -5,6 +5,7 @@ project/target/
 .project
 .cache
 .cache-main
+.cache-test
 .idea
 *.iml
 .settings
