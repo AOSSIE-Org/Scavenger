@@ -12,8 +12,6 @@ project/target/
 .history
 *~
 *.swp
-experiments/NDc/report*
-experiments/compressor/slice*
 *.aux
 *.nav
 *.out
@@ -26,10 +24,8 @@ experiments/compressor/slice*
 *private*
 *.synctex.gz
 /.scala_dependencies
-examples/proofs/VeriT/bad
 
-# Common files generated during first building
-examples/proofs/VeriT/eq_diamond9-(D-RPI-LU).smt2
-examples/proofs/VeriT/eq_diamond9-RP.smt2
-skeptik.jar
+# Generated files
+scavenger.jar
 /bin/
+examples/*.proof
