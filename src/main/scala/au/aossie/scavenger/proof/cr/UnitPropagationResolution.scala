@@ -1,9 +1,8 @@
 package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.{ Literal, SeqClause, SetClause }
 import au.aossie.scavenger.expression.Sym
-import au.aossie.scavenger.structure.immutable.SeqClause
 
 import scala.collection.mutable
 
@@ -41,7 +40,7 @@ case class UnitPropagationResolution(left: Seq[CRProofNode], right: CRProofNode,
     case Some(u) => u
   }
 
-  override def conclusion: SeqClause = rightMgu(right.conclusion.literals(desiredIndex)).toSeqSequent
+  override def conclusion: SetClause = rightMgu(right.conclusion.literals(desiredIndex))
 
   override def premises: Seq[CRProofNode] = left :+ right
 }

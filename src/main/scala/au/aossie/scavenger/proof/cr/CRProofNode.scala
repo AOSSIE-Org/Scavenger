@@ -1,9 +1,6 @@
 package au.aossie.scavenger.proof
 package cr
 
-import collection.mutable.{HashMap => MMap, HashSet => MSet}
-import au.aossie.scavenger.structure.immutable.SeqClause
-import au.aossie.scavenger.expression.E
+import au.aossie.scavenger.structure.immutable.SetClause
 
-abstract class CRProofNode extends ProofNode[SeqClause, CRProofNode]
-
+abstract class CRProofNode extends ProofNode[SetClause, CRProofNode]

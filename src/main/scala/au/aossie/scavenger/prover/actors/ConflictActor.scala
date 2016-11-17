@@ -1,18 +1,16 @@
 package au.aossie.scavenger.prover.actors
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{ Actor, ActorLogging }
 import akka.pattern.ask
 import akka.util.Timeout
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.prover.actors.messages._
-import au.aossie.scavenger.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.{ Literal, SetClause }
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.proof.cr.{Axiom, Decision, UnitPropagationResolution}
+import au.aossie.scavenger.proof.cr.{ Axiom, Decision, UnitPropagationResolution }
 import au.aossie.scavenger.proof.cr.CRProofNode
 import au.aossie.scavenger.proof.cr
-
-import au.aossie.scavenger.structure.immutable.SeqClause
 
 import scala.collection.mutable
 import scala.concurrent.Await
@@ -26,14 +24,14 @@ class ConflictActor extends Actor with ActorLogging {
   private implicit val timeout: Timeout = 5 seconds
 
   // Proof for initial and cdcl clauses
-  private val clauseProof = mutable.Map.empty[SeqClause, CRProofNode]
+  private val clauseProof = mutable.Map.empty[SetClause, CRProofNode]
 
   val unifyingActor = context.actorSelection("../unify")
   val mainActor = context.actorSelection("../main")
 
   override def receive: Receive = {
     case Conflict(leftLiteral, rightLiteral, allClauses, decisions, reverseImpGraph) =>
-      allClauses.foreach(clause => clauseProof(clause) = Axiom(clause.toSeqSequent))
+      allClauses.foreach(clause => clauseProof(clause) = Axiom(clause))
 
       log.info(s"Conflict from $leftLiteral and $rightLiteral")
 
@@ -44,16 +42,16 @@ class ConflictActor extends Actor with ActorLogging {
         * @param substitution last instantiation of this literal
         * @return clause, representing disjunction of negated decision literals, used in propagation of current literal
         */
-      def findConflictClause(current: Literal, substitution: Substitution = Substitution.empty): SeqClause = {
+      def findConflictClause(current: Literal, substitution: Substitution = Substitution.empty): SetClause = {
         if (allClauses contains current.toClause) {
-          SeqClause()()
+          SetClause()()
         } else if (decisions contains current) {
           !substitution(current)
         } else if (reverseImpGraph contains current) {
           val conflictClauses = for ((clause, unifier) <- reverseImpGraph(current))
             yield unifier.map {
               case (lit, mgu) => findConflictClause(lit, mgu(substitution))
-            }.fold(SeqClause()() )(_ union _)
+            }.fold(SetClause()() )(_ union _)
           conflictClauses.toSeq.sortBy(_.width).head
         } else {
           throw new IllegalStateException(s"Literal $current was propagated, but there is no history in implication graph")
@@ -68,7 +66,7 @@ class ConflictActor extends Actor with ActorLogging {
         */
       def buildProof(current: Literal)(implicit variables: mutable.Set[Sym]): CRProofNode = {
         if (allClauses contains current.toClause) {
-          Axiom(current.toClause.toSeqSequent)
+          Axiom(current.toClause)
         } else if (decisions contains current) {
           Decision(current)
         } else if (reverseImpGraph contains current) {
@@ -91,7 +89,7 @@ class ConflictActor extends Actor with ActorLogging {
           implicit val vars = mutable.Set(variables.toSeq: _*)
           val conflictClauseLeft = findConflictClause(leftLiteral, leftMgu)
           val conflictClauseRight = findConflictClause(rightLiteral, rightMgu)
-          val newClause = unique(conflictClauseLeft union conflictClauseRight)
+          val newClause = conflictClauseLeft union conflictClauseRight
           val conflictProof = cr.Conflict(buildProof(leftLiteral), buildProof(rightLiteral))
           clauseProof(newClause) = cr.ConflictDrivenClauseLearning(conflictProof)
           log.info(s"Derived conflict clause $newClause")

@@ -1,7 +1,7 @@
 package au.aossie.scavenger.prover.structure.mutable
 
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.structure.immutable.{Literal,SeqClause}
+import au.aossie.scavenger.structure.immutable.{ Literal, SeqClause, SetClause }
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
   *
   * @author Daniyar Itegulov
   */
-class CNF(val clauses: ArrayBuffer[SeqClause]) {
+class CNF(val clauses: ArrayBuffer[SetClause]) {
   /**
     * Shows which literals are set to be true.
     */
@@ -27,11 +27,11 @@ class CNF(val clauses: ArrayBuffer[SeqClause]) {
     * for each literal we know what clauses have watchers set
     * to this literal.
     */
-  val sentinels: Map[Literal, mutable.Set[SeqClause]] = {
+  val sentinels: Map[Literal, mutable.Set[SetClause]] = {
     val sentinels = variables.flatMap(variable =>
       Seq(
-        varToLit(variable) -> mutable.Set.empty[SeqClause],
-        !varToLit(variable) -> mutable.Set.empty[SeqClause]
+        varToLit(variable) -> mutable.Set.empty[SetClause],
+        !varToLit(variable) -> mutable.Set.empty[SetClause]
       )
     ).toMap
     for (clause <- clauses) if (clause.width >= 2) {
@@ -41,7 +41,7 @@ class CNF(val clauses: ArrayBuffer[SeqClause]) {
     sentinels
   }
 
-  def +=(that: SeqClause): CNF = {
+  def +=(that: SetClause): CNF = {
     if (that.width >= 1) {
       sentinels(that.first) += that
       sentinels(that.last) += that
@@ -50,7 +50,7 @@ class CNF(val clauses: ArrayBuffer[SeqClause]) {
     this
   }
 
-  def -=(that: SeqClause): CNF = {
+  def -=(that: SetClause): CNF = {
     if (clauses.contains(that) && that.width >= 1) {
       sentinels(that.first) -= that
       sentinels(that.last) -= that
@@ -59,7 +59,7 @@ class CNF(val clauses: ArrayBuffer[SeqClause]) {
     this
   }
 
-  private def clauseIsSatisfied(clause: SeqClause): Boolean = clause.literals.exists(assignment.contains)
+  private def clauseIsSatisfied(clause: SetClause): Boolean = clause.literals.exists(assignment.contains)
 
   /**
     * Ensures that provided literal is true and returns sequence

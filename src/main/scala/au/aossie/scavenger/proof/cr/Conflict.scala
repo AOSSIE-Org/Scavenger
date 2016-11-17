@@ -2,7 +2,7 @@ package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.Sym
-import au.aossie.scavenger.structure.immutable.SeqClause
+import au.aossie.scavenger.structure.immutable.SetClause
 
 import scala.collection.mutable
 
@@ -26,7 +26,7 @@ case class Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)(implici
 
   override def premises = Seq(leftPremise, rightPremise)
 
-  override def conclusion: SeqClause = SeqClause()()
+  override def conclusion: SetClause = SetClause()()
 
   //override def leftAuxFormulas: Clause = leftPremise.conclusion
 

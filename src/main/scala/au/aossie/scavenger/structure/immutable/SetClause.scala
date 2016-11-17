@@ -21,7 +21,7 @@ class SetClause(val ant: Set[E], val suc: Set[E]) extends AbstractClause with Cl
 }
 
 object SetClause {
-  def apply()()  = new SetClause(Set(),Set())
+  def apply(left: E*)(right: E*)  = new SetClause(left.toSet, right.toSet)
   def empty = new SetClause(Set(), Set())
 }
 

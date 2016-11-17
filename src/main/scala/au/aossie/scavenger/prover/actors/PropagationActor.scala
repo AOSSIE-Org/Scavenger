@@ -1,18 +1,18 @@
 package au.aossie.scavenger.prover.actors
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{ ActorRef, Actor, ActorLogging }
 import akka.pattern.ask
 import akka.util.Timeout
 
 import scala.concurrent.duration._
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.prover.actors.messages._
-import au.aossie.scavenger.structure.immutable.{Literal,SeqClause}
+import au.aossie.scavenger.structure.immutable.{ Literal, SetClause }
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 import scala.language.postfixOps
 
 /**
@@ -25,14 +25,14 @@ class PropagationActor(unifyingActor: ActorRef) extends Actor with ActorLogging 
   // For each propagated literal we want to know what initial (or cdcl) clause and what literals were used for it
   @volatile
   private var reverseImplicationGraph =
-    Map.empty[Literal, Set[(SeqClause, Seq[(Literal, Substitution)])]].withDefaultValue(Set.empty)
+    Map.empty[Literal, Set[(SetClause, Seq[(Literal, Substitution)])]].withDefaultValue(Set.empty)
   // Decided literals
   private val decisions = ArrayBuffer.empty[Literal]
   // Initial clauses + conflict driven clauses
   @volatile
-  private var allClauses = Set.empty[SeqClause]
+  private var allClauses = Set.empty[SetClause]
   // For each literal what initial clauses produced it
-  private val ancestor = mutable.Map.empty[Literal, mutable.Set[SeqClause]].withDefaultValue(mutable.Set.empty)
+  private val ancestor = mutable.Map.empty[Literal, mutable.Set[SetClause]].withDefaultValue(mutable.Set.empty)
 
   private implicit val timeout: Timeout = 5 seconds
 
@@ -80,7 +80,7 @@ class PropagationActor(unifyingActor: ActorRef) extends Actor with ActorLogging 
                 val newEntry = (clause, unifier zip leftMgu)
                 val newEntriesSet = reverseImplicationGraph(newLiteral) + newEntry
                 reverseImplicationGraph = reverseImplicationGraph + (newLiteral -> newEntriesSet)
-                ancestor(newLiteral) ++= (Set.empty[SeqClause] /: unifier) (_ union ancestor(_)) + clause
+                ancestor(newLiteral) ++= (Set.empty[SetClause] /: unifier) (_ union ancestor(_)) + clause
                 if (decisions.contains(newLiteral)) {
                   decisions -= newLiteral
                 }
@@ -100,7 +100,7 @@ class PropagationActor(unifyingActor: ActorRef) extends Actor with ActorLogging 
     case Reset(newClauses) =>
       unifiableUnits = Map.empty[Literal, Set[Literal]].withDefaultValue(Set.empty)
       reverseImplicationGraph =
-        Map.empty[Literal, Set[(SeqClause, Seq[(Literal, Substitution)])]].withDefaultValue(Set.empty)
+        Map.empty[Literal, Set[(SetClause, Seq[(Literal, Substitution)])]].withDefaultValue(Set.empty)
       decisions.clear()
       allClauses = newClauses
       ancestor.clear()

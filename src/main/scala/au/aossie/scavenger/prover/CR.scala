@@ -1,12 +1,9 @@
 package au.aossie.scavenger.prover
 
-import au.aossie.scavenger.structure.immutable.Literal
+import au.aossie.scavenger.structure.immutable.{ Literal, CNF, SetClause }
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
-
-import au.aossie.scavenger.structure.immutable.CNF
-import au.aossie.scavenger.structure.immutable.SeqClause
+import au.aossie.scavenger.proof.cr.{ CRProof => Proof, _ }
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -22,20 +19,20 @@ object CR extends Prover {
 
     val depthLiterals = mutable.Map.empty[Int, mutable.Set[Literal]] // Shows literals that were propagated at this depth
     depthLiterals(0) = mutable.Set.empty
-    val ancestor = mutable.Map.empty[Literal, mutable.Set[SeqClause]] // For each literal what initial clauses produced it
-    val implicationGraph = mutable.Map.empty[SeqClause, ArrayBuffer[Literal]] // For each clause (or literal) what literals was produced from it
-    val reverseImplicationGraph = mutable.Map.empty[Literal, mutable.Set[(SeqClause, Seq[(Literal, Substitution)])]] // For each literal what clause, literals and mgu were used to produce it
+    val ancestor = mutable.Map.empty[Literal, mutable.Set[SetClause]] // For each literal what initial clauses produced it
+    val implicationGraph = mutable.Map.empty[SetClause, ArrayBuffer[Literal]] // For each clause (or literal) what literals was produced from it
+    val reverseImplicationGraph = mutable.Map.empty[Literal, mutable.Set[(SetClause, Seq[(Literal, Substitution)])]] // For each literal what clause, literals and mgu were used to produce it
     val unifiableUnits = mutable.Map.empty[Literal, mutable.Set[Literal]] // Shows unifiable literals for each literal
     val literals = mutable.Set(cnf.clauses.flatMap(_.literals): _*) // All literals contained in propagated literals and initial clauses
     val propagatedLiterals = mutable.Set.empty[Literal]
     var depth = 0 // Current depth
     val decision = ArrayBuffer.empty[Literal] // Literals, which were decided
-    val conflictClauses: mutable.Set[SeqClause] = mutable.Set.empty[SeqClause]
-    val clauseProof = mutable.Map.empty[SeqClause, CRProofNode] // Stores axioms for initial clauses and conflict proof for cdcl clauses
+    val conflictClauses: mutable.Set[SetClause] = mutable.Set.empty[SetClause]
+    val clauseProof = mutable.Map.empty[SetClause, CRProofNode] // Stores axioms for initial clauses and conflict proof for cdcl clauses
 
-    cnf.clauses.foreach(clause => clauseProof(clause) = Axiom(clause.toSeqSequent))
+    cnf.clauses.foreach(clause => clauseProof(clause) = Axiom(clause))
 
-    def allClauses: Seq[SeqClause] = cnf.clauses ++ conflictClauses
+    def allClauses: Seq[SetClause] = cnf.clauses ++ conflictClauses
 
     // Initial unit-clauses are considered as propagated
     {
@@ -66,7 +63,7 @@ object CR extends Prover {
       * @param clause initial non-unit clause
       * @return Set of literals, which were propagated from given clause
       */
-    def resolve(clause: SeqClause): Set[Literal] = {
+    def resolve(clause: SetClause): Set[Literal] = {
       val result = mutable.Set.empty[Literal]
       // For each literal in clause we fetch what unit clauses exists which can be resolved with this literal
       // e.g. unifyCandidates for Clause(!P(X), Q(a)) can be Seq(Seq(P(a), P(b), P(f(a))), Seq(!Q(X), !Q(a)))
@@ -89,7 +86,7 @@ object CR extends Prover {
               if (!unifier.exists(isAncestor(_, newLiteral))) {
                 reverseImplicationGraph.getOrElseUpdate(newLiteral, mutable.Set.empty) += ((clause, unifier zip leftMgu))
                 ancestor.getOrElseUpdate(newLiteral, mutable.Set.empty) ++=
-                  (Set.empty[SeqClause] /: unifier) (_ union ancestor(_)) + clause
+                  (Set.empty[SetClause] /: unifier) (_ union ancestor(_)) + clause
                 if (decision.contains(newLiteral)) {
                   decision -= newLiteral
                   result += newLiteral
@@ -150,7 +147,7 @@ object CR extends Prover {
       *
       * @param newClauses clauses to be added as conflict
       */
-    def reset(newClauses: Traversable[SeqClause]): Unit = {
+    def reset(newClauses: Traversable[SetClause]): Unit = {
       conflictClauses ++= newClauses
       depth = 0
       depthLiterals.clear()
@@ -187,9 +184,9 @@ object CR extends Prover {
       * @param substitution last instantiation of this literal
       * @return clause, representing disjunction of negated decision literals, used in propagation of current literal
       */
-    def findConflictClause(current: Literal, substitution: Substitution = Substitution.empty): SeqClause = {
+    def findConflictClause(current: Literal, substitution: Substitution = Substitution.empty): SetClause = {
       if (allClauses contains current.toClause) {
-        SeqClause.empty
+        SetClause.empty
       } else if (decision contains current) {
         !substitution(current)
       } else if (reverseImplicationGraph contains current) {
@@ -197,7 +194,7 @@ object CR extends Prover {
           yield (clause, unifier,
               unifier.map {
                 case (lit, mgu) => findConflictClause(lit, mgu(substitution))
-              }.fold(SeqClause.empty)(_ union _)
+              }.fold(SetClause.empty)(_ union _)
             )
         val (bestClause, bestUnifier, bestConflictClause) = conflictClauses.toSeq.sortBy(_._3.width).head
         reverseImplicationGraph(current).clear()
@@ -216,7 +213,7 @@ object CR extends Prover {
       */
     def buildProof(current: Literal): CRProofNode = {
       if (allClauses contains current.toClause) {
-        Axiom(current.toClause.toSeqSequent)
+        Axiom(current.toClause)
       } else if (decision contains current) {
         Decision(current)
       } else if (reverseImplicationGraph contains current) {
@@ -263,7 +260,7 @@ object CR extends Prover {
       depth += 1
       depthLiterals(depth) = mutable.Set(result: _*)
 
-      val conflictLearnedClauses = ArrayBuffer.empty[SeqClause]
+      val conflictLearnedClauses = ArrayBuffer.empty[SetClause]
       propagatedLiterals.filter(unifiableUnits(_).nonEmpty).foreach { conflictLiteral =>
         // For each literal, which can be unified with some other literal
         val otherLiteral = unifiableUnits(conflictLiteral).head
@@ -275,11 +272,11 @@ object CR extends Prover {
 
         println(s"Conflict clause from $conflictLiteral is $conflictClauseLeft")
         println(s"Conflict clause from $otherLiteral is $conflictClauseRight")
-        val newClause = unique(conflictClauseLeft union conflictClauseRight)
+        val newClause = conflictClauseLeft union conflictClauseRight
         val conflict = Conflict(buildProof(conflictLiteral), buildProof(otherLiteral))
         clauseProof(newClause) = ConflictDrivenClauseLearning(conflict)
         println(s"Derived $newClause")
-        if (newClause == SeqClause.empty) return Unsatisfiable(Some(Proof(conflict)))
+        if (newClause == SetClause.empty) return Unsatisfiable(Some(Proof(conflict)))
         conflictLearnedClauses += newClause
       }
 

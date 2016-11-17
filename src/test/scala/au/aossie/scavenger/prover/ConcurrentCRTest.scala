@@ -1,7 +1,7 @@
 package au.aossie.scavenger.prover
 
-import au.aossie.scavenger.expression.{Sym}
-import au.aossie.scavenger.structure.immutable.{SeqClause => Clause}
+import au.aossie.scavenger.expression.Sym
+import au.aossie.scavenger.structure.immutable.{ SetClause => Clause }
 import au.aossie.scavenger.parser._
 
 
@@ -18,8 +18,8 @@ object ConcurrentCRTest extends App {
 
   def problemToClauses(problem: TPTP.CNFProblem): Seq[Clause] = {
     problem.statements.map {
-      case axiom: TPTP.CNFAxiomStatement => new Clause(axiom.ant, axiom.suc)
-      case negConj: TPTP.CNFNegatedConjectureStatement => new Clause(negConj.ant, negConj.suc)
+      case axiom: TPTP.CNFAxiomStatement => new Clause(axiom.ant.toSet, axiom.suc.toSet)
+      case negConj: TPTP.CNFNegatedConjectureStatement => new Clause(negConj.ant.toSet, negConj.suc.toSet)
     }
   }
 

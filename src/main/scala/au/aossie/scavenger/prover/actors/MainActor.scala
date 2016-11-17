@@ -1,9 +1,9 @@
 package au.aossie.scavenger.prover.actors
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{ ActorRef, Actor, ActorLogging }
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.prover.actors.messages._
-import au.aossie.scavenger.structure.immutable.{Literal,SeqClause,CNF}
+import au.aossie.scavenger.structure.immutable.{ Literal, CNF, SetClause }
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.Proof
@@ -39,9 +39,9 @@ class MainActor(cnf: CNF, propagationActor: ActorRef, conflictActor: ActorRef)
   // All literals (as a part of initial clause or as a propagated literal)
   val literals = mutable.Set.empty[Literal]
   // Clauses to be added on this level
-  val newClauses = ArrayBuffer.empty[SeqClause]
+  val newClauses = ArrayBuffer.empty[SetClause]
   // Initial clauses, which already have been used
-  val usedAncestors = mutable.Set.empty[SeqClause]
+  val usedAncestors = mutable.Set.empty[SetClause]
 
   literals ++= allClauses.flatMap(_.literals)
 
@@ -60,7 +60,7 @@ class MainActor(cnf: CNF, propagationActor: ActorRef, conflictActor: ActorRef)
   // Promise for result of alrogithm
   val promise = Promise[Option[Proof[CRProofNode]]]()
 
-  def propagate(reverseImpGraph: Map[Literal, Set[(SeqClause, Seq[(Literal, Substitution)])]]): Unit = {
+  def propagate(reverseImpGraph: Map[Literal, Set[(SetClause, Seq[(Literal, Substitution)])]]): Unit = {
     for (decisionLiteral <- decisions) {
       // Check for a conflict
       if (unifiableUnits(decisionLiteral).nonEmpty) {

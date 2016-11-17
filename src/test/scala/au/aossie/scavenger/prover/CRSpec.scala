@@ -5,7 +5,7 @@ import au.aossie.scavenger.expression._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-import au.aossie.scavenger.structure.immutable.{CNF, SeqClause => Clause}
+import au.aossie.scavenger.structure.immutable.{CNF, SetClause => Clause}
 
 import org.specs2.mutable.Specification
 
@@ -29,7 +29,7 @@ class CRSpec extends Specification {
   val Pz = App(P, z)
   implicit val vars = mutable.Set(x, y, z)
 
-  private def test(clauses: Clause*) = CR.prove(new CNF(ArrayBuffer(clauses:_*)))
+  private def test(clauses: Clause*) = CR.prove(CNF(ArrayBuffer(clauses: _*)))
 
   "CR" should {
     "find satisfiable" in {
