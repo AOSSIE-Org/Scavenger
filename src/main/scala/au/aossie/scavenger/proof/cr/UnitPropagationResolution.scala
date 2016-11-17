@@ -24,16 +24,19 @@ case class UnitPropagationResolution(left: Seq[CRProofNode], right: CRProofNode,
     } else {
       val leftAux = leftLiterals.map(_.unit)
       val rightAux = rightLiterals.map(_.unit)
-
-      unifyWithRename(leftAux, rightAux).flatMap {
-        case (lmgu, rmgu) =>
-          val conclusion = rmgu(right.conclusion.literals(desiredIndex))
-          if (conclusion.negated != desired.negated || !isInstantiation(desired.unit, conclusion.unit)) {
-            None // If desired literal is not a resulting literal
-          } else {
-            Some(lmgu, rmgu, rightLiterals, desiredIndex) // Pack some additional information to Option
-          }
-      }
+      // TODO: after migrating from Set to Seq we've lost order of rights literals, so I just look for a correct permutation
+      // it's not so efficient though.
+      leftAux.permutations.map { leftAuxPerm =>
+        unifyWithRename(leftAuxPerm, rightAux).flatMap {
+          case (lmgu, rmgu) =>
+            val conclusion = rmgu(right.conclusion.literals(desiredIndex))
+            if (conclusion.negated != desired.negated || !isInstantiation(desired.unit, conclusion.unit)) {
+              None // If desired literal is not a resulting literal
+            } else {
+              Some(lmgu, rmgu, rightLiterals, desiredIndex) // Pack some additional information to Option
+            }
+        }
+      }.flatten.toSeq.headOption
     }
   }).find(_.isDefined).flatten match {
     case None => throw new IllegalArgumentException("Unit-Propagation Resolution: given premise clauses are not resolvable")
