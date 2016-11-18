@@ -101,7 +101,7 @@ extends TokenParsers with PackratParsers {
     */
   def expandIncludes(directives : List[TPTPDirective], parser: Parser[List[TPTPDirective]]) : List[TPTPDirective] = directives match {
     case List()                             => List.empty
-    case IncludeDirective(fileName,_) :: ds => expandIncludes(extract(fileName,parser),parser) ++ ds
+    case IncludeDirective(fileName,_) :: ds => expandIncludes(extract(fileName,parser),parser) ++ ds // FIXME: Path "../../" has to be added to fileName. I wonder if this is the correct place to fix this issue.
     case d                            :: ds => d :: expandIncludes(ds,parser)
   }
 
