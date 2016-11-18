@@ -11,11 +11,12 @@ import au.aossie.scavenger.expression._
   * a Sym is a unifiable variable.
   *
   */
-object TraitVersusMap extends Bench.OfflineRegressionReport {
+object TraitVersusSet extends Bench.OnlineRegressionReport {
+//object TraitVersusSet extends Bench.LocalTime {
 
   trait Var extends Sym
   
-  val range = Gen.range("range")(500000,1000000,500000)
+  val range = Gen.range("range")(10000,50000,10000)
   
   performance of "Trait" in {
     measure method "trait" in {
@@ -35,8 +36,8 @@ object TraitVersusMap extends Bench.OfflineRegressionReport {
 
   }
   
-  performance of "HashMap" in {
-    measure method "HashMap" in {
+  performance of "HashSet" in {
+    measure method "HashSet" in {
       using(range) in { r =>
         val m = new collection.mutable.HashSet[Sym]()
         val vars = for (i <- 1 to r) yield {
