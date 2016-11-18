@@ -21,10 +21,21 @@ object Testing {
       parallelExecution in EndToEndTest := false,
       scalaSource in EndToEndTest := baseDirectory.value / "src/end-to-end/scala")
 
-  lazy val settings = integrationTestSettings ++ endToEndTestSettings ++ Seq(
+  private lazy val performanceTestSettings =
+    inConfig(PerformanceTest)(Defaults.testSettings) ++
+    Seq(
+      fork in PerformanceTest := false,
+      parallelExecution in PerformanceTest := false,
+      scalaSource in PerformanceTest := baseDirectory.value / "src/bench/scala")
+
+  lazy val settings = integrationTestSettings ++ 
+                      endToEndTestSettings ++ 
+                      performanceTestSettings ++ 
+  Seq(
   	testAll := (),
   	testAll <<= testAll.dependsOn(test in EndToEndTest),
     testAll <<= testAll.dependsOn(test in IntegrationTest),
+    testAll <<= testAll.dependsOn(test in PerformanceTest),
     testAll <<= testAll.dependsOn(test in Test)
   )
 }
