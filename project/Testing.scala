@@ -2,10 +2,13 @@ import sbt._
 import Keys._
 
 object Testing {
-  
-  import Configs._
 
-  lazy val testAll = TaskKey[Unit]("test-all")
+  val IntegrationTest = config("integration") extend(Runtime)
+  val EndToEndTest = config("end-to-end") extend(Runtime)
+  val PerformanceTest = config("bench") extend(Runtime)
+  val AdHocTest = config("adhoc") extend(Runtime)
+
+  val configs = Seq(IntegrationTest, EndToEndTest, PerformanceTest, AdHocTest)
 
   private lazy val integrationTestSettings =
     inConfig(IntegrationTest)(Defaults.testSettings) ++
@@ -28,14 +31,36 @@ object Testing {
       parallelExecution in PerformanceTest := false,
       scalaSource in PerformanceTest := baseDirectory.value / "src/bench/scala")
 
-  lazy val settings = integrationTestSettings ++ 
-                      endToEndTestSettings ++ 
-                      performanceTestSettings ++ 
-  Seq(
-  	testAll := (),
-  	testAll <<= testAll.dependsOn(test in EndToEndTest),
+  private lazy val adhocTestSettings =
+    inConfig(AdHocTest)(Defaults.testSettings) ++
+    Seq(
+      fork in AdHocTest := false,
+      parallelExecution in AdHocTest := false,
+      scalaSource in AdHocTest := baseDirectory.value / "src/adhoc/scala")
+
+  lazy val testAllQuick = TaskKey[Unit]("test-all-quick")
+
+  lazy val testAllQuickSettings = Seq(
+    testAll := (),
+    testAll <<= testAll.dependsOn(test in EndToEndTest),
+    testAll <<= testAll.dependsOn(test in IntegrationTest),
+    testAll <<= testAll.dependsOn(test in Test)
+  )
+
+  lazy val testAll = TaskKey[Unit]("test-all")
+
+  lazy val testAllSettings = Seq(
+    testAll := (),
+    testAll <<= testAll.dependsOn(test in EndToEndTest),
     testAll <<= testAll.dependsOn(test in IntegrationTest),
     testAll <<= testAll.dependsOn(test in PerformanceTest),
     testAll <<= testAll.dependsOn(test in Test)
   )
+
+  lazy val settings = integrationTestSettings ++ 
+                      endToEndTestSettings ++ 
+                      performanceTestSettings ++ 
+                      adhocTestSettings ++
+                      testAllQuickSettings ++
+                      testAllSettings
 }
