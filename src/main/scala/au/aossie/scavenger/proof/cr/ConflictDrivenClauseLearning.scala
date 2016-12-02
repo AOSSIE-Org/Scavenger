@@ -19,9 +19,9 @@ case class ConflictDrivenClauseLearning(conflict: Conflict) extends CRProofNode 
         // We don't need to traverse right premise, because it's either initial clause or conflict driven clause
         left.zip(resolution.leftMgus).map {
           case (node, mgu) => findDecisions(node, mgu(sub))
-        }.fold(SeqClause()())(_ union _)
+        }.fold(SeqClause.empty)(_ union _)
       case _ =>
-        SeqClause()()
+        SeqClause.empty
     }
   }
 

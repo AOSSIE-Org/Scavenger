@@ -10,6 +10,6 @@ import au.aossie.scavenger.structure.immutable.{ SetClause, SeqClause }
   */
 object SimpleConflictAnalyser extends ConflictAnalyser{
   override def learnConflictClause(levels: Seq[DecisionLevel]): SeqClause =
-    (SeqClause()() /: levels.map(!_.literal)) (_ union _.toClause)
+    (SeqClause.empty /: levels.map(!_.literal)) (_ union _.toClause)
 }
 

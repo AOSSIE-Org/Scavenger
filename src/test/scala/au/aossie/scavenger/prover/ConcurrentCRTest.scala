@@ -16,8 +16,8 @@ object ConcurrentCRTest extends App {
 
   def problemToClauses(problem: TPTP.CNFProblem): Seq[Clause] = {
     problem.statements.map {
-      case axiom: TPTP.CNFAxiomStatement => new Clause(axiom.ant, axiom.suc)
-      case negConj: TPTP.CNFNegatedConjectureStatement => new Clause(negConj.ant, negConj.suc)
+      case axiom: TPTP.CNFAxiomStatement => Clause(axiom.ant, axiom.suc)
+      case negConj: TPTP.CNFNegatedConjectureStatement => Clause(negConj.ant, negConj.suc)
     }
   }
 

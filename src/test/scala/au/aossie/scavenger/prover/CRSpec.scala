@@ -4,9 +4,7 @@ import au.aossie.scavenger.expression._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-
-import au.aossie.scavenger.structure.immutable.{CNF, SeqClause => Clause}
-
+import au.aossie.scavenger.structure.immutable.{ CNF, SeqClause => Clause }
 import org.specs2.mutable.Specification
 
 /**
@@ -31,28 +29,30 @@ class CRSpec extends Specification {
 
   private def test(clauses: Clause*) = CR.prove(CNF(ArrayBuffer(clauses: _*)))
 
+  private def clause(ant: E*)(suc: E*) = Clause(ant, suc)
+
   "CR" should {
     "find satisfiable" in {
       test(
-        Clause()(App(P, x)),
-        Clause()(App(P, a))
+        clause()(App(P, x)),
+        clause()(App(P, a))
       ).isInstanceOf[Satisfiable] shouldEqual true
     }
 
     "find unsatisfiable" in {
       test(
-        Clause(App(P, a))(), // P(a)
-        Clause(App(P, App(f, x)))(App(P, x)), // ∀x.(P(x) or !P(f(x))
-        Clause()(App(P, App(f, App(f, a)))) // P(f(f(a)))
+        clause(App(P, a))(), // P(a)
+        clause(App(P, App(f, x)))(App(P, x)), // ∀x.(P(x) or !P(f(x))
+        clause()(App(P, App(f, App(f, a)))) // P(f(f(a)))
       ).isInstanceOf[Unsatisfiable] shouldEqual true
 
       test(
-        Clause()(Pa, Pb),
-        Clause(Pa)(Px),
-        Clause(Pb)(Py),
-        Clause(Pa, Pb)(),
-        Clause()(Pd),
-        Clause(Pz)(App(P, App(f, z)))
+        clause()(Pa, Pb),
+        clause(Pa)(Px),
+        clause(Pb)(Py),
+        clause(Pa, Pb)(),
+        clause()(Pd),
+        clause(Pz)(App(P, App(f, z)))
       ).isInstanceOf[Unsatisfiable] shouldEqual true
     }
   }

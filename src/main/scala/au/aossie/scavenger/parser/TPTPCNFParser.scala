@@ -11,8 +11,8 @@ object TPTPCNFParser extends Parser {
   def parse(filename: String): CNF = {
     val problem = TPTPCNF.problem(filename)
     val clauses = problem.statements.map {
-      case axiom: CNFAxiomStatement => new SeqClause(axiom.ant, axiom.suc)
-      case negConj: CNFNegatedConjectureStatement => new SeqClause(negConj.ant, negConj.suc)
+      case axiom: CNFAxiomStatement => SeqClause(axiom.ant, axiom.suc)
+      case negConj: CNFNegatedConjectureStatement => SeqClause(negConj.ant, negConj.suc)
       //TODO: the case of CNFConjectureStatement seems to be missing
     }
     CNF(clauses)

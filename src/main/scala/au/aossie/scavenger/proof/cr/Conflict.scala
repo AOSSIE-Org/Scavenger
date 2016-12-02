@@ -26,7 +26,7 @@ case class Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)(implici
 
   override def premises = Seq(leftPremise, rightPremise)
 
-  override def conclusion: SeqClause = SeqClause()()
+  override def conclusion: SeqClause = SeqClause.empty
 
   //override def leftAuxFormulas: Clause = leftPremise.conclusion
 

@@ -23,41 +23,43 @@ class CDCLSpec extends Specification {
 
   private def test(clauses: SeqClause*) = CDCL.isSatisfiable(CNF(ArrayBuffer(clauses: _*)))
 
+  private def clause(ant: E*)(suc: E*) = SeqClause(ant, suc)
+
   "CDCL" should {
     "find satisfiable" in {
       test(
-        SeqClause(a, b)(),
-        SeqClause()(b, c),
-        SeqClause(c)(d),
-        SeqClause()(a)
+        clause(a, b)(),
+        clause()(b, c),
+        clause(c)(d),
+        clause()(a)
       ) shouldEqual true
 
       test(
-        SeqClause(a)(b),
-        SeqClause(b, c)(),
-        SeqClause(d)(c)
+        clause(a)(b),
+        clause(b, c)(),
+        clause(d)(c)
       ) shouldEqual true
 
       test(
-        SeqClause(b)(a, x),
-        SeqClause(c)(a),
-        SeqClause()(b, c, d)
+        clause(b)(a, x),
+        clause(c)(a),
+        clause()(b, c, d)
       ) shouldEqual true
 
       test(
-        SeqClause(b)(a, x),
-        SeqClause(c)(a),
-        SeqClause()(b, c, d),
-        SeqClause(d, e)(),
-        SeqClause(d, f)(y),
-        SeqClause()(e, f)
+        clause(b)(a, x),
+        clause(c)(a),
+        clause()(b, c, d),
+        clause(d, e)(),
+        clause(d, f)(y),
+        clause()(e, f)
       ) shouldEqual true
     }
 
     "find unsatisfiable" in {
       test(
-        SeqClause(a)(),
-        SeqClause()(a)
+        clause(a)(),
+        clause()(a)
       ) shouldEqual false
     }
   }
