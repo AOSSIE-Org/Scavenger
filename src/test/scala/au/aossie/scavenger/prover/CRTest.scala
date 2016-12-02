@@ -1,7 +1,7 @@
 package au.aossie.scavenger.prover
 
 import au.aossie.scavenger.expression.Sym
-import au.aossie.scavenger.structure.immutable.{CNF, SetClause => Clause}
+import au.aossie.scavenger.structure.immutable.{CNF, SeqClause => Clause}
 import au.aossie.scavenger.parser.TPTP.{CNFAxiomStatement, CNFNegatedConjectureStatement, CNFProblem, CNF => TPTPCNF}
 
 import scala.collection.mutable
@@ -13,8 +13,8 @@ object CRTest extends App {
 
   def problemToClauses(problem: CNFProblem): Seq[Clause] = {
     problem.statements.map {
-      case axiom: CNFAxiomStatement => new Clause(axiom.ant.toSet, axiom.suc.toSet)
-      case negConj: CNFNegatedConjectureStatement => new Clause(negConj.ant.toSet, negConj.suc.toSet)
+      case axiom: CNFAxiomStatement => new Clause(axiom.ant, axiom.suc)
+      case negConj: CNFNegatedConjectureStatement => new Clause(negConj.ant, negConj.suc)
     }
   }
 

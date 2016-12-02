@@ -1,6 +1,5 @@
 package au.aossie.scavenger.structure.immutable
 
-import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.E
 
 /**
@@ -12,7 +11,7 @@ import au.aossie.scavenger.expression.E
 case class Literal(unit: E, negated: Boolean) {
   def unary_! = Literal(unit, !negated)
 
-  def toClause: SetClause = if (negated) new SetClause(Set(unit), Set.empty) else new SetClause(Set.empty, Set(unit))
+  def toClause: SeqClause = if (negated) new SeqClause(Seq(unit), Seq.empty) else new SeqClause(Seq.empty, Seq(unit))
 
   override def toString: String = if (negated) s"$unit ⊢" else s"⊢ $unit"
 }

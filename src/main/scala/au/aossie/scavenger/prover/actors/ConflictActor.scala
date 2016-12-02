@@ -5,7 +5,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.prover.actors.messages._
-import au.aossie.scavenger.structure.immutable.{ Literal, SetClause }
+import au.aossie.scavenger.structure.immutable.{ Literal, SeqClause }
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.cr.{ Axiom, Decision, UnitPropagationResolution }
@@ -24,7 +24,7 @@ class ConflictActor extends Actor with ActorLogging {
   private implicit val timeout: Timeout = 5 seconds
 
   // Proof for initial and cdcl clauses
-  private val clauseProof = mutable.Map.empty[SetClause, CRProofNode]
+  private val clauseProof = mutable.Map.empty[SeqClause, CRProofNode]
 
   val unifyingActor = context.actorSelection("../unify")
   val mainActor = context.actorSelection("../main")
@@ -42,16 +42,16 @@ class ConflictActor extends Actor with ActorLogging {
         * @param substitution last instantiation of this literal
         * @return clause, representing disjunction of negated decision literals, used in propagation of current literal
         */
-      def findConflictClause(current: Literal, substitution: Substitution = Substitution.empty): SetClause = {
+      def findConflictClause(current: Literal, substitution: Substitution = Substitution.empty): SeqClause = {
         if (allClauses contains current.toClause) {
-          SetClause()()
+          SeqClause.empty
         } else if (decisions contains current) {
           !substitution(current)
         } else if (reverseImpGraph contains current) {
           val conflictClauses = for ((clause, unifier) <- reverseImpGraph(current))
             yield unifier.map {
               case (lit, mgu) => findConflictClause(lit, mgu(substitution))
-            }.fold(SetClause()() )(_ union _)
+            }.fold(SeqClause.empty)(_ union _)
           conflictClauses.toSeq.sortBy(_.width).head
         } else {
           throw new IllegalStateException(s"Literal $current was propagated, but there is no history in implication graph")

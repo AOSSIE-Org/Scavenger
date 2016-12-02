@@ -2,14 +2,14 @@ package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.structure.immutable.SetClause
+import au.aossie.scavenger.structure.immutable.SeqClause
 
 /**
   * @author Daniyar Itegulov
   */
 case class ConflictDrivenClauseLearning(conflict: Conflict) extends CRProofNode {
 
-  private def findDecisions(proofNode: CRProofNode, sub: Substitution): SetClause = {
+  private def findDecisions(proofNode: CRProofNode, sub: Substitution): SeqClause = {
     proofNode match {
       case Decision(literal) =>
         !sub(literal)
@@ -19,15 +19,15 @@ case class ConflictDrivenClauseLearning(conflict: Conflict) extends CRProofNode 
         // We don't need to traverse right premise, because it's either initial clause or conflict driven clause
         left.zip(resolution.leftMgus).map {
           case (node, mgu) => findDecisions(node, mgu(sub))
-        }.fold(SetClause()())(_ union _)
+        }.fold(SeqClause()())(_ union _)
       case _ =>
-        SetClause()()
+        SeqClause()()
     }
   }
 
   val conflictDrivenClause = findDecisions(conflict, Substitution.empty)
 
-  override def conclusion: SetClause = conflictDrivenClause.toSetSequent
+  override def conclusion: SeqClause = conflictDrivenClause.toSeqSequent
 
   override def premises: Seq[CRProofNode] = Seq(conflict)
 }

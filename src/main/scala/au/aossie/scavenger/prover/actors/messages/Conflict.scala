@@ -1,6 +1,6 @@
 package au.aossie.scavenger.prover.actors.messages
 
-import au.aossie.scavenger.structure.immutable.{ Literal, SetClause }
+import au.aossie.scavenger.structure.immutable.{ Literal, SeqClause }
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 
 /**
@@ -8,6 +8,6 @@ import au.aossie.scavenger.expression.substitution.immutable.Substitution
   */
 case class Conflict(leftConflict: Literal,
                     rightConflict: Literal,
-                    allClauses: Set[SetClause],
+                    allClauses: Set[SeqClause],
                     decisions: Seq[Literal],
-                    reverseImpGraph: Map[Literal, Set[(SetClause, Seq[(Literal, Substitution)])]])
+                    reverseImpGraph: Map[Literal, Set[(SeqClause, Seq[(Literal, Substitution)])]])

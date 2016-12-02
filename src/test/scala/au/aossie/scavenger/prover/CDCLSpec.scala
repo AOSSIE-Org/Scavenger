@@ -21,43 +21,43 @@ class CDCLSpec extends Specification {
   private val y = new Sym("Y")
   private val z = new Sym("Z")
 
-  private def test(clauses: SetClause*) = CDCL.isSatisfiable(CNF(ArrayBuffer(clauses: _*)))
+  private def test(clauses: SeqClause*) = CDCL.isSatisfiable(CNF(ArrayBuffer(clauses: _*)))
 
   "CDCL" should {
     "find satisfiable" in {
       test(
-        SetClause(a, b)(),
-        SetClause()(b, c),
-        SetClause(c)(d),
-        SetClause()(a)
+        SeqClause(a, b)(),
+        SeqClause()(b, c),
+        SeqClause(c)(d),
+        SeqClause()(a)
       ) shouldEqual true
 
       test(
-        SetClause(a)(b),
-        SetClause(b, c)(),
-        SetClause(d)(c)
+        SeqClause(a)(b),
+        SeqClause(b, c)(),
+        SeqClause(d)(c)
       ) shouldEqual true
 
       test(
-        SetClause(b)(a, x),
-        SetClause(c)(a),
-        SetClause()(b, c, d)
+        SeqClause(b)(a, x),
+        SeqClause(c)(a),
+        SeqClause()(b, c, d)
       ) shouldEqual true
 
       test(
-        SetClause(b)(a, x),
-        SetClause(c)(a),
-        SetClause()(b, c, d),
-        SetClause(d, e)(),
-        SetClause(d, f)(y),
-        SetClause()(e, f)
+        SeqClause(b)(a, x),
+        SeqClause(c)(a),
+        SeqClause()(b, c, d),
+        SeqClause(d, e)(),
+        SeqClause(d, f)(y),
+        SeqClause()(e, f)
       ) shouldEqual true
     }
 
     "find unsatisfiable" in {
       test(
-        SetClause(a)(),
-        SetClause()(a)
+        SeqClause(a)(),
+        SeqClause()(a)
       ) shouldEqual false
     }
   }

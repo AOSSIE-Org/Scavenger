@@ -1,10 +1,9 @@
 package au.aossie.scavenger
 
-import au.aossie.scavenger.structure.immutable.Literal
-import au.aossie.scavenger.unification.{MartelliMontanari => unify}
+import au.aossie.scavenger.structure.immutable.{ Literal, SeqClause }
+import au.aossie.scavenger.unification.{ MartelliMontanari => unify }
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.expression.{Abs, App, E, Sym, i}
-import au.aossie.scavenger.structure.immutable.SetClause
+import au.aossie.scavenger.expression._
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -16,13 +15,13 @@ package object prover {
 
   implicit def varToLit(variable: E): Literal = Literal(variable, negated = false)
 
-  implicit def literalToClause(literal: Literal): SetClause = literal.toClause
+  implicit def literalToClause(literal: Literal): SeqClause = literal.toClause
 
 //  implicit class ClauseOperations(val clause: Clause) extends AnyVal {
 //
 //  }
 
-  implicit class UnitSequent(val sequent: SetClause) extends AnyVal {
+  implicit class UnitSequent(val sequent: SeqClause) extends AnyVal {
     def literal: Literal =
       if (sequent.ant.size == 1 && sequent.suc.isEmpty) Literal(sequent.ant.head, negated = true)
       else if (sequent.ant.isEmpty && sequent.suc.size == 1) Literal(sequent.suc.head, negated = false)
@@ -30,10 +29,10 @@ package object prover {
   }
 
   implicit class LiteralsAreSequent(val literals: Iterable[Literal]) extends AnyVal {
-    def toSequent: SetClause = {
+    def toSequent: SeqClause = {
       val ant = literals.flatMap(l => if (l.negated) Some(l.unit) else None)
       val suc = literals.flatMap(l => if (l.negated) None else Some(l.unit))
-      new SetClause(ant.toSet, suc.toSet)
+      SeqClause(ant.toSeq, suc.toSeq)
     }
   }
 
@@ -157,5 +156,26 @@ package object prover {
     */
   def combinations[A](xss: Seq[Seq[A]]): Seq[Seq[A]] =
     xss.foldLeft(Seq(Seq.empty[A])) { (x, y) => for (a <- x.view; b <- y) yield a :+ b }
+
+  def tptpPrettify(e: E): String = {
+    e match {
+      case Abs(_, _, _) => throw new IllegalArgumentException("Doesn't work with abs")
+      case Sym("additive_identity") => "0"
+      case Sym("multiplicative_identity") => "1"
+      case App(Sym("multiplicative_inverse"), a) => "1/" + tptpPrettify(a)
+      case App(Sym("additive_inverse"), a) => "-" + tptpPrettify(a)
+      case AppRec(Sym("less_or_equal"), Seq(l, r)) => tptpPrettify(l) + " ≤ " + tptpPrettify(r)
+      case AppRec(Sym("sum"), Seq(a, b, c)) => tptpPrettify(a) + " + " + tptpPrettify(b) + " = " + tptpPrettify(c)
+      case AppRec(Sym("add"), Seq(a, b)) => tptpPrettify(a) + " + " + tptpPrettify(b)
+      case AppRec(Sym("product"), Seq(a, b, c)) => tptpPrettify(a) + " * " + tptpPrettify(b) + " = " + tptpPrettify(c)
+      case AppRec(Sym("multiply"), Seq(a, b)) => tptpPrettify(a) + " * " + tptpPrettify(b)
+      case x => x.toString
+    }
+  }
+
+  def tptpPrettify(clause: SeqClause): String = {
+    val (ant, suc) = clause.map(tptpPrettify, tptpPrettify)
+    ant.map("¬" + _).mkString(" ∨ ") + " ⊢ " + suc.mkString(" ∨ ")
+  }
 }
 

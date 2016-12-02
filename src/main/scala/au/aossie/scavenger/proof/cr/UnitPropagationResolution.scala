@@ -1,7 +1,7 @@
 package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.structure.immutable.{ Literal, SeqClause, SetClause }
+import au.aossie.scavenger.structure.immutable.{ Literal, SeqClause }
 import au.aossie.scavenger.expression.Sym
 
 import scala.collection.mutable
@@ -26,24 +26,23 @@ case class UnitPropagationResolution(left: Seq[CRProofNode], right: CRProofNode,
       val rightAux = rightLiterals.map(_.unit)
       // TODO: after migrating from Set to Seq we've lost order of rights literals, so I just look for a correct permutation
       // it's not so efficient though.
-      leftAux.permutations.map { leftAuxPerm =>
-        unifyWithRename(leftAuxPerm, rightAux).flatMap {
-          case (lmgu, rmgu) =>
-            val conclusion = rmgu(right.conclusion.literals(desiredIndex))
-            if (conclusion.negated != desired.negated || !isInstantiation(desired.unit, conclusion.unit)) {
-              None // If desired literal is not a resulting literal
-            } else {
-              Some(lmgu, rmgu, rightLiterals, desiredIndex) // Pack some additional information to Option
-            }
-        }
-      }.flatten.toSeq.headOption
+      unifyWithRename(leftAux, rightAux).flatMap {
+        case (lmgu, rmgu) =>
+          val conclusion = rmgu(right.conclusion.literals(desiredIndex))
+          if (conclusion.negated != desired.negated || !isInstantiation(desired.unit, conclusion.unit)) {
+            None // If desired literal is not a resulting literal
+          } else {
+            Some(lmgu, rmgu, rightLiterals, desiredIndex) // Pack some additional information to Option
+          }
+      }
     }
   }).find(_.isDefined).flatten match {
-    case None => throw new IllegalArgumentException("Unit-Propagation Resolution: given premise clauses are not resolvable")
+    case None =>
+      throw new IllegalArgumentException("Unit-Propagation Resolution: given premise clauses are not resolvable")
     case Some(u) => u
   }
 
-  override def conclusion: SetClause = rightMgu(right.conclusion.literals(desiredIndex))
+  override def conclusion: SeqClause = rightMgu(right.conclusion.literals(desiredIndex))
 
   override def premises: Seq[CRProofNode] = left :+ right
 }
