@@ -71,7 +71,7 @@ package object prover {
       val replacement = notUsedVars.headOption getOrElse { // Use some variable from unification variables
       // Or create a new one
       var newVar = Sym(v + "'") // Critical point where type information was lost during refactoring
-        while (sharedVars contains newVar) {
+        while (usedVars contains newVar) {
           newVar = Sym(newVar + "'") // Critical point where type information was lost during refactoring
         }
         variables += newVar // It will be available for unification from now
