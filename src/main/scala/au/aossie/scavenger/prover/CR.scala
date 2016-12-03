@@ -66,7 +66,7 @@ object CR extends Prover {
       * @param clause initial non-unit clause
       * @return Set of literals, which were propagated from given clause
       */
-    def resolve(clause: SeqClause, result: mutable.Set[Literal]): Set[Literal] = {
+    def resolve(clause: SeqClause, result: mutable.Set[Literal]): Unit = {
       // For each literal in clause we fetch what unit clauses exists which can be resolved with this literal
       // e.g. unifyCandidates for Clause(!P(X), Q(a)) can be Seq(Seq(P(a), P(b), P(f(a))), Seq(!Q(X), !Q(a)))
       val unifyCandidates = clause.literals.map(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty).toSeq)
@@ -105,7 +105,6 @@ object CR extends Prover {
           }
         }
       }
-      result.toSet
     }
 
     /**
@@ -122,8 +121,15 @@ object CR extends Prover {
       } else if (decision contains current) {
         false
       } else {
-        reverseImplicationGraph(current).exists {
+        if (!reverseImplicationGraph(current).forall {
           case (clause, unifiers) => unifiers.exists { case (lit, _) => isAncestor(lit, ancestor) }
+        }) {
+          reverseImplicationGraph(current) = reverseImplicationGraph(current).filterNot {
+            case (clause, unifiers) => unifiers.exists { case (lit, _) => isAncestor(lit, ancestor) }
+          }
+          false
+        } else {
+          true
         }
       }
     }
