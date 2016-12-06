@@ -9,23 +9,7 @@ import au.aossie.scavenger.structure.immutable.SeqClause
   */
 case class ConflictDrivenClauseLearning(conflict: Conflict) extends CRProofNode {
 
-  private def findDecisions(proofNode: CRProofNode, sub: Substitution): SeqClause = {
-    proofNode match {
-      case Decision(literal) =>
-        !sub(literal)
-      case conflict@Conflict(left, right) =>
-        findDecisions(left, conflict.leftMgu) union findDecisions(right, conflict.rightMgu)
-      case resolution@UnitPropagationResolution(left, right, _) =>
-        // We don't need to traverse right premise, because it's either initial clause or conflict driven clause
-        left.zip(resolution.leftMgus).map {
-          case (node, mgu) => findDecisions(node, mgu(sub))
-        }.fold(SeqClause.empty)(_ union _)
-      case _ =>
-        SeqClause.empty
-    }
-  }
-
-  val conflictDrivenClause = findDecisions(conflict, Substitution.empty)
+  val conflictDrivenClause = conflict.findDecisions(Substitution.empty)
 
   override def conclusion: SeqClause = conflictDrivenClause.toSeqSequent
 

@@ -190,34 +190,6 @@ object CR extends Prover {
     }
 
     /**
-      * Finds conflict clause, used consisting of negation of all decisions-ancestors of `current`.
-      *
-      * @param current literal
-      * @param substitution last instantiation of this literal
-      * @return clause, representing disjunction of negated decision literals, used in propagation of current literal
-      */
-    def findConflictClause(current: Literal, substitution: Substitution = Substitution.empty): SeqClause = {
-      if (allClauses contains current.toClause) {
-        SeqClause.empty
-      } else if (decision contains current) {
-        !substitution(current)
-      } else if (reverseImplicationGraph contains current) {
-        val conflictClauses = for ((clause, unifier) <- reverseImplicationGraph(current))
-          yield (clause, unifier,
-              unifier.map {
-                case (lit, mgu) => findConflictClause(lit, mgu(substitution))
-              }.fold(SeqClause.empty)(_ union _)
-            )
-        val (bestClause, bestUnifier, bestConflictClause) = conflictClauses.toSeq.sortBy(_._3.width).head
-        reverseImplicationGraph(current).clear()
-        reverseImplicationGraph(current) += ((bestClause, bestUnifier))
-        bestConflictClause
-      } else {
-        throw new IllegalStateException("Literal was propagated, but there is no history in implication graph")
-      }
-    }
-
-    /**
       * Creates formal proof, which formally reasons `current` literal.
       *
       * @param current literal to be proved
@@ -280,13 +252,8 @@ object CR extends Prover {
         println(s"There is a conflict from $conflictLiteral and $otherLiteral")
 
         val (Seq(leftMgu), rightMgu) = unifyWithRename(Seq(conflictLiteral.unit), Seq(otherLiteral.unit)).get
-        val conflictClauseLeft = findConflictClause(conflictLiteral, leftMgu)
-        val conflictClauseRight = findConflictClause(otherLiteral, rightMgu)
-
-        println(s"Conflict clause from $conflictLiteral is $conflictClauseLeft")
-        println(s"Conflict clause from $otherLiteral is $conflictClauseRight")
-        val newClause = conflictClauseLeft union conflictClauseRight
         val conflict = Conflict(buildProof(conflictLiteral), buildProof(otherLiteral))
+        val newClause = conflict.findDecisions(Substitution.empty)
         clauseProof(newClause) = ConflictDrivenClauseLearning(conflict)
         println(s"Derived $newClause")
         if (newClause == SeqClause.empty) return Unsatisfiable(Some(Proof(conflict)))
