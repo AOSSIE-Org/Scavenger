@@ -2,8 +2,10 @@ package au.aossie.scavenger.prover
 
 import au.aossie.scavenger.structure.immutable.{ Literal, CNF, SeqClause }
 import au.aossie.scavenger.expression.Sym
+import au.aossie.scavenger.expression.formula.Neg
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.cr.{ CRProof => Proof, _ }
+import au.aossie.scavenger.model.Assignment
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -264,13 +266,15 @@ object CR extends Prover {
         val toAdd = conflictLearnedClauses.filterNot(allClauses.contains(_)).toSet
         println("New CDCL clauses:\n" + toAdd.map(tptpPrettify).mkString("\n"))
         reset(toAdd)
+      } else if (allClauses.forall(_.literals.exists(propagatedLiterals.contains))) {
+        val literals = propagatedLiterals ++ decision
+        val trueLiterals = literals.filterNot(_.negated).map(_.unit).toSet
+        val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
+        return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
       } else if (result.isEmpty) {
-        return Satisfiable(None) // TODO: Check that 'Satisfiable' is really the correct ProblemStatus to return here.
-        // Consider the possibility of returning 'Some(assignment)' where assignment is a model built with the new classes Model or Assignment,
-        // containing decision literals and propagated literals.
+        return GaveUp
       }
     }
     Error // this line is unreachable.
   }
 }
-
