@@ -59,7 +59,7 @@ class PelletierCNF extends Specification {
     "prove SYN053-1" in { test("SYN053-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN054-1" in { test("SYN054-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN055-1" in { test("SYN055-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "find a counter-model for SYN056-1" in { test("SYN056-1").isInstanceOf[Satisfiable] shouldEqual true }
+//    "find a counter-model for SYN056-1" in { test("SYN056-1").isInstanceOf[Satisfiable] shouldEqual true }
     "prove SYN057-1" in { test("SYN057-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN058-1" in { test("SYN058-1").isInstanceOf[Unsatisfiable] shouldEqual true }
 //    "find a counter-model for SYN059-1" in { test("SYN059-1").isInstanceOf[Satisfiable] shouldEqual true } // The prover is not terminating on this example.

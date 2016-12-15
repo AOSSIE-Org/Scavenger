@@ -3,7 +3,7 @@ package cr
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.structure.immutable.SeqClause
+import au.aossie.scavenger.structure.immutable.{ SeqClause, Literal }
 
 abstract class CRProofNode extends ProofNode[SeqClause, CRProofNode] {
   def findDecisions(sub: Substitution): SeqClause = {
@@ -22,6 +22,19 @@ abstract class CRProofNode extends ProofNode[SeqClause, CRProofNode] {
           .fold(SeqClause.empty)(_ union _)
       case _ =>
         SeqClause.empty
+    }
+  }
+
+  def listDecisions(): Seq[Literal] = {
+    this match {
+      case Decision(literal) =>
+        Seq(literal)
+      case Conflict(left, right) =>
+        left.listDecisions() ++ right.listDecisions()
+      case resolution @ UnitPropagationResolution(left, _, _) =>
+        left.zip(resolution.leftMgus).map(_._1.listDecisions()).fold(Seq.empty)(_ ++ _)
+      case _ =>
+        Seq.empty
     }
   }
 }
