@@ -95,10 +95,11 @@ object CR extends Prover {
           unifyWithRename(unifierUnits, literalUnits) match {
             // All unifiers should be unified with literals using one common mgu
             case Some((_, rightMgu)) =>
-              val newLiteral = Literal(rightMgu(conclusion.unit), conclusion.negated)
+              val clauseNode   = reverseImplicationGraph(clause).head
+              val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSeqSequent).head)
+              val proofNode    = UnitPropagationResolution(unifierNodes, clauseNode)
+              val newLiteral   = proofNode.conclusion.literal
               if (!unifier.exists(isAncestor(_, newLiteral))) {
-                val clauseNode   = reverseImplicationGraph(clause).head
-                val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSeqSequent).head)
                 ancestor.getOrElseUpdate(newLiteral, mutable.Set.empty) ++=
                   (Set.empty[SeqClause] /: unifier)(_ union ancestor(_)) + clause
                 if (decisions.contains(newLiteral)) {
@@ -108,11 +109,11 @@ object CR extends Prover {
                   val buffer =
                     reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
                   buffer.clear()
-                  buffer += UnitPropagationResolution(unifierNodes, clauseNode, newLiteral)
+                  buffer += proofNode
                 } else {
                   val buffer =
                     reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
-                  buffer += UnitPropagationResolution(unifierNodes, clauseNode, newLiteral)
+                  buffer += proofNode
                 }
                 if (!result.contains(newLiteral) && !propagatedLiterals.contains(newLiteral)) {
                   result += newLiteral
@@ -141,7 +142,7 @@ object CR extends Prover {
         false
       } else {
         if (!reverseImplicationGraph(current).forall {
-              case UnitPropagationResolution(unifiers, _, _) =>
+              case UnitPropagationResolution(unifiers, _, _, _, _) =>
                 unifiers.exists { proofNode =>
                   isAncestor(proofNode.conclusion.literal, ancestor)
                 }
@@ -150,7 +151,7 @@ object CR extends Prover {
                 false
             }) {
           reverseImplicationGraph(current) = reverseImplicationGraph(current).filterNot {
-            case UnitPropagationResolution(unifiers, _, _) =>
+            case UnitPropagationResolution(unifiers, _, _, _, _) =>
               unifiers.exists { proofNode =>
                 isAncestor(proofNode.conclusion.literal, ancestor)
               }
@@ -264,25 +265,31 @@ object CR extends Prover {
       depth += 1
 
       val interestingConflictLearnedClauses = ArrayBuffer.empty[CRProofNode]
-      val allConflictLearnedClauses = ArrayBuffer.empty[CRProofNode]
+      val allConflictLearnedClauses         = ArrayBuffer.empty[CRProofNode]
       propagatedLiterals.filter(unifiableUnits(_).nonEmpty).foreach { conflictLiteral =>
         // For each literal, which can be unified with some other literal
-        val otherLiteral = unifiableUnits(conflictLiteral).head
-        val conflict = Conflict(reverseImplicationGraph(conflictLiteral).head,
-                                reverseImplicationGraph(otherLiteral).head)
-        val newClause = conflict.findDecisions(Substitution.empty)
-        if (newClause == SeqClause.empty) return Unsatisfiable(Some(Proof(conflict)))
-        val cdclNode = ConflictDrivenClauseLearning(conflict)
-        if (!allClauses.contains(cdclNode.conclusion)) {
-          interestingConflictLearnedClauses += cdclNode
-          usedDecisions ++= conflict.listDecisions()
+        for (otherLiteral <- unifiableUnits(conflictLiteral)) {
+          for {
+            conflictProof <- reverseImplicationGraph(conflictLiteral)
+            otherProof    <- reverseImplicationGraph(otherLiteral)
+            conflict = Conflict(conflictProof, otherProof)
+          } {
+            val newClause = conflict.findDecisions(Substitution.empty)
+            if (newClause == SeqClause.empty) return Unsatisfiable(Some(Proof(conflict)))
+            val cdclNode = ConflictDrivenClauseLearning(conflict)
+            if (!allClauses.contains(cdclNode.conclusion)) {
+              interestingConflictLearnedClauses += cdclNode
+              usedDecisions ++= conflict.listDecisions()
+            }
+            allConflictLearnedClauses += cdclNode
+          }
         }
-        allConflictLearnedClauses += cdclNode
       }
 
       println(s"Premature decisions: $decisions")
 
-      if (allConflictLearnedClauses.isEmpty && cnf.clauses.forall(_.literals.exists(propagatedLiterals.contains))) {
+      if (allConflictLearnedClauses.isEmpty && cnf.clauses.forall(
+            _.literals.exists(propagatedLiterals.contains))) {
         val literals      = propagatedLiterals ++ decisions
         val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
         val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
@@ -304,7 +311,7 @@ object CR extends Prover {
               true
             case ConflictDrivenClauseLearning(_) =>
               true
-            case UnitPropagationResolution(left, right, _) =>
+            case UnitPropagationResolution(left, right, _, _, _) =>
               left.forall(valid) && valid(right)
           }
         }
@@ -321,7 +328,8 @@ object CR extends Prover {
       println(s"Decided $decisions")
 
       if (interestingConflictLearnedClauses.nonEmpty) {
-        val cdclClauses = interestingConflictLearnedClauses.map(node => tptpPrettify(node.conclusion))
+        val cdclClauses =
+          interestingConflictLearnedClauses.map(node => tptpPrettify(node.conclusion))
         println("New CDCL clauses:\n" + cdclClauses.mkString("\n"))
         reset(interestingConflictLearnedClauses)
       }
