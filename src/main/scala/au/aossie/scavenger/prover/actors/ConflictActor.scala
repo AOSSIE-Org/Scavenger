@@ -74,7 +74,9 @@ class ConflictActor extends Actor with ActorLogging {
           val premiseProofs = unifier.map {
             case (lit, _) => buildProof(lit)
           }
-          UnitPropagationResolution(premiseProofs, clauseProof(clause), current)
+          // FIXME: Current ConcurrentCR implementation is no longer supported and will probably be deleted
+          ???
+//          UnitPropagationResolution(premiseProofs, clauseProof(clause), current)
         } else {
           throw new IllegalStateException("Literal was propagated, but there is no history in implication graph")
         }
