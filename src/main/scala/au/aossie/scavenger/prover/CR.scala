@@ -263,21 +263,24 @@ object CR extends Prover {
       updateSystem(result)
       depth += 1
 
-      val interestingConflictLearnedClauses = ArrayBuffer.empty[CRProofNode]
-      val allConflictLearnedClauses         = ArrayBuffer.empty[CRProofNode]
+      val interestingConflictLearnedClauses = mutable.Set.empty[CRProofNode]
+      val allConflictLearnedClauses         = mutable.Set.empty[CRProofNode]
       propagatedLiterals.filter(unifiableUnits(_).nonEmpty).foreach { conflictLiteral =>
-        // For each literal, which can be unified with some other literal
-        val otherLiteral = unifiableUnits(conflictLiteral).head
-        val conflict = Conflict(reverseImplicationGraph(conflictLiteral).head,
-                                reverseImplicationGraph(otherLiteral).head)
-        val newClause = conflict.findDecisions(Substitution.empty)
-        if (newClause == SeqClause.empty) return Unsatisfiable(Some(Proof(conflict)))
-        val cdclNode = ConflictDrivenClauseLearning(conflict)
-        if (!allClauses.contains(cdclNode.conclusion)) {
-          interestingConflictLearnedClauses += cdclNode
-          usedDecisions ++= conflict.listDecisions()
+        for {
+          otherLiteral <- unifiableUnits(conflictLiteral)
+          conflictNode <- reverseImplicationGraph(conflictLiteral)
+          otherNode <- reverseImplicationGraph(otherLiteral)
+          conflict = Conflict(conflictNode, otherNode)
+        } {
+          val newClause = conflict.findDecisions(Substitution.empty)
+          if (newClause == SeqClause.empty) return Unsatisfiable(Some(Proof(conflict)))
+          val cdclNode = ConflictDrivenClauseLearning(conflict)
+          if (!allClauses.contains(cdclNode.conclusion)) {
+            interestingConflictLearnedClauses += cdclNode
+            usedDecisions ++= conflict.listDecisions()
+          }
+          allConflictLearnedClauses += cdclNode
         }
-        allConflictLearnedClauses += cdclNode
       }
 
       println(s"Premature decisions: $decisions")
