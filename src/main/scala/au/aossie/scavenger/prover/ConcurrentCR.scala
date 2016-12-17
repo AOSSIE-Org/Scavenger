@@ -2,7 +2,6 @@ package au.aossie.scavenger.prover
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
-import akka.util.Timeout
 import au.aossie.scavenger.prover.actors.{ConflictActor, MainActor, PropagationActor, UnifyingActor}
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.proof.cr.{CRProof => Proof}
@@ -21,6 +20,7 @@ import scala.language.postfixOps
 // TODO: akka logging level is currently too verbose.
 object ConcurrentCR extends Prover {
   def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): ProblemStatus = {
+    import akka.util.Timeout
     implicit val timeout: Timeout = 2 seconds
     implicit val system = ActorSystem()
 
