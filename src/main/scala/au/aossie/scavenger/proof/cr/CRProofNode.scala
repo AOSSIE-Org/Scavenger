@@ -12,10 +12,10 @@ abstract class CRProofNode extends ProofNode[SeqClause, CRProofNode] {
         !sub(literal)
       case conflict @ Conflict(left, right) =>
         left.findDecisions(conflict.leftMgu) union right.findDecisions(conflict.rightMgu)
-      case resolution @ UnitPropagationResolution(left, right, _) =>
+      case UnitPropagationResolution(left, right, _, leftMgus, _) =>
         // We don't need to traverse right premise, because it's either initial clause or conflict driven clause
         left
-          .zip(resolution.leftMgus)
+          .zip(leftMgus)
           .map {
             case (node, mgu) => node.findDecisions(mgu(sub))
           }
@@ -31,8 +31,8 @@ abstract class CRProofNode extends ProofNode[SeqClause, CRProofNode] {
         Seq(literal)
       case Conflict(left, right) =>
         left.listDecisions() ++ right.listDecisions()
-      case resolution @ UnitPropagationResolution(left, _, _) =>
-        left.zip(resolution.leftMgus).map(_._1.listDecisions()).fold(Seq.empty)(_ ++ _)
+      case UnitPropagationResolution(left, _, _, leftMgus, _) =>
+        left.zip(leftMgus).map(_._1.listDecisions()).fold(Seq.empty)(_ ++ _)
       case _ =>
         Seq.empty
     }
