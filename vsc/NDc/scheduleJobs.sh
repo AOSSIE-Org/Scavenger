@@ -1,2 +1,0 @@
-qsub NDc.job
-qstat
