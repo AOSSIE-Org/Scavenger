@@ -1,6 +1,6 @@
 package au.aossie.scavenger.prover.conflict
 
-import au.aossie.scavenger.structure.immutable.{ SetClause, SeqClause }
+import au.aossie.scavenger.structure.immutable.{ SetClause => Clause }
 import au.aossie.scavenger.prover.util.DecisionLevel
 
 /**
@@ -15,6 +15,6 @@ trait ConflictAnalyser {
     * @param levels decision levels
     * @return learnt clause
     */
-  def learnConflictClause(levels: Seq[DecisionLevel]): SeqClause
+  def learnConflictClause(levels: Seq[DecisionLevel]): Clause
 }
 

@@ -11,8 +11,8 @@ import au.aossie.scavenger.expression.E
 case class Literal(unit: E, negated: Boolean) {
   def unary_! = Literal(unit, !negated)
 
-  def toClause: SeqClause = if (negated) SeqClause(Seq(unit), Seq.empty) else SeqClause(Seq.empty, Seq(unit))
+  def toSetClause: SetClause =
+    if (negated) new SetClause(Set(unit), Set.empty) else new SetClause(Set.empty, Set(unit))
 
   override def toString: String = if (negated) s"$unit ⊢" else s"⊢ $unit"
 }
-

@@ -1,8 +1,7 @@
 package au.aossie.scavenger.prover
 
-import au.aossie.scavenger.structure.immutable._
+import au.aossie.scavenger.structure.immutable.{ CNF, SetClause => Clause }
 import au.aossie.scavenger.expression._
-
 import org.specs2.mutable.Specification
 
 import scala.collection.mutable.ArrayBuffer
@@ -21,9 +20,9 @@ class CDCLSpec extends Specification {
   private val y = new Sym("Y")
   private val z = new Sym("Z")
 
-  private def test(clauses: SeqClause*) = CDCL.isSatisfiable(CNF(ArrayBuffer(clauses: _*)))
+  private def test(clauses: Clause*) = CDCL.isSatisfiable(CNF(ArrayBuffer(clauses: _*)))
 
-  private def clause(ant: E*)(suc: E*) = SeqClause(ant, suc)
+  private def clause(ant: E*)(suc: E*) = new Clause(ant.toSet, suc.toSet)
 
   "CDCL" should {
     "find satisfiable" in {
@@ -64,4 +63,3 @@ class CDCLSpec extends Specification {
     }
   }
 }
-

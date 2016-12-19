@@ -1,7 +1,7 @@
 package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.structure.immutable.{ Literal, SeqClause }
+import au.aossie.scavenger.structure.immutable.{ Literal, SetClause => Clause }
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 
@@ -23,7 +23,7 @@ case class UnitPropagationResolution private (
   require(left.size + 1 == right.conclusion.width,
           "There should be enough left premises to derive desired")
 
-  override def conclusion: SeqClause = desired
+  override def conclusion: Clause = desired
 
   override def premises: Seq[CRProofNode] = left :+ right
 }

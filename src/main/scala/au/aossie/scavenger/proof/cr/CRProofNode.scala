@@ -3,10 +3,10 @@ package cr
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.structure.immutable.{ SeqClause, Literal }
+import au.aossie.scavenger.structure.immutable.{ SetClause => Clause, Literal }
 
-abstract class CRProofNode extends ProofNode[SeqClause, CRProofNode] {
-  def findDecisions(sub: Substitution): SeqClause = {
+abstract class CRProofNode extends ProofNode[Clause, CRProofNode] {
+  def findDecisions(sub: Substitution): Clause = {
     this match {
       case Decision(literal) =>
         !sub(literal)
@@ -19,9 +19,9 @@ abstract class CRProofNode extends ProofNode[SeqClause, CRProofNode] {
           .map {
             case (node, mgu) => node.findDecisions(mgu(sub))
           }
-          .fold(SeqClause.empty)(_ union _)
+          .fold(Clause.empty)(_ union _)
       case _ =>
-        SeqClause.empty
+        Clause.empty
     }
   }
 

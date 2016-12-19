@@ -1,7 +1,8 @@
 package au.aossie.scavenger.structure.mutable
 
+import au.aossie.scavenger.expression.E
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.structure.immutable.{ Literal, SeqClause }
+import au.aossie.scavenger.structure.immutable.{ Literal, SetClause => Clause }
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -11,27 +12,27 @@ import scala.collection.mutable.ArrayBuffer
   *
   * @author Daniyar Itegulov
   */
-class CNF(val clauses: ArrayBuffer[SeqClause]) {
+class CNF(val clauses: ArrayBuffer[Clause]) {
   /**
     * Shows which literals are set to be true.
     */
-  val assignment = mutable.Set.empty[Literal]
+  val assignment: mutable.Set[Literal] = mutable.Set.empty[Literal]
 
   /**
     * Just all variables, contained in CNF.
     */
-  val variables = clauses.flatMap(_.literals.map(_.unit))
+  val variables: ArrayBuffer[E] = clauses.flatMap(_.literals.map(_.unit))
 
   /**
     * Represents two-watched literal scheme:
     * for each literal we know what clauses have watchers set
     * to this literal.
     */
-  val sentinels: Map[Literal, mutable.Set[SeqClause]] = {
+  val sentinels: Map[Literal, mutable.Set[Clause]] = {
     val sentinels = variables.flatMap(variable =>
       Seq(
-        varToLit(variable) -> mutable.Set.empty[SeqClause],
-        !varToLit(variable) -> mutable.Set.empty[SeqClause]
+        varToLit(variable) -> mutable.Set.empty[Clause],
+        !varToLit(variable) -> mutable.Set.empty[Clause]
       )
     ).toMap
     for (clause <- clauses) if (clause.width >= 2) {
@@ -41,7 +42,7 @@ class CNF(val clauses: ArrayBuffer[SeqClause]) {
     sentinels
   }
 
-  def +=(that: SeqClause): CNF = {
+  def +=(that: Clause): CNF = {
     if (that.width >= 1) {
       sentinels(that.first) += that
       sentinels(that.last) += that
@@ -50,7 +51,7 @@ class CNF(val clauses: ArrayBuffer[SeqClause]) {
     this
   }
 
-  def -=(that: SeqClause): CNF = {
+  def -=(that: Clause): CNF = {
     if (clauses.contains(that) && that.width >= 1) {
       sentinels(that.first) -= that
       sentinels(that.last) -= that
@@ -59,7 +60,7 @@ class CNF(val clauses: ArrayBuffer[SeqClause]) {
     this
   }
 
-  private def clauseIsSatisfied(clause: SeqClause): Boolean = clause.literals.exists(assignment.contains)
+  private def clauseIsSatisfied(clause: Clause): Boolean = clause.literals.exists(assignment.contains)
 
   /**
     * Ensures that provided literal is true and returns sequence

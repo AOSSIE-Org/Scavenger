@@ -1,7 +1,7 @@
 package au.aossie.scavenger
 
 import au.aossie.scavenger.structure.immutable.CNF
-import au.aossie.scavenger.prover.{CR, ConcurrentCR}
+import au.aossie.scavenger.prover.CR
 import au.aossie.scavenger.prover.{Unsatisfiable, Satisfiable}
 import au.aossie.scavenger.parser.TPTPCNFParser
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
@@ -19,8 +19,7 @@ object CLI {
                     output: Output = StandardOutput)
 
   val algorithms = Map(
-    "CR" -> CR,
-    "ConcurrentCR" -> ConcurrentCR
+    "CR" -> CR
   )
   val parsers = Map(
     "cnf" -> TPTPCNFParser,
@@ -63,7 +62,7 @@ object CLI {
     arg[String]("<problem-file>...") unbounded() optional() action { (v, c) =>
       c.copy(inputs = c.inputs :+ v)
     } text "solve <problem-file>\n"
-    
+
     help("help") text("print this usage text")
 
     note(
