@@ -18,8 +18,8 @@ object CRTest extends App {
 
   def problemToClauses(problem: CNFProblem): Seq[Clause] = {
     problem.statements.map {
-      case axiom: CNFAxiomStatement               => new Clause(axiom.ant.toSet, axiom.suc.toSet)
-      case negConj: CNFNegatedConjectureStatement => new Clause(negConj.ant.toSet, negConj.suc.toSet)
+      case axiom: CNFAxiomStatement               => Clause(axiom.ant: _*)(axiom.suc: _*)
+      case negConj: CNFNegatedConjectureStatement => Clause(negConj.ant: _*)(negConj.suc: _*)
     }
   }
 

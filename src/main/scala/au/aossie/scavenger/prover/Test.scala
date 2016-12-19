@@ -26,6 +26,6 @@ object Test {
   }
 
   def main(args: Array[String]): Unit = {
-    println(test("GRP135-2.002"))
+    println(test("SYN067-1"))
   }
 }

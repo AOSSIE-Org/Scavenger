@@ -12,7 +12,7 @@ import au.aossie.scavenger.structure.immutable.Literal
  */
 abstract class AbstractClause extends ClauseLike[AbstractClause] {
 
-  def toSetSequent = new immutable.SetClause(ant.toSet, suc.toSet)
+  def toSetSequent = immutable.SetClause(ant.toSeq: _*)(suc.toSeq: _*)
   def toSeqSequent = immutable.SeqClause(ant.toSeq, suc.toSeq)
 
   def literals = ant.map(Literal(_, negated = true)).toSeq ++ suc.map(Literal(_, negated = false))

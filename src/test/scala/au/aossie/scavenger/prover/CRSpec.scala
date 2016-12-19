@@ -29,7 +29,7 @@ class CRSpec extends Specification {
 
   private def test(clauses: Clause*) = CR.prove(CNF(ArrayBuffer(clauses: _*)))
 
-  private def clause(ant: E*)(suc: E*) = new Clause(ant.toSet, suc.toSet)
+  private def clause(ant: E*)(suc: E*) = Clause(ant.toSeq: _*)(suc.toSeq: _*)
 
   "CR" should {
     "find satisfiable" in {

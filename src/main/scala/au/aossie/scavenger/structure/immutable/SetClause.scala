@@ -3,13 +3,15 @@ package immutable
 
 import au.aossie.scavenger.expression.E
 
+import scala.collection.immutable.ListSet
+
 /**
  *
  *  @author  Bruno Woltzenlogel Paleo
  *  @version 0.2
  *  @since   0.2
  */
-class SetClause(val ant: Set[E], val suc: Set[E]) extends AbstractClause with ClauseLike[SetClause] {
+class SetClause(val ant: ListSet[E], val suc: ListSet[E]) extends AbstractClause with ClauseLike[SetClause] {
   def +(f:E) = new SetClause(ant, suc + f)
   def +:(f:E) = new SetClause(ant + f, suc)
   def -(f:E) =  new SetClause(ant, suc - f)
@@ -23,7 +25,7 @@ class SetClause(val ant: Set[E], val suc: Set[E]) extends AbstractClause with Cl
 }
 
 object SetClause {
-  def apply(left: E*)(right: E*)  = new SetClause(left.toSet, right.toSet)
-  def empty = new SetClause(Set(), Set())
+  def apply(left: E*)(right: E*)  = new SetClause(ListSet(left: _*), ListSet(right: _*))
+  def empty = new SetClause(ListSet.empty, ListSet.empty)
 }
 

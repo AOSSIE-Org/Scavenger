@@ -32,7 +32,7 @@ package object prover {
     def toSequent: Clause = {
       val ant = literals.flatMap(l => if (l.negated) Some(l.unit) else None)
       val suc = literals.flatMap(l => if (l.negated) None else Some(l.unit))
-      new Clause(ant.toSet, suc.toSet)
+      Clause(ant.toSeq: _*)(suc.toSeq: _*)
     }
   }
 
