@@ -3,7 +3,6 @@ package au.aossie.scavenger.prover
 import au.aossie.scavenger.structure.immutable.{ Literal, CNF, SetClause => Clause }
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.formula.Neg
-import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.cr.{ CRProof => Proof, _ }
 import au.aossie.scavenger.model.Assignment
 
@@ -37,8 +36,9 @@ object CR extends Prover {
     // Current depth
     var depth = 0
     // Literals, which were decided
-    val decisions       = ArrayBuffer.empty[Literal]
-    val conflictClauses = mutable.Set.empty[CRProofNode]
+    val decisions        = ArrayBuffer.empty[Literal]
+    val conflictClauses  = mutable.Set.empty[CRProofNode]
+    val uselessDecisions = mutable.Set.empty[Literal]
 
     def allClauses: Seq[Clause] = cnf.clauses ++ conflictClauses.map(_.conclusion)
 
@@ -93,7 +93,10 @@ object CR extends Prover {
           unifyWithRename(unifierUnits, literalUnits) match {
             // All unifiers should be unified with literals using one common mgu
             case Some(_) =>
-              val clauseNode   = reverseImplicationGraph(clause).head
+              val clauseNode = reverseImplicationGraph(clause).head
+              if (clauseNode.conclusion.literals != clause.literals) {
+                throw new IllegalStateException("kek")
+              }
               val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
               val unitPropagationNode =
                 UnitPropagationResolution(unifierNodes, clauseNode, conclusionId)
@@ -199,8 +202,10 @@ object CR extends Prover {
       propagatedLiterals.clear()
       decisions.clear()
       reverseImplicationGraph.clear()
-      cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(Axiom(clause)))
-      conflictClauses.foreach(node => reverseImplicationGraph(node.conclusion) = ArrayBuffer(node))
+      cnf.clauses.foreach(clause =>
+        reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += Axiom(clause))
+      conflictClauses.foreach(node =>
+        reverseImplicationGraph.getOrElseUpdate(node.conclusion, ArrayBuffer.empty) += node)
 
       literals.foreach(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty))
       for (literal <- literals) {
@@ -269,13 +274,13 @@ object CR extends Prover {
         for {
           otherLiteral <- unifiableUnits(conflictLiteral)
           conflictNode <- reverseImplicationGraph(conflictLiteral)
-          otherNode <- reverseImplicationGraph(otherLiteral)
+          otherNode    <- reverseImplicationGraph(otherLiteral)
           conflict = Conflict(conflictNode, otherNode)
         } {
-          val newClause = conflict.findDecisions(Substitution.empty)
+          val cdclNode  = ConflictDrivenClauseLearning(conflict)
+          val newClause = cdclNode.conclusion
           if (newClause == Clause.empty) return Unsatisfiable(Some(Proof(conflict)))
-          val cdclNode = ConflictDrivenClauseLearning(conflict)
-          if (!allClauses.contains(cdclNode.conclusion)) {
+          if (!allClauses.contains(newClause)) {
             interestingConflictLearnedClauses += cdclNode
             usedDecisions ++= conflict.listDecisions()
           }
@@ -285,17 +290,10 @@ object CR extends Prover {
 
       println(s"Premature decisions: $decisions")
 
-      if (allConflictLearnedClauses.isEmpty &&
-          cnf.clauses.forall(_.literals.exists(propagatedLiterals.contains))) {
-        val literals      = propagatedLiterals ++ decisions
-        val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
-        val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
-        return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
-      }
-
       val notUsedDecisions = decisions -- usedDecisions
       if (notUsedDecisions.nonEmpty) {
         println(s"There are some not used decisions: $notUsedDecisions")
+        uselessDecisions ++= notUsedDecisions
         decisions --= notUsedDecisions
 
         def valid(node: CRProofNode): Boolean = {
@@ -328,6 +326,15 @@ object CR extends Prover {
         val cdclClauses = interestingConflictLearnedClauses.map(_.conclusion).map(tptpPrettify)
         println("New CDCL clauses:\n" + cdclClauses.mkString("\n"))
         reset(interestingConflictLearnedClauses)
+      } else if (cnf.clauses.forall(clause =>
+                   clause.literals.exists(propagatedLiterals.contains) ||
+                     clause.literals.forall(uselessDecisions.contains))) {
+        val literals      = propagatedLiterals ++ decisions
+        val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
+        val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
+        return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
+      } else if (result.nonEmpty) {
+        uselessDecisions.clear()
       }
     }
     Error // this line is unreachable.
