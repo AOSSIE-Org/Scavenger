@@ -25,9 +25,9 @@ abstract class UnaryFormula(connective: Sym) extends Formula {
 }
 
 abstract class QuantifierFormula(quantifier: Sym) extends Formula {
-  def apply(v:Sym, t: T, f:E) = App(quantifier, Abs(v,t,f))
+  def apply(v:Var, t: T, f:E) = App(quantifier, Abs(v,t,f))
 
-  def apply(vars : List[(Sym,T)], f : E) : E = {
+  def apply(vars : List[(Var,T)], f : E) : E = {
     vars match {
       case Nil => f
       case (v,t)::tail => apply(v, t, apply(tail,f))

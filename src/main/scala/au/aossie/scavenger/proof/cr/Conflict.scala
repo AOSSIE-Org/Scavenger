@@ -11,7 +11,7 @@ import scala.collection.mutable
   *
   * @author Daniyar Itegulov
   */
-case class Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)(implicit variables: mutable.Set[Sym])
+case class Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)
   extends CRProofNode {
   require(leftPremise.conclusion.width == 1, "Left premise should be a unit clause")
   require(rightPremise.conclusion.width == 1, "Right premise should be a unit clause")

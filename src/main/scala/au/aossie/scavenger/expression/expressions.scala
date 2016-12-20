@@ -32,8 +32,15 @@ case class Sym(val name: String) extends E {
 }
 
 trait Var extends Sym
+object Var {
+  def apply(name: String) = new Sym(name) with Var
+  def unapply(e: E): Option[String] = e match {
+    case v: Var => Some(v.name)
+    case _ => None
+  }
+}
 
-case class Abs(val variable: Sym, val t: T, val body: E) extends E {
+case class Abs(val variable: Var, val t: T, val body: E) extends E {
   def logicalSize = (1 + t.logicalSize + 1) + body.logicalSize + 1
   override def toString = unicodeOrElse("\u03BB","@") + variable.name + ":" + t + "." + body
 }
@@ -46,16 +53,16 @@ case class App(val function: E, val argument: E) extends E {
 }
 
 object AbsRec {
-  def apply(vars : Iterable[(Sym,T)], body : E) : E =
+  def apply(vars: Iterable[(Var,T)], body : E) : E =
     vars match {
       case Nil => body
       case (x,t) :: xts => Abs(x,t,apply(xts,body))
     }
-  def unapply(e : E): Option[(List[(Sym,T)],E)] = e match {
-    case e : Abs => Some(unapplyRec(e))
+  def unapply(e: E): Option[(List[(Var,T)],E)] = e match {
+    case e: Abs => Some(unapplyRec(e))
     case _       => None
   }
-  private def unapplyRec(a : Abs) : (List[(Sym,T)],E) = a match {
+  private def unapplyRec(a: Abs) : (List[(Var,T)],E) = a match {
     case Abs(x,t1,body) => body match {
       case Abs(y,t2,b) =>
         val (vars,b2) = unapplyRec(Abs(y,t2,b))

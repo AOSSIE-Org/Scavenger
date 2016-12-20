@@ -1,6 +1,6 @@
 package au.aossie.scavenger.expression.term
 
-import au.aossie.scavenger.expression.{AppRec, AtomicType, E, T, Sym, i, o}
+import au.aossie.scavenger.expression.{AppRec, AtomicType, E, T, Sym, Var, i, o}
 
 /**
   * Objects to facilitate the creation of logical terms.
@@ -8,61 +8,57 @@ import au.aossie.scavenger.expression.{AppRec, AtomicType, E, T, Sym, i, o}
   * @author Ezequiel Postan
   * @since 24.05.2016
   */
-class Term {
-  final val conditional = "conditionalTerm"
-  final val ifThenElse  = new Sym(conditional)
-  @deprecated("use Sym instead.", "Scavenger")
-  def newTerm(name: String, i: T) = new Sym(name)
+abstract class Symbol {
+  def apply(name: String) : E = Sym(name)
+  def apply(name: String, i: T): E = Sym(name)
 }
 
-object DistinctObjectTerm extends Term {
-  def apply(name : String) :E = newTerm(name,i)
+object DistinctObjectTerm extends Symbol {
+  //override def apply(name : String) :E = apply(name,i)
 }
 
-object NumberTerm extends Term {
-  def apply(number : String) :E = newTerm(number,AtomicType("$int"))
+object NumberTerm extends Symbol {
+  //override def apply(number : String) :E = apply(number,AtomicType("$int"))
 }
 
-object Constant extends Term {
-  def apply(name : String) : E = newTerm(name,i)
+object Constant extends Symbol {
+  //override def apply(name : String) : E = apply(name,i)
 }
 
-object Variable extends Term {
-  def apply(name : String) : E = newTerm(name,i)
+object Variable extends Symbol {
+  override def apply(name : String) : E = Var(name)
+  override def apply(name : String, t: T) : E = Var(name)
 }
 
-object FunctionTerm extends Term {
-  def apply(name : String, args : List[E]) : E = {
-    def createType(list : List[E]) : T = list match {
-      case Nil   => i
-      case e::es => i -> createType(es)
-    }
-    AppRec(newTerm(name,createType(args)),args)
-  }
-  def apply(name : String,typ : T , args : List[E]) : E = AppRec(newTerm(name,typ),args)
+object FunctionTerm {
+  def apply(name : String, args : List[E]) : E = AppRec(Sym(name),args)
+  //def apply(name : String,typ : T , args : List[E]) : E = AppRec(Symbol(name,typ),args)
   def unapply(e:E) = e match {
     case AppRec(f,args) if args.nonEmpty => Some((f,args))
     case _ => None
   }
 }
 
-object TypedNumberTerm extends Term {
-  def apply(number : String, numberType : String) : E = newTerm(number, AtomicType(numberType))
+object TypedNumberTerm extends Symbol {
+  //def apply(number : String, numberType : String) : E = newTerm(number, AtomicType(numberType))
 }
 
-object TypedConstant extends Term {
-  def apply(name : String, constantType : T) : E = newTerm(name,constantType)
+object TypedConstant extends Symbol {
+  //def apply(name : String, constantType : T) : E = newTerm(name,constantType)
 }
 
-object TypedVariable extends Term {
-  def apply(name : String, variableType : T) : E = newTerm(name,variableType)
+object TypedVariable extends Symbol {
+  override def apply(name : String) : E = Var(name)
+  override def apply(name : String, t: T) : E = Var(name)
 }
 
-object TypedFunctionSymbol extends Term {
-  def apply(name : String, functionSymbolType : T) : E = newTerm(name,functionSymbolType)
+object TypedFunctionSymbol extends Symbol {
+  //def apply(name : String, functionSymbolType : T) : E = Sym(name)
 }
 
-object ConditionalTerm extends Term {
+object ConditionalTerm {
+  val conditional = "conditionalTerm"
+  val ifThenElse  = new Sym(conditional)
   def apply(condition : E , t1 : E, t2 : E) : E = {
     AppRec(ifThenElse,List(condition,t1,t2))
   }

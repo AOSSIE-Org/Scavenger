@@ -43,7 +43,7 @@ class Assignment(trueFacts: Set[E]) extends Model {
           case _ => None
         }
         case All(v, t, f) => None // we could do something better than this if we knew that v is of a finite type.
-        case Ex(v, t, f) => if (trueFacts exists { t => unify(f,t)(collection.mutable.Set(v)).isDefined }) Some(true) else None
+        case Ex(v, t, f) => if (trueFacts exists { t => unify(f,t).isDefined }) Some(true) else None
       }
     }
   }

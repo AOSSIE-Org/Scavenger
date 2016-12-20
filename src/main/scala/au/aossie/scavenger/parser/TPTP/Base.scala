@@ -251,7 +251,10 @@ extends TokenParsers with PackratParsers {
   private def toFunctionTerm(name : String , arguments : List[E]) : E =
     if(arguments.isEmpty && name == "$true") True
     else if(arguments.isEmpty && name == "$false") False
-    else if(typedExpressions contains name) FunctionTerm(name,typedExpressions(name),arguments)
+    else if(typedExpressions contains name) {
+      // TODO: check typing
+      FunctionTerm(name,arguments)
+    }
     else FunctionTerm(name,arguments)
 
   def plain_term: Parser[(String,List[E])] =
@@ -364,7 +367,7 @@ extends TokenParsers with PackratParsers {
     )
 
   def fof_quantified_formula: Parser[E] =
-    fol_quantifier ~ elem(LeftBracket) ~ rep1sep(variable^^{x => {recordVar(x);Variable(x).asInstanceOf[Sym]}},elem(Comma)) ~ elem(RightBracket) ~ elem(Colon) ~ fof_unitary_formula ^^ {
+    fol_quantifier ~ elem(LeftBracket) ~ rep1sep(variable^^{x => {recordVar(x);Variable(x).asInstanceOf[Var]}},elem(Comma)) ~ elem(RightBracket) ~ elem(Colon) ~ fof_unitary_formula ^^ {
       case Exclamationmark ~ _ ~ vars ~ _ ~ _ ~ matrix => All(vars map {x => (x,i)} ,matrix)
       case Questionmark    ~ _ ~ vars ~ _ ~ _ ~ matrix => Ex(vars map {x => (x,i)},matrix)
     }
@@ -482,15 +485,15 @@ extends TokenParsers with PackratParsers {
       case Questionmark    ~ _ ~ vars ~ _ ~ _ ~ matrix => Ex(vars,matrix)
     }
 
-  def tff_variable: Parser[(Sym,T)] = (
+  def tff_variable: Parser[(Var,T)] = (
     tff_typed_variable
       | failure("Expected type not found for quantified variable")
     // Here the failure is replacing the option of an untyped variable.
     // We don't allow the absence of type because we can't infer the type.  // TODO: Now that the type system has been refactored, we could support this case more easily, perhaps.
     )
 
-  def tff_typed_variable: Parser[(Sym,T)] =
-    variable ~ elem(Colon) ~ tff_atomic_type ^^ {case variable ~ _ ~ typ  => recordVar(variable,typ); typedExpressions += (variable -> typ);  (Sym(variable), typ) }
+  def tff_typed_variable: Parser[(Var,T)] =
+    variable ~ elem(Colon) ~ tff_atomic_type ^^ {case variable ~ _ ~ typ  => recordVar(variable,typ); typedExpressions += (variable -> typ);  (Var(variable), typ) }
 
   def tff_unary_formula: Parser[E] = (
     unary_connective ~ tff_unitary_formula ^^ {case Tilde ~ formula => Neg(formula)}
@@ -674,14 +677,14 @@ extends TokenParsers with PackratParsers {
     )
 
 
-  def thf_variable: Parser[(Sym,T)] =(
+  def thf_variable: Parser[(Var,T)] =(
     thf_typed_variable
       | failure("Expected type not found for quantified variable")
     )
 
-  def thf_typed_variable: Parser[(Sym,T)] =
+  def thf_typed_variable: Parser[(Var,T)] =
     variable ~ elem(Colon) ~ thf_top_level_type ^^ {
-      case vari ~ _ ~ typ => recordVar(vari,typ); typedExpressions += (vari -> typ); (Sym(vari), typ)
+      case vari ~ _ ~ typ => recordVar(vari,typ); typedExpressions += (vari -> typ); (Var(vari), typ)
     }
 
   def thf_unary_formula: Parser[E] = thf_unary_connective ~ elem(LeftParenthesis) ~ thf_logic_formula <~ elem(RightParenthesis) ^^ {
@@ -716,11 +719,11 @@ extends TokenParsers with PackratParsers {
     )
 
   private def etaExpand(conective : Token) : E = conective match {
-    case NotEquals            => Abs(Sym("NEW_1"), o, Abs(Sym("NEW_2"), o, Neg(FormulaEquality(Sym("NEW_1"),Sym("NEW_2")))))  // Critical point where type information was lost during refactoring
-    case Leftarrow            => Abs(Sym("NEW_1"), o, Abs(Sym("NEW_2"), o, Imp(Sym("NEW_2"),Sym("NEW_1"))))  // Critical point where type information was lost during refactoring
-    case Leftrighttildearrow  => Abs(Sym("NEW_1"), o, Abs(Sym("NEW_2"), o, Neg(Equivalence(Sym("NEW_1"),Sym("NEW_2")))))  // Critical point where type information was lost during refactoring
-    case TildePipe            => Abs(Sym("NEW_1"), o, Abs(Sym("NEW_2"), o, Neg(Or(Sym("NEW_1"),Sym("NEW_2")))))  // Critical point where type information was lost during refactoring
-    case TildeAmpersand       => Abs(Sym("NEW_1"), o, Abs(Sym("NEW_2"), o, Neg(And(Sym("NEW_1"),Sym("NEW_2")))))  // Critical point where type information was lost during refactoring
+    case NotEquals            => Abs(Var("NEW_1"), o, Abs(Var("NEW_2"), o, Neg(FormulaEquality(Var("NEW_1"),Var("NEW_2")))))
+    case Leftarrow            => Abs(Var("NEW_1"), o, Abs(Var("NEW_2"), o, Imp(Var("NEW_2"),Var("NEW_1")))) // FIXME: Is the order of the abstracted variables correct here?
+    case Leftrighttildearrow  => Abs(Var("NEW_1"), o, Abs(Var("NEW_2"), o, Neg(Equivalence(Var("NEW_1"),Var("NEW_2")))))  
+    case TildePipe            => Abs(Var("NEW_1"), o, Abs(Var("NEW_2"), o, Neg(Or(Var("NEW_1"),Var("NEW_2"))))) 
+    case TildeAmpersand       => Abs(Var("NEW_1"), o, Abs(Var("NEW_2"), o, Neg(And(Var("NEW_1"),Var("NEW_2"))))) 
   }
 
   def assoc_connective: Parser[Token] = elem(VLine) | elem(Ampersand)

@@ -43,13 +43,13 @@ package object prover {
     * @param exps where unifiable variables should be found
     * @return unifiable variables contained at least once in exps
     */
-  def unifiableVars(exps: E*)(implicit variables: mutable.Set[Sym]): Set[Sym] = exps.flatMap {
+  def unifiableVars(exps: E*): Set[Var] = exps.flatMap {
     case App(e1, e2) =>
       unifiableVars(e1) union unifiableVars(e2)
     case Abs(v, t, e1) =>
       unifiableVars(v) union unifiableVars(e1)
-    case v: Sym =>
-      if (variables contains v) Set(v) else Set.empty[Sym]
+    case v: Var => Set(v)
+    case _ => Set.empty[Var]
   }.toSet
 
   /**
@@ -61,24 +61,20 @@ package object prover {
     * @param usedVars already used variables
     * @return proper substitution to rename without variable collisions
     */
-  def renameVars(left: E, usedVars: Set[Sym])(implicit variables: mutable.Set[Sym]): Substitution = {
+  def renameVars(left: E, usedVars: Set[Var]): Substitution = {
+    // TODO: check that modifications done in this function due to Sym to Var refactoring did not intriduce bugs
+    
     val sharedVars = unifiableVars(left) intersect usedVars // Variables which should be renamed
 
-    // Unification variables which can be reused for new variables
-    val notUsedVars = variables diff (sharedVars union unifiableVars(left) union usedVars)
-
     val kvs = for (v <- sharedVars) yield {
-      val replacement = notUsedVars.headOption getOrElse { // Use some variable from unification variables
-      // Or create a new one
-      var newVar = Sym(v + "'") // Critical point where type information was lost during refactoring
+      val replacement = {
+        var newVar = Var(v + "'")
         while (usedVars contains newVar) {
-          newVar = Sym(newVar + "'") // Critical point where type information was lost during refactoring
+          newVar = Var(newVar + "'")
         }
-        variables += newVar // It will be available for unification from now
         newVar
       }
 
-      if (notUsedVars contains replacement) notUsedVars -= replacement
       v -> replacement
     }
 
@@ -100,8 +96,7 @@ package object prover {
     *           is the signle substitution for all right expressions
     *         None if there is no substitution.
     */
-  def unifyWithRename(left: Seq[E], right: Seq[E])
-                     (implicit variables: mutable.Set[Sym]): Option[(Seq[Substitution], Substitution)] = {
+  def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
     var usedVars = unifiableVars(right: _*)
     val newLeftWithSub = for (oneLeft <- left) yield {
       val substitution = renameVars(oneLeft, usedVars)

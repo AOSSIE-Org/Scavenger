@@ -18,8 +18,8 @@ object CR extends Prover {
 
   // TODO: refactor this class and enable scalastyle
   // scalastyle:off
-  def prove(cnf: CNF)(implicit variables: mutable.Set[Sym]): ProblemStatus = {
-
+  def prove(cnf: CNF): ProblemStatus = {
+    
     // TODO: this is a temporal determined random for easier debugging
     val rnd = new Random(132374)
 

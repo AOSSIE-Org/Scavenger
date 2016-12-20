@@ -68,11 +68,11 @@ package object formula {
   def neg(f: E) = Neg(f)
   def ¬(f: E) = neg(f)
 
-  def all(v:Sym, t:T) = (f:E) => All(v,t,f)
-  def ∀(v:Sym,t:T) = all(v,t)
+  def all(v:Var, t:T) = (f:E) => All(v,t,f)
+  def ∀(v:Var, t:T) = all(v,t)
 
-  def ex(v:Sym, t:T) = (f:E) => Ex(v,t,f)
-  def ∃(v:Sym,t:T) = all(v,t)
+  def ex(v:Var, t:T) = (f:E) => Ex(v,t,f)
+  def ∃(v:Var, t:T) = all(v,t)
 
   def bigOr(args: Iterable[E]) = AppRec(bigOrC(args.size), args)
   def bigAnd(args: Iterable[E]) = AppRec(bigAndC(args.size), args)

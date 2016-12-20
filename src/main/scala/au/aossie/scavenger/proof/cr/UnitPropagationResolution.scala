@@ -17,7 +17,7 @@ case class UnitPropagationResolution private (
     right: CRProofNode,
     desired: Literal,
     leftMgus: Seq[Substitution],
-    rightMgu: Substitution)(implicit variables: mutable.Set[Sym])
+    rightMgu: Substitution)
     extends CRProofNode {
   require(left.forall(_.conclusion.width == 1), "All left conclusions should be unit")
   require(left.size + 1 == right.conclusion.width,
@@ -29,8 +29,7 @@ case class UnitPropagationResolution private (
 }
 
 object UnitPropagationResolution {
-  def apply(left: Seq[CRProofNode], right: CRProofNode, desiredIndex: Int)(
-      implicit variables: mutable.Set[Sym]): UnitPropagationResolution = {
+  def apply(left: Seq[CRProofNode], right: CRProofNode, desiredIndex: Int): UnitPropagationResolution = {
     val leftLiterals = left.map(_.conclusion.literals.head)
     // Find such desired index that remaining right literals will be unifiable with left literals
     val rightLiterals = right.conclusion.literals.patch(desiredIndex, Nil, 1)
