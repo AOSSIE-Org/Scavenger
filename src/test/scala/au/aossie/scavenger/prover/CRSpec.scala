@@ -11,9 +11,9 @@ import org.specs2.mutable.Specification
   * @author Daniyar Itegulov
   */
 class CRSpec extends Specification {
-  val x = Sym("x")
-  val y = Sym("y")
-  val z = Sym("z")
+  val x = Var("x")
+  val y = Var("y")
+  val z = Var("z")
   val a = Sym("a")
   val b = Sym("b")
   val d = Sym("d")
@@ -25,7 +25,6 @@ class CRSpec extends Specification {
   val Px = App(P, x)
   val Py = App(P, y)
   val Pz = App(P, z)
-  implicit val vars = mutable.Set(x, y, z)
 
   private def test(clauses: Clause*) = CR.prove(CNF(ArrayBuffer(clauses: _*)))
 
