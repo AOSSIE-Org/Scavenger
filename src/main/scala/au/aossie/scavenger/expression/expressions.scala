@@ -31,6 +31,8 @@ case class Sym(val name: String) extends E {
   override def toString = name
 }
 
+trait Var extends Sym
+
 case class Abs(val variable: Sym, val t: T, val body: E) extends E {
   def logicalSize = (1 + t.logicalSize + 1) + body.logicalSize + 1
   override def toString = unicodeOrElse("\u03BB","@") + variable.name + ":" + t + "." + body
