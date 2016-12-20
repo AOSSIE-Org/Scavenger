@@ -227,7 +227,7 @@ object CR extends Prover {
     }
 
     while (true) {
-      println(s"Starting level $depth")
+      //println(s"Starting level $depth")
       val result = mutable.Set.empty[Literal] // New literals, which are propagated on this step
       for (clause <- allClauses if !clause.isUnit) {
         resolve(clause, result) // Try to resolve all clause with some other clauses
@@ -264,7 +264,7 @@ object CR extends Prover {
           }
         }
       }
-      println(s"Resolved $result")
+      //println(s"Resolved $result")
       updateSystem(result)
       depth += 1
 
@@ -288,11 +288,11 @@ object CR extends Prover {
         }
       }
 
-      println(s"Premature decisions: $decisions")
+      //println(s"Premature decisions: $decisions")
 
       val notUsedDecisions = decisions -- usedDecisions
       if (notUsedDecisions.nonEmpty) {
-        println(s"There are some not used decisions: $notUsedDecisions")
+        //println(s"There are some not used decisions: $notUsedDecisions")
         uselessDecisions ++= notUsedDecisions
         decisions --= notUsedDecisions
 
@@ -320,11 +320,11 @@ object CR extends Prover {
         unifiableUnits.values.foreach(_ --= nonValidLiterals)
       }
 
-      println(s"Decided $decisions")
+      //println(s"Decided $decisions")
 
       if (interestingConflictLearnedClauses.nonEmpty) {
         val cdclClauses = interestingConflictLearnedClauses.map(_.conclusion).map(tptpPrettify)
-        println("New CDCL clauses:\n" + cdclClauses.mkString("\n"))
+        //println("New CDCL clauses:\n" + cdclClauses.mkString("\n"))
         reset(interestingConflictLearnedClauses)
       } else if (cnf.clauses.forall(clause =>
                    clause.literals.exists(propagatedLiterals.contains) ||
