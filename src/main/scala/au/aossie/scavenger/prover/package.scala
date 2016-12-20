@@ -83,6 +83,8 @@ package object prover {
     *           is the signle substitution for all right expressions
     *         None if there is no substitution.
     */
+  
+  // TODO: This method should be moved to the unification package
   def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
     var usedVars = right map { _.variables.toSet } reduce { _ union _ }
     val newLeftWithSub = for (oneLeft <- left) yield {
@@ -103,29 +105,6 @@ package object prover {
       }
       (unifiedSubs, s)
     })
-  }
-
-  /**
-    * Checks if there is such unification, which don't use unification variables from `what`.
-    *
-    * @param what what should be instantiated
-    * @param from from what should be instantiated
-    * @param variables unifiaction variables
-    * @return true, if there exists some unification for what and from according to rules
-    *         false, otherwise
-    */
-  def isInstantiation(what: E, from: E)(implicit variables: mutable.Set[Sym]): Boolean = {
-    val usedVars = what.variables.toSet
-    val sub = renameVars(from, usedVars)
-    val newFrom = sub(from)
-    val newVars = what.variables.toSet
-    variables --= newVars // newVars are fixed
-    val result = unify((what, newFrom) :: Nil) match {
-      case None => false
-      case Some(_) => true
-    }
-    variables ++= newVars // Should revert variables set back to initial state
-    result
   }
 
   /**
