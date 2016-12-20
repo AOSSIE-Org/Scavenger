@@ -19,7 +19,7 @@ object CR extends Prover {
   // TODO: refactor this class and enable scalastyle
   // scalastyle:off
   def prove(cnf: CNF): ProblemStatus = {
-    
+
     // TODO: this is a temporal determined random for easier debugging
     val rnd = new Random(132374)
 
@@ -94,9 +94,6 @@ object CR extends Prover {
             // All unifiers should be unified with literals using one common mgu
             case Some(_) =>
               val clauseNode = reverseImplicationGraph(clause).head
-              if (clauseNode.conclusion.literals != clause.literals) {
-                throw new IllegalStateException("kek")
-              }
               val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
               val unitPropagationNode =
                 UnitPropagationResolution(unifierNodes, clauseNode, conclusionId)
