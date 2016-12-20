@@ -24,6 +24,8 @@ sealed abstract class E {
     case App(f,a) => (this occursIn f) || (this occursIn a)
     case Abs(v,t,g) => (this occursIn v) || (this occursIn g)
   }
+  
+  lazy val freeVariables = ??? // TODO
 }
 
 case class Sym(val name: String) extends E {
