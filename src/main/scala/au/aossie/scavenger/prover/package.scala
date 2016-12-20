@@ -36,21 +36,7 @@ package object prover {
     }
   }
 
-  /**
-    * Gets all unifiable variables (contained in `variables`) from
-    * given Es.
-    *
-    * @param exps where unifiable variables should be found
-    * @return unifiable variables contained at least once in exps
-    */
-  def unifiableVars(exps: E*): Set[Var] = exps.flatMap {
-    case App(e1, e2) =>
-      unifiableVars(e1) union unifiableVars(e2)
-    case Abs(v, t, e1) =>
-      unifiableVars(v) union unifiableVars(e1)
-    case v: Var => Set(v)
-    case _ => Set.empty[Var]
-  }.toSet
+  // FIXME: do we really want to use e.variables? maybe we mean e.freeVariables ?
 
   /**
     * Rename quantified variables in left so that they don't intersect
@@ -64,8 +50,9 @@ package object prover {
   def renameVars(left: E, usedVars: Set[Var]): Substitution = {
     // TODO: check that modifications done in this function due to Sym to Var refactoring did not intriduce bugs
     
-    val sharedVars = unifiableVars(left) intersect usedVars // Variables which should be renamed
-
+    //val sharedVars = unifiableVars(left) intersect usedVars // Variables which should be renamed
+    val sharedVars = left.variables.toSet intersect usedVars // TODO: do we really need to convert to set here?
+    
     val kvs = for (v <- sharedVars) yield {
       val replacement = {
         var newVar = Var(v + "'")
@@ -97,11 +84,11 @@ package object prover {
     *         None if there is no substitution.
     */
   def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
-    var usedVars = unifiableVars(right: _*)
+    var usedVars = right map { _.variables.toSet } reduce { _ union _ }
     val newLeftWithSub = for (oneLeft <- left) yield {
       val substitution = renameVars(oneLeft, usedVars)
       val newLeft = substitution(oneLeft)
-      usedVars ++= unifiableVars(newLeft)
+      usedVars ++= newLeft.variables
       (newLeft, substitution)
     }
     val newLeft = newLeftWithSub.map(_._1)
@@ -128,10 +115,10 @@ package object prover {
     *         false, otherwise
     */
   def isInstantiation(what: E, from: E)(implicit variables: mutable.Set[Sym]): Boolean = {
-    val usedVars = unifiableVars(what)
+    val usedVars = what.variables.toSet
     val sub = renameVars(from, usedVars)
     val newFrom = sub(from)
-    val newVars = unifiableVars(what)
+    val newVars = what.variables.toSet
     variables --= newVars // newVars are fixed
     val result = unify((what, newFrom) :: Nil) match {
       case None => false

@@ -25,7 +25,26 @@ sealed abstract class E {
     case Abs(v,t,g) => (this occursIn v) || (this occursIn g)
   }
   
-  lazy val freeVariables = ??? // TODO
+  lazy val variables = {
+    def rec(e: E): Seq[Var] = e match {
+      case v: Var => Seq(v)
+      case App(f, a) => rec(f) ++ rec(a)
+      case Abs(v,t,b) => rec(v) ++ rec(b)
+      case _ => Seq()
+    }
+    rec(this)
+  }
+  
+  lazy val freeVariables = {
+    def rec(e: E, bVars: Set[Var]): Seq[Var] = e match {
+      case v: Var if !(bVars contains v) => Seq(v)
+      case App(f, a) => rec(f, bVars) ++ rec(a, bVars)
+      case Abs(v,t,b) => rec(b, bVars + v)
+      case _ => Seq()
+    }
+    rec(this, Set[Var]())
+  }
+  
 }
 
 case class Sym(val name: String) extends E {
