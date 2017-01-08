@@ -1,18 +1,15 @@
 package au.aossie.scavenger
 
 
-import au.aossie.scavenger.prover.{ CR, ProblemStatus, Unsatisfiable, Satisfiable }
 import au.aossie.scavenger.expression._
+import au.aossie.scavenger.parser.TPTP.{CNF => TPTPCNF}
+import au.aossie.scavenger.parser.TPTPCNFParser
+import au.aossie.scavenger.prover.{CR, ProblemStatus, Satisfiable, Unsatisfiable}
+import au.aossie.scavenger.structure.immutable.{CNF, SeqClause => Clause}
+import org.specs2.mutable.Specification
+import ammonite.ops._
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
-
-import au.aossie.scavenger.structure.immutable.{CNF, SeqClause => Clause}
-
-import au.aossie.scavenger.parser.TPTP.{CNFAxiomStatement, CNFNegatedConjectureStatement, CNFProblem, CNF => TPTPCNF}
-
-import au.aossie.scavenger.parser.TPTPCNFParser
-import org.specs2.mutable.Specification
 
 /**
   * This class executes the prover on Pelletier's CNF problems that are currently available in the TPTP library.
@@ -37,7 +34,7 @@ class PelletierCNF extends Specification {
   }
 
   def test(testName: String): ProblemStatus = {
-    val p = TPTPCNFParser.parse(s"examples/problems/Pelletier/$testName.p")
+    val p = TPTPCNFParser.parse(pwd / 'examples / 'problems / 'Pelletier / s"$testName.p")
     implicit val vars = getUppercaseVariables(p)
     CR.prove(p)
   }

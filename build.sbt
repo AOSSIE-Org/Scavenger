@@ -20,7 +20,8 @@ libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
   "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3-1", // seems inactive
   "com.typesafe.akka" %% "akka-actor" % "2.4.12",
-  "com.storm-enroute" %% "scalameter" % "0.7"
+  "com.storm-enroute" %% "scalameter" % "0.7",
+  "com.lihaoyi" %% "ammonite-ops" % "0.8.1"
 )
 
 testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework")

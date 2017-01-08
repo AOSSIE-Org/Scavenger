@@ -1,11 +1,13 @@
 package au.aossie.scavenger
 
+import ammonite.ops._
 import au.aossie.scavenger.structure.immutable.CNF
 import au.aossie.scavenger.prover.CR
-import au.aossie.scavenger.prover.{Unsatisfiable, Satisfiable}
+import au.aossie.scavenger.prover.{Satisfiable, Unsatisfiable}
 import au.aossie.scavenger.parser.TPTPCNFParser
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
+
 import scala.collection.mutable
 
 /**
@@ -22,7 +24,7 @@ object CLI {
     "CR" -> CR
   )
   val parsers = Map(
-    "cnf" -> TPTPCNFParser,
+    "cnf"  -> TPTPCNFParser,
     "cnfp" -> TPTPCNFParser
   )
   val knownFormats = Seq("cnf", "cnfp")
@@ -30,7 +32,7 @@ object CLI {
   val parser = new scopt.OptionParser[Config]("scavenger") {
     head("\nScavenger's Command Line Interface\n\n")
 
-    opt[String]('a', "algorithm") unbounded() action { (v, c) =>
+    opt[String]('a', "algorithm") unbounded () action { (v, c) =>
       c.copy(algorithm = v)
     } text "use <alg> to solve the problem" valueName "<alg>"
 
@@ -59,14 +61,13 @@ object CLI {
       c.copy(output = Output(v))
     } text "output proof to <file>\n" valueName "<file>"
 
-    arg[String]("<problem-file>...") unbounded() optional() action { (v, c) =>
+    arg[String]("<problem-file>...") unbounded () optional () action { (v, c) =>
       c.copy(inputs = c.inputs :+ v)
     } text "solve <problem-file>\n"
 
-    help("help") text("print this usage text")
+    help("help") text "print this usage text"
 
-    note(
-      """
+    note("""
     Example:
       The following command solves the problem 'SET006-1.cnfp'
       using the algorithm 'ConcurrentCR'.
@@ -77,17 +78,18 @@ object CLI {
       """)
   }
 
-
   // TODO: This is not the right place for this function
   def getUppercaseVariables(cnf: CNF): mutable.Set[Sym] = {
     def uppercaseVariableInFormula(e: E): Set[Sym] = e match {
-      case v: Sym if v.name.charAt(0).isUpper => Set(v)
-      case App(l, r) => uppercaseVariableInFormula(l) ++ uppercaseVariableInFormula(r)
-      case Abs(_,_, body) => uppercaseVariableInFormula(body)
-      case _ => Set()
+      case v: Sym if v.name.head.isUpper => Set(v)
+      case App(l, r)                     => uppercaseVariableInFormula(l) ++ uppercaseVariableInFormula(r)
+      case Abs(_, _, body)               => uppercaseVariableInFormula(body)
+      case _                             => Set.empty
     }
     val variables = mutable.Set.empty[Sym]
-    cnf.clauses.flatMap(clause => clause.ant ++ clause.suc).foreach(variables ++= uppercaseVariableInFormula(_))
+    cnf.clauses
+      .flatMap(clause => clause.ant ++ clause.suc)
+      .foreach(variables ++= uppercaseVariableInFormula(_))
     variables
   }
 
@@ -95,15 +97,22 @@ object CLI {
     parser.parse(args, Config()) foreach { c =>
       val algorithm = algorithms(c.algorithm)
       for (input <- c.inputs) {
-        val parser = parsers(c.format.getOrElse(input.split(".").last))
-        val cnf = parser.parse(input)
+        val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), TPTPCNFParser)
+        val path   = Path.apply(input, pwd)
+        val cnf    = parser.parse(path)
         algorithm.prove(cnf) match {
-          case Unsatisfiable(p) => c.output.write("Unsatisfiable\n\nRefutation:\n" +  p)
-          case Satisfiable(m) => c.output.write("Satisfiable\n\nModel:\n" + m)
-          case s => c.output.write(s)
+          case Unsatisfiable(p) =>
+            c.output.write(s"% SZS status Unsatisfiable for $input")
+            c.output.write("\n")
+            c.output.write(p)
+          case Satisfiable(m) =>
+            c.output.write(s"% SZS status Satisfiable for $input")
+            c.output.write("\n")
+            c.output.write(m)
+          case s =>
+            c.output.write(s"% SZS status GaveUp for $input")
         }
       }
     }
   }
 }
-

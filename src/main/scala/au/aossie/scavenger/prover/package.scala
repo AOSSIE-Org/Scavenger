@@ -49,10 +49,10 @@ package object prover {
     */
   def renameVars(left: E, usedVars: Set[Var]): Substitution = {
     // TODO: check that modifications done in this function due to Sym to Var refactoring did not intriduce bugs
-    
+
     //val sharedVars = unifiableVars(left) intersect usedVars // Variables which should be renamed
     val sharedVars = left.variables.toSet intersect usedVars // TODO: do we really need to convert to set here?
-    
+
     val kvs = for (v <- sharedVars) yield {
       val replacement = {
         var newVar = Var(v + "'")
@@ -83,7 +83,7 @@ package object prover {
     *           is the signle substitution for all right expressions
     *         None if there is no substitution.
     */
-  
+
   // TODO: This method should be moved to the unification package
   def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
     var usedVars = right map { _.variables.toSet } reduce { _ union _ }
