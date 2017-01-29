@@ -1,13 +1,14 @@
 package au.aossie.scavenger.prover
 
 import au.aossie.scavenger.expression.Sym
-import au.aossie.scavenger.structure.immutable.{ CNF, SetClause => Clause }
+import au.aossie.scavenger.structure.immutable.{CNF, SetClause => Clause}
 import au.aossie.scavenger.parser.TPTP.{
   CNFAxiomStatement,
   CNFNegatedConjectureStatement,
   CNFProblem,
   CNF => TPTPCNF
 }
+import ammonite.ops._
 
 import scala.collection.mutable
 
@@ -30,8 +31,9 @@ object CRTest extends App {
   }
 
   def test(testName: String)(implicit vars: mutable.Set[Sym]) {
-    val clauses = problemToClauses(TPTPCNF.problem(s"examples/problems/CNF/$testName.cnfp"))
-    val t       = time(CR.prove(new CNF(clauses)))
+    val clauses = problemToClauses(
+      TPTPCNF.problem(pwd / 'examples / 'problems / 'CNF / s"$testName.cnfp"))
+    val t = time(CR.prove(CNF(clauses)))
     println(s"Computed $testName in $t microseconds")
   }
 

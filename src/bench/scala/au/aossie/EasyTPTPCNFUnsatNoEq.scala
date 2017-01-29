@@ -1,18 +1,15 @@
 package au.aossie
 
+import ammonite.ops._
 import org.scalameter.api._
 import org.scalameter.picklers.Implicits.stringPickler
-
-import au.aossie.scavenger.prover.{ CR, ProblemStatus, Unsatisfiable, Satisfiable }
+import au.aossie.scavenger.prover.{CR, ProblemStatus, Satisfiable, Unsatisfiable}
 import au.aossie.scavenger.expression._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-
 import au.aossie.scavenger.structure.immutable.{CNF, SeqClause => Clause}
-
 import au.aossie.scavenger.parser.TPTP.{CNFAxiomStatement, CNFNegatedConjectureStatement, CNFProblem, CNF => TPTPCNF}
-
 import au.aossie.scavenger.parser.TPTPCNFParser
 
 /**
@@ -37,7 +34,7 @@ object EasyTPTPCNFUnsatNoEq extends Bench.OfflineRegressionReport {
   }
 
   def test(testName: String): ProblemStatus = {
-    val p = TPTPCNFParser.parse("examples/problems/TPTP-v6.4.0/Problems/" +  testName.take(3) + "/" + testName + ".p")
+    val p = TPTPCNFParser.parse(pwd / 'examples / 'problems / "TPTP-v6.4.0" / 'Problems / testName.take(3) / (testName + ".p"))
     implicit val vars = getUppercaseVariables(p)
     CR.prove(p)
   }
@@ -50,18 +47,18 @@ object EasyTPTPCNFUnsatNoEq extends Bench.OfflineRegressionReport {
                      "COM001-1","COM002-2","COM002-1", // ok
                      "COM003-2","COM011-2", // ok
                      //"FLD001-3"."FLD002-3","FLD006-1", // timeout
-                     //"FLD006-3", // ok
+                     "FLD006-3", // ok
                      //"FLD010-5","FLD013-3","FLD013-4","FLD013-5","FLD014-3","FLD017-1", // timeout
                      //"FLD017-1", // timeout
-                     //"FLD017-3", // ok
+                     "FLD017-3", // ok
                      //"FLD018-3","FLD019-3","FLD021-3","FLD023-3","FLD024-3","FLD025-3","FLD025-4", // timeout
                      //"FLD025-5","FLD030-1", // ok
                      //"FLD030-2","FLD030-3", // timeout
-                     //"FLD030-4", // ok
+                     "FLD030-4", // ok
                      //"FLD034-3","FLD037-3", // timeout
-                     //"FLD039-1","FLD039-3", // ok
+                     "FLD039-1","FLD039-3", // ok
                      //"FLD043-3","FLD055-1","FLD055-3", // timeout
-                     //"FLD056-1","FLD056-3", // ok
+                     "FLD056-1","FLD056-3", // ok
                      //"FLD058-1","FLD058-3","FLD059-1","FLD059-3","FLD059-4", // timeout
                      //"FLD064-3","FLD065-3","FLD067-3","FLD067-4","FLD068-3","FLD068-4", // timeout
                      //"FLD069-3", // ok
@@ -169,13 +166,13 @@ object EasyTPTPCNFUnsatNoEq extends Bench.OfflineRegressionReport {
                      //"SYN001-1.005", // timeout
                      "SYN002-1.007.008", // ok
                      "SYN003-1.006","SYN004-1.007","SYN005-1.010","SYN006-1","SYN008-1","SYN009-1","SYN009-2", // ok
-                     //"SYN009-3","SYN009-4","SYN010-1.005.005","SYN011-1","SYN012-1","SYN014-2","SYN015-2", // ok
+                     "SYN009-3","SYN009-4","SYN010-1.005.005","SYN011-1","SYN012-1","SYN014-2","SYN015-2", // ok
                      "SYN028-1","SYN029-1","SYN030-1","SYN031-1","SYN032-1","SYN033-1","SYN034-1","SYN035-1", // ok
-                     //"SYN038-1","SYN040-1","SYN041-1","SYN044-1","SYN045-1","SYN046-1","SYN047-1","SYN048-1", // ok
-                     //"SYN049-1","SYN050-1","SYN051-1","SYN052-1","SYN053-1","SYN054-1","SYN055-1","SYN057-1", // ok
+                     "SYN038-1","SYN040-1","SYN041-1","SYN044-1","SYN045-1","SYN046-1","SYN047-1","SYN048-1", // ok
+                     "SYN049-1","SYN050-1","SYN051-1","SYN052-1","SYN053-1","SYN054-1","SYN055-1","SYN057-1", // ok
                      "SYN058-1","SYN060-1","SYN061-1","SYN062-1","SYN063-1","SYN063-2","SYN064-1","SYN065-1", // ok
-                     //"SYN068-1","SYN069-1","SYN070-1","SYN073-1","SYN079-1","SYN081-1","SYN084-2","SYN088-1.010", // ok
-                     //"SYN095-1.002","SYN096-1.008","SYN099-1.003","SYN100-1.005","SYN101-1.002.002", // ok
+//                     "SYN068-1","SYN069-1","SYN070-1","SYN073-1","SYN079-1","SYN081-1","SYN084-2","SYN088-1.010", // ok
+                     "SYN095-1.002","SYN096-1.008","SYN099-1.003","SYN100-1.005","SYN101-1.002.002", // ok
                      //"SYN102-1.007.007", // timeout
                      //"SYN103-1","SYN104-1","SYN105-1","SYN106-1","SYN107-1","SYN108-1", // ok
                      //"SYN109-1","SYN110-1", // timeout

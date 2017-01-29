@@ -1,5 +1,6 @@
 package au.aossie.scavenger.parser.TPTP
 
+import ammonite.ops._
 import au.aossie.scavenger.expression.{E, Sym}
 import au.aossie.scavenger.parser.TPTP.TPTPAST.{AnnotatedFormula, SimpleFormula, TPTPDirective}
 
@@ -40,7 +41,7 @@ extends Base {
     }
 
 
-  def problem(fileName : String) : FOFProblem = extract(fileName,problemParser)
+  def problem(fileName : Path) : FOFProblem = extract(fileName,problemParser)
 
 }
 

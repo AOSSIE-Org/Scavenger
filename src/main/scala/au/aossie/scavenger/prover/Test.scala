@@ -5,6 +5,7 @@ import au.aossie.scavenger.structure.immutable.CNF
 import scala.collection.mutable
 import au.aossie.scavenger.expression.{ Sym, E, App, Abs }
 import au.aossie.scavenger.parser.TPTPCNFParser
+import ammonite.ops._
 
 object Test {
   def getUppercaseVariables(cnf: CNF): mutable.Set[Sym] = {
@@ -20,12 +21,19 @@ object Test {
   }
 
   def test(testName: String): ProblemStatus = {
-    val p = TPTPCNFParser.parse("examples/problems/TPTP-v6.4.0/Problems/" +  testName.take(3) + "/" + testName + ".p")
+    val p = TPTPCNFParser.parse(pwd / 'examples / 'problems / "TPTP-v6.4.0" / 'Problems / testName.take(3) / (testName + ".p"))
     implicit val vars = getUppercaseVariables(p)
     CR.prove(p)
   }
 
+  def time[A](a: => A): Long = {
+    val now    = System.nanoTime
+    val result = a
+    (System.nanoTime - now) / 1000
+  }
+
   def main(args: Array[String]): Unit = {
-    println(test("SYN067-1"))
+    val executionTime = time(println(test("ALG001-1")))
+    println(executionTime / 1000000.0)
   }
 }

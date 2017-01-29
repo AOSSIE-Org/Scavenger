@@ -10,10 +10,11 @@ import scala.collection.mutable
 import scala.collection.mutable.HashSet
 import scala.io.Source
 import au.aossie.scavenger.parser.TPTP.Base
+import ammonite.ops._
 
 object TPTPTest {
   def main(args: Array[String]):Unit = {
-    val problem1 = FOF.problem("examples/problems/FOF/AGT001+1.fofp")
+    val problem1 = FOF.problem(pwd / 'examples / 'problems / 'FOF / "AGT001+1.fofp")
     println(problem1)
     FOF.resetVarsSeen()
 
@@ -119,7 +120,7 @@ object TPTPExtensiveTest extends Base {
         results.print("Parsing " + problem + ": ")
         results.flush()
         problemStartTime = System.nanoTime
-        extract(problem, TPTP_file_TESTS(axiomsFolderPath))
+        extract(Path(problem), TPTP_file_TESTS(axiomsFolderPath))
         problemEndTime = System.nanoTime
         problemRunTime = problemEndTime - problemStartTime
         results.println("SUCCEEDED in " + (problemRunTime/1000000000.0).toString + " seconds")

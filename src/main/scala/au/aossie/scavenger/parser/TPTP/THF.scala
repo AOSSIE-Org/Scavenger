@@ -1,5 +1,6 @@
 package au.aossie.scavenger.parser.TPTP
 
+import ammonite.ops._
 import au.aossie.scavenger.expression.{E, Sym}
 import au.aossie.scavenger.parser.TPTP.TPTPAST.{AnnotatedFormula, SimpleFormula, TPTPDirective}
 
@@ -47,7 +48,7 @@ trait THF
     }
 
 
-  def problem(fileName : String) : THFProblem = extract(fileName,problemParser)
+  def problem(fileName : Path) : THFProblem = extract(fileName,problemParser)
 
 }
 
