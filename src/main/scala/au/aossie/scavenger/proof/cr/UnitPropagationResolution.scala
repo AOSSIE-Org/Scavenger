@@ -29,17 +29,17 @@ case class UnitPropagationResolution private (
 }
 
 object UnitPropagationResolution {
-  def apply(left: Seq[CRProofNode], right: CRProofNode, desiredIndex: Int): UnitPropagationResolution = {
+  def apply(left: Seq[CRProofNode], right: CRProofNode, desired: Literal): UnitPropagationResolution = {
     val leftLiterals = left.map(_.conclusion.literals.head)
     // Find such desired index that remaining right literals will be unifiable with left literals
-    val rightLiterals = right.conclusion.literals.patch(desiredIndex, Nil, 1)
+    val rightLiterals = right.conclusion.literals.filterNot(_ == desired)
     if (!leftLiterals.zip(rightLiterals).forall { case (f, s) => f.negated != s.negated }) {
       throw new IllegalArgumentException("Left literals and right clause aren't unifiable")
     } else {
       unifyWithRename(leftLiterals.map(_.unit), rightLiterals.map(_.unit)) match {
         case Some((leftMgus, rightMgu)) =>
-          val desired = rightMgu(right.conclusion.literals(desiredIndex))
-          UnitPropagationResolution(left, right, desired, leftMgus, rightMgu)
+          val newDesired = rightMgu(desired)
+          UnitPropagationResolution(left, right, newDesired, leftMgus, rightMgu)
         case _ =>
           throw new IllegalArgumentException("Left literals and right clause aren't unifiable")
       }

@@ -96,7 +96,7 @@ object CR extends Prover {
               val clauseNode = reverseImplicationGraph(clause).head
               val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
               val unitPropagationNode =
-                UnitPropagationResolution(unifierNodes, clauseNode, conclusionId)
+                UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId))
               val newLiteral = unitPropagationNode.conclusion.literal
               if (!unifier.exists(isAncestor(_, newLiteral))) {
                 ancestor.getOrElseUpdate(newLiteral, mutable.Set.empty) ++=

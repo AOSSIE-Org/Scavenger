@@ -15,7 +15,7 @@ abstract class AbstractClause extends ClauseLike[AbstractClause] {
   def toSetSequent = immutable.SetClause(ant.toSeq: _*)(suc.toSeq: _*)
   def toSeqSequent = immutable.SeqClause(ant.toSeq, suc.toSeq)
 
-  def literals = ant.map(Literal(_, negated = true)).toSeq ++ suc.map(Literal(_, negated = false))
+  def literals = ant.toSeq.map(Literal(_, negated = true)) ++ suc.toSeq.map(Literal(_, negated = false))
 
   // TODO: the following three methods are inefficient.
   // I suspect they will not be used anymore when we use SetClause instead of SeqClause
