@@ -2,6 +2,8 @@ package au.aossie.scavenger.expression
 
 import au.aossie.scavenger.util.unicode._
 
+import scala.collection.mutable.ArrayBuffer
+
 sealed abstract class E {
   def logicalSize: Int
 
@@ -25,14 +27,20 @@ sealed abstract class E {
     case Abs(v,t,g) => (this occursIn v) || (this occursIn g)
   }
   
-  lazy val variables = {
-    def rec(e: E): Seq[Var] = e match {
-      case v: Var => Seq(v)
-      case App(f, a) => rec(f) ++ rec(a)
-      case Abs(v,t,b) => rec(v) ++ rec(b)
-      case _ => Seq()
+  lazy val variables: Seq[Var] = {
+    val result = ArrayBuffer.empty[Var]
+    def rec(e: E): Unit = e match {
+      case v: Var => result += v
+      case App(f, a) =>
+        rec(f)
+        rec(a)
+      case Abs(v, _, b) =>
+        rec(v)
+        rec(b)
+      case _ =>
     }
     rec(this)
+    result
   }
   
   lazy val freeVariables = {

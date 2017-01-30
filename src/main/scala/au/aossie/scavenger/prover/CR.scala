@@ -65,6 +65,32 @@ object CR extends Prover {
       }
     }
 
+    def getUnify(unifiers: Seq[Seq[Literal]], literals: Seq[Literal]): Seq[Seq[Literal]] = {
+      val unifier = ArrayBuffer.empty[Literal]
+      val result = ArrayBuffer.empty[Seq[Literal]]
+      def recUnify(k: Int): Unit = {
+        if (k == unifiers.size) {
+          unifyWithRename(unifier.map(_.unit), literals.map(_.unit)) match {
+            case Some(_) => result += Seq(unifier: _*)
+            case None =>
+          }
+        } else {
+          val xs = unifiers(k)
+          for (x <- xs) {
+            unifier += x
+            val newLiterals = literals.take(unifier.size)
+            unifyWithRename(unifier.map(_.unit), newLiterals.map(_.unit)) match {
+              case Some(_) => recUnify(k + 1)
+              case None =>
+            }
+            unifier.remove(unifier.size - 1)
+          }
+        }
+      }
+      recUnify(0)
+      result
+    }
+
     // TODO: try to avoid nested function definitions when possible (i.e. when they do not depend on local variables). Prefer private defs in the class body instead.
     /**
       * Try to resolve given non-unit clause with some propagated literals.
@@ -78,48 +104,37 @@ object CR extends Prover {
       val unifyCandidates =
         clause.literals.map(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty).toSeq)
       val myResult = mutable.Set.empty[Literal]
-      val combs    = unifyCandidates.map(_.length).product
-      if (combs > 100000) {
-        println(s"WARNING! Too many combinations: $combs")
-      }
       for (conclusionId <- unifyCandidates.indices) {
         // All unifiers excluding that one for conclusion
         val unifiers = unifyCandidates.take(conclusionId) ++ unifyCandidates.drop(conclusionId + 1)
         // All literals excluding conclusion
         val literals = clause.literals.take(conclusionId) ++ clause.literals.drop(conclusionId + 1)
-        for (unifier <- combinations(unifiers)) { // We should try all combinations of unifiers
-          val unifierUnits = unifier.map(_.unit)
-          val literalUnits = literals.map(_.unit)
-          unifyWithRename(unifierUnits, literalUnits) match {
-            // All unifiers should be unified with literals using one common mgu
-            case Some(_) =>
-              val clauseNode = reverseImplicationGraph(clause).head
-              val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
-              val unitPropagationNode =
-                UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId))
-              val newLiteral = unitPropagationNode.conclusion.literal
-              if (!unifier.exists(isAncestor(_, newLiteral))) {
-                ancestor.getOrElseUpdate(newLiteral, mutable.Set.empty) ++=
-                  (Set.empty[Clause] /: unifier)(_ union ancestor(_)) + clause
-                if (decisions.contains(newLiteral)) {
-                  decisions -= newLiteral
-                  result += newLiteral
-                  myResult += newLiteral
-                  val buffer =
-                    reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
-                  buffer.clear()
-                  buffer += unitPropagationNode
-                } else {
-                  val buffer =
-                    reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
-                  buffer += unitPropagationNode
-                }
-                if (!result.contains(newLiteral) && !propagatedLiterals.contains(newLiteral)) {
-                  result += newLiteral
-                  myResult += newLiteral
-                }
-              }
-            case None =>
+        for (unifier <- getUnify(unifiers, literals)) {
+          val clauseNode = reverseImplicationGraph(clause).head
+          val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
+          val unitPropagationNode =
+            UnitPropagationResolution(unifierNodes, clauseNode, conclusionId)
+          val newLiteral = unitPropagationNode.conclusion.literal
+          if (!unifier.exists(isAncestor(_, newLiteral))) {
+            ancestor.getOrElseUpdate(newLiteral, mutable.Set.empty) ++=
+              (Set.empty[Clause] /: unifier)(_ union ancestor(_)) + clause
+            if (decisions.contains(newLiteral)) {
+              decisions -= newLiteral
+              result += newLiteral
+              myResult += newLiteral
+              val buffer =
+                reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
+              buffer.clear()
+              buffer += unitPropagationNode
+            } else {
+              val buffer =
+                reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
+              buffer += unitPropagationNode
+            }
+            if (!result.contains(newLiteral) && !propagatedLiterals.contains(newLiteral)) {
+              result += newLiteral
+              myResult += newLiteral
+            }
           }
         }
       }
