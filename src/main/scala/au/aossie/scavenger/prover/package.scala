@@ -86,6 +86,9 @@ package object prover {
 
   // TODO: This method should be moved to the unification package
   def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
+    if (left.zip(right).forall { case (x, y) => x == y }) {
+      return Some(Seq.fill(left.size)(Substitution.empty), Substitution.empty)
+    }
     var usedVars = right map { _.variables.toSet } reduce { _ union _ }
     val newLeftWithSub = for (oneLeft <- left) yield {
       val substitution = renameVars(oneLeft, usedVars)

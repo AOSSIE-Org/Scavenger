@@ -1,5 +1,6 @@
 package au.aossie.scavenger.prover
-import au.aossie.scavenger.expression.E
+import au.aossie.scavenger.expression.formula.Neg
+import au.aossie.scavenger.model.Assignment
 import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 import au.aossie.scavenger.structure.immutable.{CNF, Literal, SetClause => Clause}
 
@@ -24,7 +25,6 @@ object EPCR extends Prover {
     val decisions = ArrayBuffer.empty[Literal]
     val conflictClauses = mutable.Set.empty[CRProofNode]
     val resolvedCache = mutable.Set.empty[(Clause, Int, Seq[Literal])]
-    val unificationCache = mutable.WeakHashMap.empty[(Seq[E], Seq[E]), Boolean]
 
     def updateUnifiableUnits(newLiterals: Seq[Literal]): Unit = {
       literals ++= newLiterals
@@ -50,59 +50,17 @@ object EPCR extends Prover {
           val unifierUnits = unifier.map(_.unit)
           val literalUnits = literals.map(_.unit)
           resolvedCache += task
-          if (unificationCache.getOrElseUpdate((unifierUnits, literalUnits), unifyWithRename(unifierUnits, literalUnits).isDefined)) {
+          if (unifyWithRename(unifierUnits, literalUnits).isDefined) {
             val clauseNode = reverseImplicationGraph(clause).head
             val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
-            val unitPropagationNode = UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId))
+            val unitPropagationNode = UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId), literals)
             val newLiteral = unitPropagationNode.conclusion.literal
-            if (!unifier.exists(isAncestor(_, newLiteral))) {
-              if (decisions.contains(newLiteral)) {
-                decisions -= newLiteral
-                result += newLiteral
-                val buffer = reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
-                buffer.clear()
-                buffer += unitPropagationNode
-              } else {
-                val buffer = reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
-                buffer += unitPropagationNode
-              }
               if (!result.contains(newLiteral) && !propagatedLiterals.contains(newLiteral)) {
+                val buffer = reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
+                buffer += unitPropagationNode
                 result += newLiteral
               }
-            }
           }
-        }
-      }
-    }
-
-    def isAncestor(current: Literal, ancestor: Literal): Boolean = {
-      if (current == ancestor) {
-        true
-      } else if (cnf.clauses.contains(current.toSetClause) || conflictClauses.exists(_.conclusion == current.toSetClause)) {
-        false
-      } else if (decisions contains current) {
-        false
-      } else {
-        if (!reverseImplicationGraph(current).forall {
-          case UnitPropagationResolution(unifiers, _, _, _, _) =>
-            unifiers.exists { proofNode =>
-              isAncestor(proofNode.conclusion.literal, ancestor)
-            }
-          case _ =>
-            require(false) // unexpected branch
-            false
-        }) {
-          reverseImplicationGraph(current) = reverseImplicationGraph(current).filterNot {
-            case UnitPropagationResolution(unifiers, _, _, _, _) =>
-              unifiers.exists { proofNode =>
-                isAncestor(proofNode.conclusion.literal, ancestor)
-              }
-            case _ =>
-              false
-          }
-          false
-        } else {
-          true
         }
       }
     }
@@ -138,6 +96,8 @@ object EPCR extends Prover {
         resolve(conflictClause.conclusion, result)
       }
 
+      println("Resolved:\n" + result.mkString("\n"))
+
       updateUnifiableUnits(result.toSeq)
 
       val cdclClauses = mutable.Set.empty[CRProofNode]
@@ -158,16 +118,47 @@ object EPCR extends Prover {
       }
 
       if (cdclClauses.nonEmpty) {
+        println("Resetting with:\n" + cdclClauses.mkString("\n"))
         reset(cdclClauses.toSet)
       } else if (result.isEmpty) {
-        if (literals.size == propagatedLiterals.size) {
+        val available = rnd.shuffle((literals -- propagatedLiterals -- propagatedLiterals.map(!_)).toSeq)
+        if (available.isEmpty) {
           reset(Set.empty)
         } else {
-          val decisionLiteral = rnd.shuffle((literals -- propagatedLiterals).toSeq).head
+          val decisionLiteral = available.head
           decisions += decisionLiteral
+          if (decisions.contains(!decisionLiteral)) {
+            decisions -= !decisionLiteral
+            def valid(node: CRProofNode): Boolean = {
+              node match {
+                case Decision(literal) if literal == !decisionLiteral =>
+                  false
+                case Decision(_) =>
+                  true
+                case Axiom(_) =>
+                  true
+                case ConflictDrivenClauseLearning(_) =>
+                  true
+                case UnitPropagationResolution(left, right, _, _, _) =>
+                  left.forall(valid) && valid(right)
+              }
+            }
+            for (literal <- propagatedLiterals) {
+              reverseImplicationGraph(literal) = reverseImplicationGraph(literal).filter(valid)
+            }
+            val nonValidLiterals = reverseImplicationGraph.filter(_._2.isEmpty).keys.map(_.literal)
+            propagatedLiterals --= nonValidLiterals
+            unifiableUnits.values.foreach(_ --= nonValidLiterals)
+          }
+          println("Decision: " + decisionLiteral)
           reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
           updateUnifiableUnits(Seq(decisionLiteral))
         }
+      } else if (cnf.clauses.forall(clause => clause.literals.exists(propagatedLiterals.contains))) {
+        val literals      = propagatedLiterals ++ decisions
+        val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
+        val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
+        return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
       }
     }
     Error // this line is unreachable.
