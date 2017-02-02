@@ -53,7 +53,7 @@ object EPCR extends Prover {
           if (unifyWithRename(unifierUnits, literalUnits).isDefined) {
             val clauseNode = reverseImplicationGraph(clause).head
             val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
-            val unitPropagationNode = UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId), literals)
+            val unitPropagationNode = UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId), literals) // TODO: Inside UnitPropagationResolution we redo the same unification that is done in "unifyWithRename". We could probably double the efficiency by avoid this duplicate computation somehow, but this would require a major refactor. It is better to leave it as it is now.
             val newLiteral = unitPropagationNode.conclusion.literal
               if (!result.contains(newLiteral) && !propagatedLiterals.contains(newLiteral)) {
                 val buffer = reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
