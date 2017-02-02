@@ -83,6 +83,30 @@ object EPCR extends Prover {
       updateUnifiableUnits(propagatedLiterals.toSeq)
     }
 
+    def removeDecisionLiteral(decisionLiteral: Literal): Unit = {
+      decisions -= decisionLiteral
+      def valid(node: CRProofNode): Boolean = {
+        node match {
+          case Decision(literal) if literal == decisionLiteral =>
+            false
+          case Decision(_) =>
+            true
+          case Axiom(_) =>
+            true
+          case ConflictDrivenClauseLearning(_) =>
+            true
+          case UnitPropagationResolution(left, right, _, _, _) =>
+            left.forall(valid) && valid(right)
+        }
+      }
+      for (literal <- propagatedLiterals) {
+        reverseImplicationGraph(literal) = reverseImplicationGraph(literal).filter(valid)
+      }
+      val nonValidLiterals = reverseImplicationGraph.filter(_._2.isEmpty).keys.map(_.literal)
+      propagatedLiterals --= nonValidLiterals
+      unifiableUnits.values.foreach(_ --= nonValidLiterals)
+    }
+
     updateUnifiableUnits(propagatedLiterals.toSeq)
 
     cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(Axiom(clause)))
@@ -100,7 +124,8 @@ object EPCR extends Prover {
 
       updateUnifiableUnits(result.toSeq)
 
-      val cdclClauses = mutable.Set.empty[CRProofNode]
+      val CDCLClauses = mutable.Set.empty[CRProofNode]
+      val allCDCLClauses = mutable.Set.empty[CRProofNode]
       propagatedLiterals.filter(unifiableUnits(_).nonEmpty).foreach { conflictLiteral =>
         for {
           otherLiteral <- unifiableUnits(conflictLiteral)
@@ -112,14 +137,15 @@ object EPCR extends Prover {
           val newClause = cdclNode.conclusion
           if (newClause == Clause.empty) return Unsatisfiable(Some(Proof(conflict)))
           if (!cnf.clauses.contains(newClause) && !conflictClauses.exists(_.conclusion == newClause)) {
-            cdclClauses += cdclNode
+            CDCLClauses += cdclNode
           }
+          allCDCLClauses += cdclNode
         }
       }
 
-      if (cdclClauses.nonEmpty) {
-        println("Resetting with:\n" + cdclClauses.mkString("\n"))
-        reset(cdclClauses.toSet)
+      if (CDCLClauses.nonEmpty) {
+//        println("Resetting with:\n" + CDCLClauses.map(_.conclusion).mkString("\n"))
+        reset(CDCLClauses.toSet)
       } else if (result.isEmpty) {
         val available = rnd.shuffle((literals -- propagatedLiterals -- propagatedLiterals.map(!_)).toSeq)
         if (available.isEmpty) {
@@ -128,33 +154,13 @@ object EPCR extends Prover {
           val decisionLiteral = available.head
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
-            decisions -= !decisionLiteral
-            def valid(node: CRProofNode): Boolean = {
-              node match {
-                case Decision(literal) if literal == !decisionLiteral =>
-                  false
-                case Decision(_) =>
-                  true
-                case Axiom(_) =>
-                  true
-                case ConflictDrivenClauseLearning(_) =>
-                  true
-                case UnitPropagationResolution(left, right, _, _, _) =>
-                  left.forall(valid) && valid(right)
-              }
-            }
-            for (literal <- propagatedLiterals) {
-              reverseImplicationGraph(literal) = reverseImplicationGraph(literal).filter(valid)
-            }
-            val nonValidLiterals = reverseImplicationGraph.filter(_._2.isEmpty).keys.map(_.literal)
-            propagatedLiterals --= nonValidLiterals
-            unifiableUnits.values.foreach(_ --= nonValidLiterals)
+            removeDecisionLiteral(!decisionLiteral)
           }
           println("Decision: " + decisionLiteral)
           reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
           updateUnifiableUnits(Seq(decisionLiteral))
         }
-      } else if (cnf.clauses.forall(clause => clause.literals.exists(propagatedLiterals.contains))) {
+      } else if (allCDCLClauses.isEmpty && cnf.clauses.forall(clause => clause.literals.exists(propagatedLiterals.contains))) {
         val literals      = propagatedLiterals ++ decisions
         val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
         val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
