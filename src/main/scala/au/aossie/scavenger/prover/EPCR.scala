@@ -43,23 +43,31 @@ object EPCR extends Prover {
     def resolve(clause: Clause, result: mutable.Set[Literal]): Unit = {
       val unifyCandidates = clause.literals.map(unifiableUnits(_).toSeq)
       for (conclusionId <- unifyCandidates.indices) {
-        val unifiers = unifyCandidates.take(conclusionId) ++ unifyCandidates.drop(conclusionId + 1)
-        val literals = clause.literals.take(conclusionId) ++ clause.literals.drop(conclusionId + 1)
-        for (unifier <- combinations(unifiers)) if (!resolvedCache.contains((clause, conclusionId, unifier))) {
-          val task = (clause, conclusionId, unifier)
-          val unifierUnits = unifier.map(_.unit)
-          val literalUnits = literals.map(_.unit)
-          resolvedCache += task
-          if (unifyWithRename(unifierUnits, literalUnits).isDefined) {
-            val clauseNode = reverseImplicationGraph(clause).head
-            val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
-            val unitPropagationNode = UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId), literals) // TODO: Inside UnitPropagationResolution we redo the same unification that is done in "unifyWithRename". We could probably double the efficiency by avoid this duplicate computation somehow, but this would require a major refactor. It is better to leave it as it is now.
-            val newLiteral = unitPropagationNode.conclusion.literal
+        val isUseful = (
+            for (i <- unifyCandidates.indices) yield {
+              i == conclusionId || unifyCandidates(i).nonEmpty
+            }
+          ).forall(identity)
+        if (isUseful) {
+          val unifiers = unifyCandidates.take(conclusionId) ++ unifyCandidates.drop(conclusionId + 1)
+          val literals = clause.literals.take(conclusionId) ++ clause.literals.drop(conclusionId + 1)
+          for (unifier <- combinations(unifiers)) if (!resolvedCache.contains((clause, conclusionId, unifier))) {
+            val task = (clause, conclusionId, unifier)
+            val unifierUnits = unifier.map(_.unit)
+            val literalUnits = literals.map(_.unit)
+            resolvedCache += task
+            if (unifyWithRename(unifierUnits, literalUnits).isDefined) {
+              val clauseNode = reverseImplicationGraph(clause).head
+              val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
+              val unitPropagationNode = UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId), literals)
+              // TODO: Inside UnitPropagationResolution we redo the same unification that is done in "unifyWithRename". We could probably double the efficiency by avoid this duplicate computation somehow, but this would require a major refactor. It is better to leave it as it is now.
+              val newLiteral = unitPropagationNode.conclusion.literal
               if (!result.contains(newLiteral) && !propagatedLiterals.contains(newLiteral)) {
                 val buffer = reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
                 buffer += unitPropagationNode
                 result += newLiteral
               }
+            }
           }
         }
       }
@@ -113,7 +121,7 @@ object EPCR extends Prover {
 
     while (true) {
       val result = mutable.Set.empty[Literal]
-      for (clause <- clauses) {
+      for (clause <- clauses) if (!clause.literals.exists(propagatedLiterals.contains)) {
         resolve(clause, result)
       }
       for (conflictClause <- conflictClauses) if (!conflictClause.conclusion.isUnit) {
@@ -144,7 +152,7 @@ object EPCR extends Prover {
       }
 
       if (CDCLClauses.nonEmpty) {
-//        println("Resetting with:\n" + CDCLClauses.map(_.conclusion).mkString("\n"))
+        println("Resetting with:\n" + CDCLClauses.map(_.conclusion).mkString("\n"))
         reset(CDCLClauses.toSet)
       } else if (result.isEmpty) {
         val available = rnd.shuffle((literals -- propagatedLiterals -- propagatedLiterals.map(!_)).toSeq)
