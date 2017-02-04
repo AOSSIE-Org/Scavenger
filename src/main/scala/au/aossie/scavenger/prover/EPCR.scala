@@ -133,7 +133,6 @@ object EPCR extends Prover {
       updateUnifiableUnits(result.toSeq)
 
       val CDCLClauses = mutable.Set.empty[CRProofNode]
-      val allCDCLClauses = mutable.Set.empty[CRProofNode]
       propagatedLiterals.filter(unifiableUnits(_).nonEmpty).foreach { conflictLiteral =>
         for {
           otherLiteral <- unifiableUnits(conflictLiteral)
@@ -144,10 +143,7 @@ object EPCR extends Prover {
           val cdclNode  = ConflictDrivenClauseLearning(conflict)
           val newClause = cdclNode.conclusion
           if (newClause == Clause.empty) return Unsatisfiable(Some(Proof(conflict)))
-          if (!cnf.clauses.contains(newClause) && !conflictClauses.exists(_.conclusion == newClause)) {
-            CDCLClauses += cdclNode
-          }
-          allCDCLClauses += cdclNode
+          CDCLClauses += cdclNode
         }
       }
 
@@ -168,7 +164,7 @@ object EPCR extends Prover {
           reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
           updateUnifiableUnits(Seq(decisionLiteral))
         }
-      } else if (allCDCLClauses.isEmpty && cnf.clauses.forall(clause => clause.literals.exists(propagatedLiterals.contains))) {
+      } else if (cnf.clauses.forall(clause => clause.literals.exists(propagatedLiterals.contains))) {
         val literals      = propagatedLiterals ++ decisions
         val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
         val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
