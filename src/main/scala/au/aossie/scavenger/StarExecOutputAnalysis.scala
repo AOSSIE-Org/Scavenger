@@ -48,40 +48,61 @@ object StarExecOutputAnalysis {
           
           val bf = new BufferedReader(new FileReader(f))
           val lines = bf.lines.iterator()
-          
-          var result: Option[String] = None
-          var cpuTime: Option[String] = None
-          var wallclockTime: Option[String] = None
+ 
+// This commented out code is more elegant, but too inefficient, because Scala's pattern matching of regular expressions is inefficient
+//          var line = ""
+//          var hasOutput = false
+//          while (!hasOutput && lines.hasNext()) {
+//            line = lines.next()
+//            val pattern = "([0-9]+[.][0-9]+)/([0-9]+[.][0-9]+).*SZS status ([a-zA-Z]+).*".r 
+//            line match {
+//              case pattern(cpuTime,wallclockTime,status) => {
+//                val jp = JobPair(domain, prover, problem, status, cpuTime, wallclockTime) 
+//                println(jp)
+//                jpa += jp
+//                hasOutput = true
+//              }
+//              case _ => 
+//            }
+//          }
+//          
+//          if (!hasOutput) {
+//            val pattern = "([0-9]+[.][0-9]+)/([0-9]+[.][0-9]+).*".r 
+//            line match {
+//              case pattern(cpuTime,wallclockTime) => {
+//                val jp = JobPair(domain, prover, problem, "NoOutput", cpuTime, wallclockTime) 
+//                println(jp)
+//                jpa += jp
+//              }
+//              case _ => throw new Exception("Could not find CPU Time and Wallclock Time")
+//            }  
+//          }
+
           var line = ""
-          
-          //println(lines.hasNext)
-          
-          while ((result == None) && lines.hasNext()) {
+          var hasOutput = false
+          while (!hasOutput && lines.hasNext()) {
             line = lines.next()
             if (line.contains("SZS status")) {
-              //println(line)
               val tl = line.split("\t")
-              val times = tl(0).split("/")
-              cpuTime = Some(times(0))
-              wallclockTime = Some(times(1))
-              result = "(Satisfiable|Unsatisfiable|GaveUp|TimeOut|ResourceOut)".r findFirstIn tl(1)
-              val jp = JobPair(domain, prover, problem, result.get, cpuTime.get, wallclockTime.get) 
+              val timePrefix = tl(0)
+              val ss = tl(1).split("SZS status ")
+              val status = "([a-zA-Z]+)".r findFirstIn ss(1)
+              val tt = timePrefix.split("/")
+              val jp = JobPair(domain, prover, problem, status.get, tt(0), tt(1)) 
               println(jp)
               jpa += jp
+              hasOutput = true 
             }
           }
           
-          if (result == None) {
-            //println(line)
-            val tl = line.split("\t")
-            val times = tl(0).split("/")
-            cpuTime = Some(times(0))
-            wallclockTime = Some(times(1))
-            val jp = JobPair(domain, prover, problem, "ResourceOut", cpuTime.get, wallclockTime.get) 
+          if (!hasOutput) {
+            val tt = line.split("\t")(0).split("/")
+            val jp = JobPair(domain, prover, problem, "NoOutput", tt(0), tt(1)) 
             println(jp)
-            jpa += jp            
+            jpa += jp
           }
-
+          
+          bf.close()
         }
       }
     }
