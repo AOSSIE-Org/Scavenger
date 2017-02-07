@@ -4,6 +4,8 @@ import java.io.File
 import java.io.FileReader
 import java.io.BufferedReader
 
+import scalax.chart.api._
+
 import scala.collection.mutable._
 
 /**
@@ -24,7 +26,7 @@ object StarExecOutputAnalysis {
   }
 
   case class JobPair(domain: String, prover: String, problem: String, 
-                     result: String, cpuTime: String, wallclockTime: String)
+                     result: String, cpuTime: Double, wallclockTime: Double)
   
   def main(args: Array[String]): Unit = {
     parser.parse(args, Config()) foreach { c =>
@@ -59,7 +61,7 @@ object StarExecOutputAnalysis {
               val ss = tl(1).split("SZS status ")
               val status = "([a-zA-Z]+)".r findFirstIn ss(1)
               val tt = timePrefix.split("/")
-              val jp = JobPair(domain, prover, problem, status.get, tt(0), tt(1)) 
+              val jp = JobPair(domain, prover, problem, status.get, tt(0).toDouble, tt(1).toDouble) 
               println(jp)
               jpa += jp
               hasOutput = true 
@@ -68,14 +70,44 @@ object StarExecOutputAnalysis {
           
           if (!hasOutput) {
             val tt = line.split("\t")(0).split("/")
-            val jp = JobPair(domain, prover, problem, "NoOutput", tt(0), tt(1)) 
+            val jp = JobPair(domain, prover, problem, "NoOutput", tt(0).toDouble, tt(1).toDouble) 
             println(jp)
             jpa += jp
           }
           
           bf.close()
         }
+        
+        
+        val fjpa = jpa filter { jp => jp.result != "NoOutput" }
+        
+        val gfjpa = fjpa groupBy { jp => jp.prover } 
+        
+        
+        // Calculating number of problems solved under a given time
+        val ppt = for ((p, pjpa) <- gfjpa) yield {
+          // FIXME: In general, we want to filter results that are correct, and not just "Unsatisfiable"
+          val sortedSolvedBenchs = pjpa filter { jp => jp.result == "Unsatisfiable" }  sortWith { (jp1, jp2) => jp1.cpuTime < jp2.cpuTime }
+          
+          for (e <- sortedSolvedBenchs) println(p + " " + e)
+          
+          val numOfProblemsPerTime = sortedSolvedBenchs.zipWithIndex map { case (jp, i) => (i+1, jp.cpuTime) }
+          
+          for (e <- numOfProblemsPerTime) println(p + " " + e)
+          
+          (p, numOfProblemsPerTime)
+        }
+        
+        // TODO: Make this chart more beautiful. Include axis labels in the chart. 
+        // Grey is probably not a good color for the background.
+        val chart = XYLineChart( ppt.toSeq map { case (p, pt) => (p -> pt.toIndexedSeq) } )
+        chart.show()
+        val date = new java.text.SimpleDateFormat("yyyy-mm-dd--HH-mm-ss").format(new java.util.Date())
+        chart.saveAsPNG(s"${d}chart--${date}.png")        
+        
+        
       }
+
     }
   }
 }
