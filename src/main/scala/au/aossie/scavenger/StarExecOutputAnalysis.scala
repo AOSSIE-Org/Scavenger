@@ -7,6 +7,7 @@ import java.io.BufferedReader
 import scalax.chart.api._
 
 import scala.collection.mutable._
+import scala.language.postfixOps
 
 /**
   * @author Bruno Woltzenlogel Paleo
@@ -45,7 +46,8 @@ object StarExecOutputAnalysis {
         for (f <- walkTree(f0) if !f.isDirectory && f.toString.contains(".txt") ) {
           val path = f.toString.split("/")
           val domain = path(offset)
-          val prover = path(offset + 1).split("___")(0)
+          val proverAux = path(offset + 1).split("___")
+          val prover = (proverAux(0) + (if (proverAux(1) != "default" && proverAux(0) != proverAux(1)) "_" + proverAux(1) else "")).replace("---", "-")
           val problem = path(offset + 2)
           
           val bf = new BufferedReader(new FileReader(f))
@@ -85,28 +87,30 @@ object StarExecOutputAnalysis {
         
         
         // Calculating number of problems solved under a given time
-        val ppt = for ((p, pjpa) <- gfjpa) yield {
+        val ppt = (for ((p, pjpa) <- gfjpa) yield {
           // FIXME: In general, we want to filter results that are correct, and not just "Unsatisfiable"
           // But StarExec's output doesn't tell us the expected status for each job pair.
           // We should at least get the expected status from the command line, instead of hard-coding it here.
           val sortedSolvedBenchs = pjpa filter { jp => jp.result == "Unsatisfiable" }  sortWith { (jp1, jp2) => jp1.cpuTime < jp2.cpuTime }
           
-          for (e <- sortedSolvedBenchs) println(p + " " + e)
+          //for (e <- sortedSolvedBenchs) println(p + " " + e)
           
           val numOfProblemsPerTime = sortedSolvedBenchs.zipWithIndex map { case (jp, i) => (i+1, jp.cpuTime) }
           
-          for (e <- numOfProblemsPerTime) println(p + " " + e)
+          //for (e <- numOfProblemsPerTime) println(p + " " + e)
           
           (p, numOfProblemsPerTime)
-        }
+        }) toSeq
         
         // TODO: Make this chart more beautiful. Include axis labels in the chart. 
         // Grey is probably not a good color for the background.
-        val chart = XYLineChart( ppt.toSeq map { case (p, pt) => (p -> pt.toIndexedSeq) } )
+        val chart = XYLineChart( ppt filter { e => e._2.length != 0 } sortWith { (e1, e2) => e1._2.length < e2._2.length } map { case (p, pt) => (p -> pt) } )
         chart.show()
         val date = new java.text.SimpleDateFormat("yyyy-mm-dd--HH-mm-ss").format(new java.util.Date())
         chart.saveAsPNG(s"${d}chart--${date}.png")        
         
+        // Sort provers by number of problems solved
+        ppt map { e => (e._1, e._2.length)} sortWith { (e1, e2) => e1._2 < e2._2 } map { println(_) }
         
       }
 
