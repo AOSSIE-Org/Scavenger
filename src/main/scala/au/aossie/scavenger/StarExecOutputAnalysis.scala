@@ -86,12 +86,14 @@ object StarExecOutputAnalysis {
         val gfjpa = fjpa groupBy { jp => jp.prover } 
         
         
+        // FIXME: In general, we want to filter results that are correct, and not just "Unsatisfiable"
+        // But StarExec's output doesn't tell us the expected status for each job pair.
+        // We should at least get the expected status from the command line, instead of hard-coding it here.
+        val SOLVED = "Unsatisfiable"
+        
         // Calculating number of problems solved under a given time
         val ppt = (for ((p, pjpa) <- gfjpa) yield {
-          // FIXME: In general, we want to filter results that are correct, and not just "Unsatisfiable"
-          // But StarExec's output doesn't tell us the expected status for each job pair.
-          // We should at least get the expected status from the command line, instead of hard-coding it here.
-          val sortedSolvedBenchs = pjpa filter { jp => jp.result == "Unsatisfiable" }  sortWith { (jp1, jp2) => jp1.cpuTime < jp2.cpuTime }
+          val sortedSolvedBenchs = pjpa filter { jp => jp.result == SOLVED }  sortWith { (jp1, jp2) => jp1.cpuTime < jp2.cpuTime }
           
           //for (e <- sortedSolvedBenchs) println(p + " " + e)
           
@@ -111,6 +113,22 @@ object StarExecOutputAnalysis {
         
         // Sort provers by number of problems solved
         ppt map { e => (e._1, e._2.length)} sortWith { (e1, e2) => e1._2 < e2._2 } map { println(_) }
+        
+        
+        // Find problems that are solved only by one prover
+        println()
+        fjpa filter { _.result == SOLVED } groupBy { _.problem } filter { case (problem, list) => list.length == 1 } map {case (problem, list) => println(problem + " : " + list(0).prover) }
+        
+        
+        // Find problems on which Scavenger is strong and most other provers aren't
+        println()
+        (fjpa filter { _.result == SOLVED } groupBy { _.problem } filter { case (problem, list) => list.exists( jp => jp.prover == "Scavenger 0.1-EPCR-10" ) }).toSeq sortWith { 
+          (e1, e2) => e1._2.length > e2._2.length 
+        } filter {
+          case (problem, list) => list.length <= 8 // at most 8 other provers should have solved the same problem
+        } map {
+          case (problem, list) => println(); println(problem + ": " + (list map { jp => (jp.prover, jp.cpuTime) }).mkString(", ") )
+        }
         
       }
 
