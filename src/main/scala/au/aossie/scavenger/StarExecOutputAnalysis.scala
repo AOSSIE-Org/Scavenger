@@ -48,35 +48,6 @@ object StarExecOutputAnalysis {
           
           val bf = new BufferedReader(new FileReader(f))
           val lines = bf.lines.iterator()
- 
-// This commented out code is more elegant, but too inefficient, because Scala's pattern matching of regular expressions is inefficient
-//          var line = ""
-//          var hasOutput = false
-//          while (!hasOutput && lines.hasNext()) {
-//            line = lines.next()
-//            val pattern = "([0-9]+[.][0-9]+)/([0-9]+[.][0-9]+).*SZS status ([a-zA-Z]+).*".r 
-//            line match {
-//              case pattern(cpuTime,wallclockTime,status) => {
-//                val jp = JobPair(domain, prover, problem, status, cpuTime, wallclockTime) 
-//                println(jp)
-//                jpa += jp
-//                hasOutput = true
-//              }
-//              case _ => 
-//            }
-//          }
-//          
-//          if (!hasOutput) {
-//            val pattern = "([0-9]+[.][0-9]+)/([0-9]+[.][0-9]+).*".r 
-//            line match {
-//              case pattern(cpuTime,wallclockTime) => {
-//                val jp = JobPair(domain, prover, problem, "NoOutput", cpuTime, wallclockTime) 
-//                println(jp)
-//                jpa += jp
-//              }
-//              case _ => throw new Exception("Could not find CPU Time and Wallclock Time")
-//            }  
-//          }
 
           var line = ""
           var hasOutput = false
