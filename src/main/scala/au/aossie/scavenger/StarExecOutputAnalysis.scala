@@ -1,11 +1,11 @@
 package au.aossie.scavenger
 
+import java.awt.Color
 import java.io.File
 import java.io.FileReader
 import java.io.BufferedReader
 
 import scalax.chart.api._
-
 import scala.collection.mutable._
 import scala.language.postfixOps
 
@@ -26,9 +26,9 @@ object StarExecOutputAnalysis {
 
   }
 
-  case class JobPair(domain: String, prover: String, problem: String, 
+  case class JobPair(domain: String, prover: String, problem: String,
                      result: String, cpuTime: Double, wallclockTime: Double)
-  
+  // scalastyle:off
   def main(args: Array[String]): Unit = {
     parser.parse(args, Config()) foreach { c =>
       def walkTree(file: File): Iterable[File] = {
@@ -103,16 +103,19 @@ object StarExecOutputAnalysis {
           
           (p, numOfProblemsPerTime)
         }) toSeq
-        
-        // TODO: Make this chart more beautiful. Include axis labels in the chart. 
-        // Grey is probably not a good color for the background.
-        val chart = XYLineChart( ppt filter { e => e._2.length != 0 } sortWith { (e1, e2) => e1._2.length < e2._2.length } map { case (p, pt) => (p -> pt) } )
+
+        val chart = XYLineChart( ppt filter { e => e._2.nonEmpty } sortWith { (e1, e2) => e1._2.length < e2._2.length } map { case (p, pt) => (p -> pt) } )
+        chart.plot.getDomainAxis.setLabel("Number of Problems")
+        chart.plot.getRangeAxis.setLabel("Time (seconds)")
+        chart.plot.setBackgroundPaint(Color.WHITE)
+        chart.plot.setDomainGridlinePaint(Color.BLACK)
+        chart.plot.setRangeGridlinePaint(Color.BLACK)
         chart.show()
         val date = new java.text.SimpleDateFormat("yyyy-mm-dd--HH-mm-ss").format(new java.util.Date())
-        chart.saveAsPNG(s"${d}chart--${date}.png")        
+        chart.saveAsPNG(s"${d}chart--${date}.png")
         
         // Sort provers by number of problems solved
-        ppt map { e => (e._1, e._2.length)} sortWith { (e1, e2) => e1._2 < e2._2 } map { println(_) }
+        ppt map { e => (e._1, e._2.length)} sortWith { (e1, e2) => e1._2 < e2._2 } foreach { println(_) }
         
         
         // Find problems that are solved only by one prover
@@ -134,4 +137,5 @@ object StarExecOutputAnalysis {
 
     }
   }
+  // scalastyle:on
 }
