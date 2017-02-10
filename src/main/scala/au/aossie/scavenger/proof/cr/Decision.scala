@@ -8,7 +8,6 @@ import au.aossie.scavenger.structure.immutable.{ Literal, SetClause => Clause }
 case class Decision(literal: Literal) extends CRProofNode {
 
   override def conclusion: Clause = literal.toSetClause
-
   override def premises: Seq[CRProofNode] = Seq.empty
 }
 
