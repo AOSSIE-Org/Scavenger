@@ -13,5 +13,7 @@ case class Literal(unit: E, negated: Boolean) {
 
   def toSetClause: SetClause = if (negated) SetClause(unit)() else SetClause()(unit)
 
+  def depth = unit.depth
+
   override def toString: String = if (negated) s"$unit ⊢" else s"⊢ $unit"
 }

@@ -52,6 +52,17 @@ sealed abstract class E {
     }
     rec(this, Set[Var]())
   }
+
+  lazy val depth = {
+    def rec(e: E): Int = e match {
+      case Var(_) | Sym(_) => 0
+      case AppRec(_, args) =>
+        args.map(rec).max + 1
+      case Abs(_, _, b) => rec(b) + 1
+      case _ => 0
+    }
+    rec(this)
+  }
   
 }
 
