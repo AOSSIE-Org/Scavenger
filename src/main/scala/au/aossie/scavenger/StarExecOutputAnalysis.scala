@@ -81,7 +81,30 @@ object StarExecOutputAnalysis {
         }
         
         
-        val fjpa = jpa filter { jp => jp.result != "NoOutput" }
+        val fjpa = jpa filter { jp => jp.result != "NoOutput" && 
+                                      jp.result != "ResourceOut" &&
+                                      jp.result != "Unknown" &&
+                                      jp.result != "GaveUp" &&
+                                      jp.result != "TimeOut" &&
+                                      jp.result != "Inappropriate" &&
+                                      ! (jp.prover contains "Prover9Plus")
+                              }
+        
+        println("Hey!")
+        println()
+        
+        for (jp <- fjpa if jp.cpuTime > 275.0) { println(jp) }
+        
+        println("Ho!")
+        println()
+        
+        for (jp <- fjpa if jp.prover contains "JGRM3") { println(jp) }
+        
+        println("Haaa!")
+        println()
+        
+        for (jp <- fjpa if jp.prover contains "Prover9Plus") { println(jp) }
+        
         
         val gfjpa = fjpa groupBy { jp => jp.prover } 
         
@@ -110,9 +133,27 @@ object StarExecOutputAnalysis {
         chart.plot.setBackgroundPaint(Color.WHITE)
         chart.plot.setDomainGridlinePaint(Color.BLACK)
         chart.plot.setRangeGridlinePaint(Color.BLACK)
+        // chart.plot.setRenderer(new org.jfree.chart.renderer.xy.XYLineAndShapeRenderer(false, true))
         chart.show()
         val date = new java.text.SimpleDateFormat("yyyy-mm-dd--HH-mm-ss").format(new java.util.Date())
         chart.saveAsPNG(s"${d}chart--${date}.png")
+        
+        // Scatter plot of solving time per problem
+        
+        val gpfjpa = (fjpa groupBy { jp => jp.problem } toSeq) sortWith 
+                     { (p1, p2) => (p1._2.length < p2._2.length) || 
+                                   ((p1._2.length == p2._2.length) && (p1._2 map {_.cpuTime} reduce(_ + _)) < (p2._2 map {_.cpuTime}  reduce(_ + _) ) ) }
+        
+        for (p <- gpfjpa.zipWithIndex) { println(p._2 + ": \t" + p._1._1) }
+        
+        gpfjpa.zipWithIndex filter { case ((problem, jpa), index) => !jpa.exists(jp => jp.prover contains "Scavenger") } foreach { p => println(p._2 + ": \t" + p._1._1) }
+        
+        val igpfjpa = gpfjpa.zipWithIndex map { p => (p._2, p._1._1, p._1._2) } // Prepend index in tuple
+        val data = igpfjpa flatMap { p => p._3 map { jp => (jp,p._1,jp.cpuTime) } } groupBy { _._1.prover } map { case (p, pjps) => (p -> (pjps map { case (jp, pnumber, time) => (pnumber,time) })) } toSeq
+        
+        val chart2 = XYLineChart( data )
+        chart2.plot.setRenderer(new org.jfree.chart.renderer.xy.XYLineAndShapeRenderer(false, true))
+        chart2.show()
         
         // Sort provers by number of problems solved
         ppt map { e => (e._1, e._2.length)} sortWith { (e1, e2) => e1._2 < e2._2 } foreach { println(_) }
@@ -139,3 +180,4 @@ object StarExecOutputAnalysis {
   }
   // scalastyle:on
 }
+
