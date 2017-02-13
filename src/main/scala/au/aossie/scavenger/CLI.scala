@@ -2,7 +2,7 @@ package au.aossie.scavenger
 
 import ammonite.ops._
 import au.aossie.scavenger.structure.immutable.CNF
-import au.aossie.scavenger.prover.{CR, EPCR, Satisfiable, TDCR, Unsatisfiable}
+import au.aossie.scavenger.prover.{PDCR, EPCR, Satisfiable, TDCR, Unsatisfiable}
 import au.aossie.scavenger.parser.TPTPCNFParser
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
@@ -15,12 +15,12 @@ import scala.collection.mutable
 object CLI {
 
   case class Config(inputs: Seq[String] = Seq(),
-                    algorithm: String = "CR",
+                    configuration: String = "CR",
                     format: Option[String] = None,
                     output: Output = StandardOutput)
 
   val configurations = Map(
-    "PD" -> CR,
+    "PD" -> PDCR,
     "EP" -> EPCR,
     "TD" -> TDCR
   )
