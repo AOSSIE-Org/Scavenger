@@ -128,7 +128,7 @@ object EPCR extends Prover {
         resolve(conflictClause.conclusion, result)
       }
 
-      println("Resolved:\n" + result.mkString("\n"))
+//      println("Resolved:\n" + result.mkString("\n"))
 
       updateUnifiableUnits(result.toSeq)
 
@@ -148,7 +148,7 @@ object EPCR extends Prover {
       }
 
       if (CDCLClauses.nonEmpty) {
-        println("Resetting with:\n" + CDCLClauses.map(_.conclusion).mkString("\n"))
+ //       println("Resetting with:\n" + CDCLClauses.map(_.conclusion).mkString("\n"))
         reset(CDCLClauses.toSet)
       } else if (result.isEmpty) {
         val available = rnd.shuffle((literals -- propagatedLiterals -- propagatedLiterals.map(!_)).toSeq)
@@ -160,7 +160,7 @@ object EPCR extends Prover {
           if (decisions.contains(!decisionLiteral)) {
             removeDecisionLiteral(!decisionLiteral)
           }
-          println("Decision: " + decisionLiteral)
+//          println("Decision: " + decisionLiteral)
           reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
           updateUnifiableUnits(Seq(decisionLiteral))
         }

@@ -2,7 +2,7 @@ package au.aossie.scavenger
 
 import ammonite.ops._
 import au.aossie.scavenger.structure.immutable.CNF
-import au.aossie.scavenger.prover.{PDCR, EPCR, Satisfiable, TDCR, Unsatisfiable}
+import au.aossie.scavenger.prover.{CR, EPCR, Satisfiable, TDCR, Unsatisfiable}
 import au.aossie.scavenger.parser.TPTPCNFParser
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
@@ -19,10 +19,10 @@ object CLI {
                     format: Option[String] = None,
                     output: Output = StandardOutput)
 
-  val algorithms = Map(
-    "PDCR" -> PDCR,
-    "EPCR" -> EPCR,
-    "TDCR" -> TDCR
+  val configurations = Map(
+    "PD" -> CR,
+    "EP" -> EPCR,
+    "TD" -> TDCR
   )
   val parsers = Map(
     "cnf"  -> TPTPCNFParser,
@@ -33,14 +33,14 @@ object CLI {
   val parser = new scopt.OptionParser[Config]("scavenger") {
     head("\nScavenger's Command Line Interface\n\n")
 
-    opt[String]('a', "algorithm") unbounded () action { (v, c) =>
-      c.copy(algorithm = v)
+    opt[String]('a', "algorithm") action { (v, c) =>
+      c.copy(configuration = v)
     } text "use <alg> to solve the problem" valueName "<alg>"
 
     note(
       s"""
         <alg> can be any of the following algorithms:
-        ${algorithms.keys.mkString(", ")}
+        ${configurations.keys.mkString(", ")}
         """
     )
 
@@ -96,12 +96,12 @@ object CLI {
 
   def main(args: Array[String]): Unit = {
     parser.parse(args, Config()) foreach { c =>
-      val algorithm = algorithms(c.algorithm)
+      val solver = configurations(c.configuration)
       for (input <- c.inputs) {
         val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), TPTPCNFParser)
         val path   = Path.apply(input, pwd)
         val cnf    = parser.parse(path)
-        algorithm.prove(cnf) match {
+        solver.prove(cnf) match {
           case Unsatisfiable(p) =>
             c.output.write(s"% SZS status Unsatisfiable for $input")
             c.output.write("\n")
