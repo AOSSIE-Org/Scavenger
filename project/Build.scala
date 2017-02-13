@@ -13,7 +13,7 @@ object ScavengerBuild extends Build {
   // Extension of "one-jar" to copy jar file to the root folder
   val jarS = oneJar <<= (oneJar,scalaVersion,version) map { (file,s,v) =>
     val m = major(s)
-    sys.process.stringToProcess("cp ./target/scala-" + m + "/scavenger_" + m + "-" + v + "-one-jar.jar scavenger.jar") !;
+    sys.process.stringToProcess("cp ./target/scala-" + m + "/scavenger_" + m + "-" + v + "-one-jar.jar bin/scavenger.jar") !;
     file
   }
   val jarSettings = oneJarSettings ++

@@ -18,7 +18,7 @@ import scala.language.postfixOps
 object StarExecOutputAnalysis {
 
   case class Config(dir: Option[String] = None,
-                    solvers: Seq[String] = Seq("EP-Scavenger","TD-Scavenger"),
+                    solvers: Seq[String] = Seq("EP-Scavenger","TD-Scavenger","PD-Scavenger"),
                     desiredOutputStatus: String = "Unsatisfiable",
                     sotacThreshold: Int = 9,
                     verbosity: Int = 0)
@@ -70,7 +70,7 @@ object StarExecOutputAnalysis {
           val path = f.toString.split("/")
           val domain = path(offset)
           val proverAux = path(offset + 1).split("___")
-          val prover = (proverAux(0) + (if (proverAux(1) != "default" && proverAux(0) != proverAux(1)) "_" + proverAux(1) else "")).replace("---", "-").replace("Beagle-ALL-0.9.47_","").replace("Darwin-1.4.5_","")
+          val prover = (proverAux(0) + (if (proverAux(1) != "default" && proverAux(0) != proverAux(1)) "_" + proverAux(1) else "")).replace("---", "-").replace("Beagle-ALL-0.9.47_","").replace("Darwin-1.4.5_","").replace("Zipperpin-0.4_","")
           val problem = path(offset + 2)
           
           val bf = new BufferedReader(new FileReader(f))
@@ -143,6 +143,8 @@ object StarExecOutputAnalysis {
                      { (p1, p2) => (p1._2.length < p2._2.length) || 
                                    ((p1._2.length == p2._2.length) && (p1._2 map {_.cpuTime} reduce(_ + _)) < (p2._2 map {_.cpuTime}  reduce(_ + _) ) ) } // FIXME: mapping and reducing the same thing multiple times. This is inneficient.
         
+        val ranking = gpfjpa.zipWithIndex map {case ((problem, _), index) => (problem -> index)} toMap
+        
         // Print problem ranking
         println("Problems Ranked by Difficulty")
         for (p <- gpfjpa.zipWithIndex) { println(p._2 + ": \t" + p._1._1 + "\t" + p._1._2.length + "\t" + (p._1._2 map {_.cpuTime} reduce {_+_})) }  // FIXME: mapping and reducing the same thing multiple times. This is inneficient.
@@ -158,7 +160,7 @@ object StarExecOutputAnalysis {
         val data = igpfjpa flatMap { p => p._3 map { jp => (jp,p._1,jp.cpuTime) } } groupBy { _._1.prover } map { case (p, pjps) => (p -> (pjps map { case (jp, pnumber, time) => (pnumber,time) })) } toSeq    
         
         // Scatter plot of solving time per problem
-        val scatter = XYLineChart( data sortWith { (pd1, pd2) => (pd1._1 compareTo pd2._1) < 0 } )
+        val scatter = XYLineChart( data sortWith { (pd1, pd2) => (c.solvers contains pd1._1) || (pd1._1 compareTo pd2._1) < 0 } )
         scatter.plot.setRenderer(new XYLineAndShapeRenderer(false, true))
         scatter.plot.setRangeAxis(new LogAxis("Time (seconds)"))
         scatter.plot.getRangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits())
@@ -196,6 +198,18 @@ object StarExecOutputAnalysis {
           case (problem, list) => println(problem + ": " + (list map { jp => (jp.prover, jp.cpuTime) }).mkString(", ") )
         }
         
+        // Find problem on which the solvers in c.solvers are the fastest
+        println()
+        println("Problems on which the Solvers of Interest are the fastest")
+        println("=========================================================")          
+        fjpa filter { _.result == c.desiredOutputStatus } groupBy { _.problem } map {
+          case (problem, list) => { (problem, list.sortWith( (jp1, jp2) => jp1.cpuTime < jp2.cpuTime ).head )
+            
+            //list.nonEmpty && (c.solvers contains list.sortWith( (jp1, jp2) => jp1.cpuTime < jp2.cpuTime ).head.prover) 
+          }
+        } filter {
+          case (problem, jp) => c.solvers contains jp.prover
+        } foreach { case (problem, jp) => println(problem + ":\t" + ranking(problem) + "\t:\t" + jp.prover)}
       }
 
     }
