@@ -2,7 +2,7 @@ package au.aossie.scavenger
 
 import ammonite.ops._
 import au.aossie.scavenger.structure.immutable.CNF
-import au.aossie.scavenger.prover.{CR, EPCR, Satisfiable, TDCR, Unsatisfiable}
+import au.aossie.scavenger.prover.{PDCR, EPCR, Satisfiable, TDCR, Unsatisfiable}
 import au.aossie.scavenger.parser.TPTPCNFParser
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
@@ -20,7 +20,7 @@ object CLI {
                     output: Output = StandardOutput)
 
   val algorithms = Map(
-    "CR" -> CR,
+    "PDCR" -> PDCR,
     "EPCR" -> EPCR,
     "TDCR" -> TDCR
   )

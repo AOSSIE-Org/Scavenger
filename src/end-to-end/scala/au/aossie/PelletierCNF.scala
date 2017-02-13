@@ -4,7 +4,7 @@ package au.aossie.scavenger
 import au.aossie.scavenger.expression._
 import au.aossie.scavenger.parser.TPTP.{CNF => TPTPCNF}
 import au.aossie.scavenger.parser.TPTPCNFParser
-import au.aossie.scavenger.prover.{CR, ProblemStatus, Satisfiable, Unsatisfiable}
+import au.aossie.scavenger.prover.{PDCR, ProblemStatus, Satisfiable, Unsatisfiable}
 import au.aossie.scavenger.structure.immutable.{CNF, SeqClause => Clause}
 import org.specs2.mutable.Specification
 import ammonite.ops._
@@ -36,7 +36,7 @@ class PelletierCNF extends Specification {
   def test(testName: String): ProblemStatus = {
     val p = TPTPCNFParser.parse(pwd / 'examples / 'problems / 'Pelletier / s"$testName.p")
     implicit val vars = getUppercaseVariables(p)
-    CR.prove(p)
+    PDCR.prove(p)
   }
 
   // TODO: Implement a timeout as described here: https://etorreborre.github.io/specs2/guide/SPECS2-3.5/org.specs2.guide.TimeoutExamples.html

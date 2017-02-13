@@ -3,7 +3,7 @@ package au.aossie
 import ammonite.ops._
 import org.scalameter.api._
 import org.scalameter.picklers.Implicits.stringPickler
-import au.aossie.scavenger.prover.{CR, ProblemStatus, Satisfiable, Unsatisfiable}
+import au.aossie.scavenger.prover.{PDCR, ProblemStatus, Satisfiable, Unsatisfiable}
 import au.aossie.scavenger.expression._
 
 import scala.collection.mutable
@@ -36,7 +36,7 @@ object EasyTPTPCNFUnsatNoEq extends Bench.OfflineRegressionReport {
   def test(testName: String): ProblemStatus = {
     val p = TPTPCNFParser.parse(pwd / 'examples / 'problems / "TPTP-v6.4.0" / 'Problems / testName.take(3) / (testName + ".p"))
     implicit val vars = getUppercaseVariables(p)
-    CR.prove(p)
+    PDCR.prove(p)
   }
 
   // TODO: Right now we are executing the test only on a subset. Enable the whole set when the prover has a timeout. Otherwise this test might never terminate.
