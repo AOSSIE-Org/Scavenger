@@ -334,10 +334,6 @@ object PDCR extends Prover {
 
       //println(s"Decided $decisions")
 
-      if (result.isEmpty && allConflictLearnedClauses.isEmpty) {
-        return GaveUp
-      }
-
       if (interestingConflictLearnedClauses.nonEmpty) {
         val cdclClauses = interestingConflictLearnedClauses.map(_.conclusion).map(tptpPrettify)
         //println("New CDCL clauses:\n" + cdclClauses.mkString("\n"))
@@ -351,6 +347,8 @@ object PDCR extends Prover {
         return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
       } else if (result.nonEmpty) {
         uselessDecisions.clear()
+      } else if (result.isEmpty && allConflictLearnedClauses.isEmpty) {
+        return GaveUp
       }
     }
     Error // this line is unreachable.
