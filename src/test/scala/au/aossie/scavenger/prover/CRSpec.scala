@@ -26,7 +26,7 @@ class CRSpec extends Specification {
   val Py = App(P, y)
   val Pz = App(P, z)
 
-  private def test(clauses: Clause*) = CR.prove(CNF(ArrayBuffer(clauses: _*)))
+  private def test(clauses: Clause*) = PDCR.prove(CNF(ArrayBuffer(clauses: _*)))
 
   private def clause(ant: E*)(suc: E*) = Clause(ant.toSeq: _*)(suc.toSeq: _*)
 

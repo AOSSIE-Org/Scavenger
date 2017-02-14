@@ -14,7 +14,7 @@ import scala.util.Random
 /**
   * @author Daniyar Itegulov
   */
-object CR extends Prover {
+object PDCR extends Prover {
 
   // TODO: refactor this class and enable scalastyle
   // scalastyle:off
@@ -338,7 +338,7 @@ object CR extends Prover {
         val cdclClauses = interestingConflictLearnedClauses.map(_.conclusion).map(tptpPrettify)
         //println("New CDCL clauses:\n" + cdclClauses.mkString("\n"))
         reset(interestingConflictLearnedClauses)
-      } else if (cnf.clauses.forall(clause =>
+      } else if (allConflictLearnedClauses.isEmpty && cnf.clauses.forall(clause =>
                    clause.literals.exists(propagatedLiterals.contains) ||
                      clause.literals.forall(uselessDecisions.contains))) {
         val literals      = propagatedLiterals ++ decisions
@@ -347,6 +347,8 @@ object CR extends Prover {
         return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
       } else if (result.nonEmpty) {
         uselessDecisions.clear()
+      } else if (result.isEmpty && allConflictLearnedClauses.isEmpty) {
+        return GaveUp
       }
     }
     Error // this line is unreachable.
