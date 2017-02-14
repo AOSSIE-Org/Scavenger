@@ -70,7 +70,7 @@ object StarExecOutputAnalysis {
           val path = f.toString.split("/")
           val domain = path(offset)
           val proverAux = path(offset + 1).split("___")
-          val prover = (proverAux(0) + (if (proverAux(1) != "default" && proverAux(0) != proverAux(1)) "_" + proverAux(1) else "")).replace("---", "-").replace("Beagle-ALL-0.9.47_","").replace("Darwin-1.4.5_","").replace("Zipperpin-0.4_","")
+          val prover = (proverAux(0) + (if (proverAux(1) != "default" && proverAux(1) != "default2" && proverAux(0) != proverAux(1)) "_" + proverAux(1) else "")).replace("---", "-").replace("Beagle-ALL-0.9.47_","").replace("Darwin-1.4.5_","").replace("Zipperpin-0.4_","")
           val problem = path(offset + 2)
           
           val bf = new BufferedReader(new FileReader(f))
@@ -134,7 +134,7 @@ object StarExecOutputAnalysis {
         chart.plot.setDomainGridlinePaint(Color.BLACK)
         chart.plot.setRangeGridlinePaint(Color.BLACK)
         chart.show()
-        val date = new java.text.SimpleDateFormat("yyyy-mm-dd--HH-mm-ss").format(new java.util.Date())
+        val date = new java.text.SimpleDateFormat("yyyy-MM-dd--HH-mm-ss").format(new java.util.Date())
         chart.saveAsPNG(s"${d}chart--${date}.png")
         
         
