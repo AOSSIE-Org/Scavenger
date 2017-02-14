@@ -27,6 +27,7 @@ object TDCR extends Prover {
     val conflictClauses = mutable.Set.empty[CRProofNode]
     val resolvedCache = mutable.Set.empty[(Clause, Int, Seq[Literal])]
     var termDepthThreshold = 0
+    val maxInitialTermDepth = cnf.clauses.flatMap(_.literals).map(_.depth).max
 
     def updateUnifiableUnits(newLiterals: Seq[Literal]): Unit = {
       literals ++= newLiterals
@@ -171,7 +172,8 @@ object TDCR extends Prover {
           termDepthThreshold += 1
           updateUnifiableUnits(propagatedLiterals.filter(_.depth == termDepthThreshold).toSeq)
         }
-      } else if (cnf.clauses.forall(clause => clause.literals.exists(propagatedLiterals.contains))) {
+      } else if (termDepthThreshold >= maxInitialTermDepth &&
+                 cnf.clauses.forall(clause => clause.literals.exists(propagatedLiterals.contains))) {
         val literals      = propagatedLiterals ++ decisions
         val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
         val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
