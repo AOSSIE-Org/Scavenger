@@ -20,7 +20,8 @@ extends AbstractSubstitution with Map[Var, E] with MapLike[Var, E, Substitution]
 
   def apply(other: Substitution): Substitution = {
     val composedSubstitution = for ((key, value) <- this) yield (key, other(value))
-    new Substitution(composedSubstitution)
+    val left = other.filterNot { case (k, v) => this.contains(k) }
+    new Substitution(composedSubstitution ++ left)
   }
 }
 object Substitution {

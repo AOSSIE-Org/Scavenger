@@ -101,11 +101,7 @@ package object prover {
     val unificationProblem = newLeft.zip(right)
     val unificationSubstitution = unify(unificationProblem)
     unificationSubstitution.map(s => {
-      val unifiedSubs = for (renameSubstitution <- subs) yield {
-        val unificationRenamedSubstitution = for ((key, value) <- renameSubstitution) yield (key, s(value))
-        val left = s.filterNot { case (k, v) => renameSubstitution.contains(k) }
-        new Substitution(unificationRenamedSubstitution ++ left)
-      }
+      val unifiedSubs = subs.map(_(s))
       (unifiedSubs, s)
     })
   }
