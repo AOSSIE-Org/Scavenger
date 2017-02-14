@@ -347,8 +347,6 @@ object PDCR extends Prover {
         return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
       } else if (result.nonEmpty) {
         uselessDecisions.clear()
-      } else if (result.isEmpty && allConflictLearnedClauses.isEmpty) {
-        return GaveUp
       }
     }
     Error // this line is unreachable.
