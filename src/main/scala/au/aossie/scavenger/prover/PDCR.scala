@@ -19,6 +19,9 @@ object PDCR extends Prover {
   // TODO: refactor this class and enable scalastyle
   // scalastyle:off
   def prove(cnf: CNF): ProblemStatus = {
+    if (cnf.clauses.contains(Clause.empty)) {
+      return Unsatisfiable(Axiom(Clause.empty))
+    }
 
     // TODO: this is a temporal determined random for easier debugging
     val rnd = new Random(132374)

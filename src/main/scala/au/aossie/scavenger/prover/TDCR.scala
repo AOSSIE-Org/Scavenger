@@ -18,6 +18,10 @@ object TDCR extends Prover {
 
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
+    if (cnf.clauses.contains(Clause.empty)) {
+      return Unsatisfiable(Axiom(Clause.empty))
+    }
+
     val propagatedLiterals = mutable.Set(cnf.clauses.filter(_.isUnit).map(_.literal): _*)
     val clauses = mutable.Set(cnf.clauses.filter(!_.isUnit): _*)
     val literals = mutable.Set(cnf.clauses.flatMap(_.literals): _*)
