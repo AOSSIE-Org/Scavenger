@@ -135,8 +135,8 @@ object StarExecOutputAnalysis {
         chart.plot.setRangeGridlinePaint(Color.BLACK)
         chart.show()
         val date = new java.text.SimpleDateFormat("yyyy-MM-dd--HH-mm-ss").format(new java.util.Date())
-        chart.saveAsPNG(s"${d}chart--${date}.png")
-        
+        chart.saveAsPNG(s"${d}chart--${date}.png", (720,450))
+   
         
         // Rank problems by difficulty
         val gpfjpa = (fjpa groupBy { jp => jp.problem } toSeq) sortWith 
@@ -171,7 +171,7 @@ object StarExecOutputAnalysis {
         scatter.plot.setDomainGridlinePaint(Color.BLACK)
         scatter.plot.setRangeGridlinePaint(Color.BLACK)
         scatter.show()
-        scatter.saveAsPNG(s"${d}scatter--${date}.png")
+        scatter.saveAsPNG(s"${d}scatter--${date}.png", (720,450))
         
         // Rank solvers by number of problems solved
         println()
