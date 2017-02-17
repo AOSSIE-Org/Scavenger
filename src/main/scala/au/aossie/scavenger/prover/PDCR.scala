@@ -295,7 +295,13 @@ object PDCR extends Prover {
           val cdclNode  = ConflictDrivenClauseLearning(conflict)
           val newClause = cdclNode.conclusion
           if (newClause == Clause.empty) return Unsatisfiable(Some(Proof(conflict)))
-          if (!allClauses.contains(newClause)) {
+          
+          // TODO: I think we can/must do something stronger here.
+          // In principle, newClause could be a unit clause that is not contained in allClauses, 
+          // but whose literal is contained in the model constructed so far. In such a case,
+          // newClause should not be considered an interestingConflictLearnedClause, and the literals
+          // used to derive it should not be considered usedDecisions.
+          if (!allClauses.contains(newClause)) { 
             interestingConflictLearnedClauses += cdclNode
             usedDecisions ++= conflict.listDecisions()
           }
