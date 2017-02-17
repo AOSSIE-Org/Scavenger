@@ -20,7 +20,7 @@ object StarExecOutputAnalysis {
   case class Config(dir: Option[String] = None,
                     solvers: Seq[String] = Seq("EP-Scavenger","TD-Scavenger","PD-Scavenger"),
                     desiredOutputStatus: String = "Unsatisfiable",
-                    sotacThreshold: Int = 9,
+                    sotacThreshold: Int = 15,
                     verbosity: Int = 0)
 
 
