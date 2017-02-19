@@ -1,0 +1,3 @@
+#!/bin/sh
+
+java -Xmx128000m -Xms64000m -jar scavenger.jar -a EP $1
