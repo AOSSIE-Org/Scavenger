@@ -23,6 +23,40 @@ object StarExecOutputAnalysis {
                     sotacThreshold: Int = 15,
                     verbosity: Int = 0)
 
+  val colorer = Map(
+    "LEO-II-1.7.0" -> Color.RED,
+    "PD-Scavenger" -> Color.BLUE,
+    "ZenonModulo-0.4.1" -> Color.GREEN,
+    "Geo-III-2016C" -> Color.YELLOW,
+    "SOS-2.0" -> Color.PINK,
+    "Otter-3.3" -> Color.CYAN,
+    "EP-Scavenger" -> Color.DARK_GRAY,
+    "Beagle-SAT-0.9.47" -> Color.MAGENTA,
+    "E-KRHyper-1.4" -> Color.LIGHT_GRAY,
+    "TD-Scavenger" -> Color.ORANGE,
+    "Zipperpin-FOF-0.4" -> new Color(0x8b0000),
+    "Beagle-0.9.47" -> new Color(0xdaa520),
+    "Prover9-1109a" -> new Color(0xa0db8e),
+    "Metis-2.3" -> new Color(0x31698a),
+    "DarwinFM-1.4.5" -> new Color(0x794044),
+    "SNARK-20120808r022" -> new Color(0x191970),
+    "Bliksem-1.12" -> new Color(0x6dc066),
+    "PEPR-0.0ps" -> new Color(0x0e2f44),
+    "GrAnDe-1.1" -> new Color(0xffc3a0),
+    "CVC4-FOF-1.5.1" -> new Color(0x468499),
+    "E-Darwin-1.5" -> new Color(0x008080),
+    "Paradox-3.0" -> new Color(0xffe4e1),
+    "ET-0.2" -> new Color(0xffd700),
+    "E-2.0" -> new Color(0xd3ffce),
+    "Z3-4.4.1" -> new Color(0xff7373),
+    "Darwin-1.4.5" -> new Color(0xb0e0e6),
+    "VampireZ3-1.0" -> new Color(0xe6e6fa),
+    "Vampire-4.1" -> new Color(0x7fffd4),
+    "Vampire-SAT-4.1" -> new Color(0x3399ff),
+    "iProver-2.5" -> new Color(0x6897bb),
+    "Vampire-4.0" -> new Color(0xff4444),
+    "Vampire-SAT-4.0" -> new Color(0x8a2be2)
+  ).withDefaultValue(Color.BLACK)
 
   val parser = new scopt.OptionParser[Config]("starexec-analysis") {
     head("\nStarExec Output Analysis\n\n")
@@ -128,6 +162,10 @@ object StarExecOutputAnalysis {
         
         // Plot number of problems solved under a given time. Each prover is a different line in the chart.
         val chart = XYLineChart( ppt filter { e => e._2.nonEmpty } sortWith { (e1, e2) => e1._2.length < e2._2.length } map { case (p, pt) => (p -> pt) } )
+        for (i <- 0 until chart.plot.getDataset.getSeriesCount) {
+          val name = chart.plot.getDataset.getSeriesKey(i).asInstanceOf[String]
+          chart.plot.getRenderer.setSeriesPaint(i, colorer(name))
+        }
         chart.plot.getDomainAxis.setLabel("Number of Problems")
         chart.plot.getRangeAxis.setLabel("Time (seconds)")
         chart.plot.setBackgroundPaint(Color.WHITE)
