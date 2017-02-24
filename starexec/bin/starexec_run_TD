@@ -1,0 +1,3 @@
+#!/bin/sh
+
+java -Xmx120000000k -Xms64g -jar scavenger.jar -a TD $1

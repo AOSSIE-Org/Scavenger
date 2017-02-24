@@ -301,6 +301,7 @@ object PDCR extends Prover {
           // but whose literal is contained in the model constructed so far. In such a case,
           // newClause should not be considered an interestingConflictLearnedClause, and the literals
           // used to derive it should not be considered usedDecisions.
+          // TODO: We could check whether it is not the case that allClauses contains a clause that theta-subsumes newClause
           if (!allClauses.contains(newClause)) { 
             interestingConflictLearnedClauses += cdclNode
             usedDecisions ++= conflict.listDecisions()

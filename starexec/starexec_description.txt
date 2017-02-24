@@ -1,0 +1,1 @@
+Scavenger 0.1 is the first automated theorem prover based on the Conflict Resolution calculus.

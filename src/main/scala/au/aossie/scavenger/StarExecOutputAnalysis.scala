@@ -21,7 +21,8 @@ object StarExecOutputAnalysis {
                     solvers: Seq[String] = Seq("EP-Scavenger","TD-Scavenger","PD-Scavenger"),
                     desiredOutputStatus: String = "Unsatisfiable",
                     sotacThreshold: Int = 15,
-                    verbosity: Int = 0)
+                    verbosity: Int = 0,
+                    displayCharts: Boolean = true)
 
   val colorer = Map(
     "LEO-II-1.7.0" -> Color.RED,
@@ -72,6 +73,10 @@ object StarExecOutputAnalysis {
     opt[String]('o', "desiredOutputStatus") action { (v, c) =>
       c.copy(desiredOutputStatus = v)
     } text s"consider successful those job pairs with status <desiredOutput>\n" valueName "<desiredOutput>"
+    
+    opt[Boolean]('c', "displayCharts") action { (v, c) =>
+      c.copy(displayCharts = v)
+    } text s"display charts if <boolean value> is equal to 'true'\n" valueName "<boolean value>"
     
     opt[String]('t', "sotacThreshold") action { (v, c) =>
       c.copy(sotacThreshold = v.toInt)
@@ -171,7 +176,7 @@ object StarExecOutputAnalysis {
         chart.plot.setBackgroundPaint(Color.WHITE)
         chart.plot.setDomainGridlinePaint(Color.BLACK)
         chart.plot.setRangeGridlinePaint(Color.BLACK)
-        chart.show()
+        if (c.displayCharts) chart.show()
         val date = new java.text.SimpleDateFormat("yyyy-MM-dd--HH-mm-ss").format(new java.util.Date())
         chart.saveAsPNG(s"${d}chart--${date}.png", (720,450))
    
@@ -179,7 +184,7 @@ object StarExecOutputAnalysis {
         // Rank problems by difficulty
         val gpfjpa = (fjpa groupBy { jp => jp.problem } toSeq) sortWith 
                      { (p1, p2) => (p1._2.length < p2._2.length) || 
-                                   ((p1._2.length == p2._2.length) && (p1._2 map {_.cpuTime} reduce(_ + _)) < (p2._2 map {_.cpuTime}  reduce(_ + _) ) ) } // FIXME: mapping and reducing the same thing multiple times. This is inneficient.
+                                   ((p1._2.length == p2._2.length) && (p1._2 map {_.cpuTime} reduce(_ + _)) > (p2._2 map {_.cpuTime}  reduce(_ + _) ) ) } // FIXME: mapping and reducing the same thing multiple times. This is inneficient.
         
         val ranking = gpfjpa.zipWithIndex map {case ((problem, _), index) => (problem -> index)} toMap
         
@@ -189,8 +194,8 @@ object StarExecOutputAnalysis {
         
         for (s <- c.solvers) {
           println()
-          println(s"Problems not solved by $s but solved by at least one other prover")
-          println("==========")
+          println(s"## Problems not solved by $s but solved by at least one other prover")
+          println()
           gpfjpa.zipWithIndex filter { case ((problem, jpa), index) => !jpa.exists(jp => jp.prover contains s) } foreach { p => println(p._2 + ": \t" + p._1._1) }
         }
         
@@ -208,26 +213,26 @@ object StarExecOutputAnalysis {
         scatter.plot.setBackgroundPaint(Color.WHITE)
         scatter.plot.setDomainGridlinePaint(Color.BLACK)
         scatter.plot.setRangeGridlinePaint(Color.BLACK)
-        scatter.show()
+        if (c.displayCharts) scatter.show()
         scatter.saveAsPNG(s"${d}scatter--${date}.png", (720,450))
         
         // Rank solvers by number of problems solved
         println()
-        println("Ranking of Solvers")
-        println("==================")
+        println("## Ranking of Solvers")
+        println()
         ppt map { e => (e._1, e._2.length)} sortWith { (e1, e2) => e1._2 < e2._2 } foreach { println(_) }
            
         // Find problems that are solved only by one prover
         println()
-        println("Problems Solved by only one Solver")
-        println("==================================")
+        println("## Problems solved by only one solver")
+        println()
         fjpa filter { _.result == c.desiredOutputStatus } groupBy { _.problem } filter { case (problem, list) => list.length == 1 } map {case (problem, list) => println(problem + " : " + list(0).prover) }
         
         
-        // Find problems that are solved by the solvers in c.solved and by only at most c.sotacThreshold solvers
+        // Find problems that are solved by the solvers in c.solvers and by only at most c.sotacThreshold solvers
         println()
-        println("Problems Solved by the Solvers of Interest and by only a few other Solvers")
-        println("==========================================================================")       
+        println(s"## Problems solved by at least one solvers in ${c.solvers.mkString("{", ",", "}")} and by at most ${c.sotacThreshold}")
+        println()       
         (fjpa filter { _.result == c.desiredOutputStatus } groupBy { _.problem } filter { case (problem, list) => list.exists( jp => c.solvers contains jp.prover) }).toSeq sortWith { 
           (e1, e2) => e1._2.length > e2._2.length 
         } filter {
@@ -236,10 +241,24 @@ object StarExecOutputAnalysis {
           case (problem, list) => println(problem + ": " + (list map { jp => (jp.prover, jp.cpuTime) }).mkString(", ") )
         }
         
-        // Find problem on which the solvers in c.solvers are the fastest
+        // Find problems that are solved by one solver in c.solved but not by the other solvers in c.solved
         println()
-        println("Problems on which the Solvers of Interest are the fastest")
-        println("=========================================================")          
+        println(s"## Problems solved by one solver in ${c.solvers.mkString("{", ",", "}")} but not by other solvers in ${c.solvers.mkString("{", ",", "}")}")
+        println()       
+        (fjpa filter { _.result == c.desiredOutputStatus } groupBy { _.problem } filter { case (problem, list) => list.exists( jp => c.solvers contains jp.prover) }).toSeq sortWith { 
+          (e1, e2) => e1._2.length > e2._2.length 
+        } map {
+          case (problem, list) => (problem, list filter { jp => c.solvers contains jp.prover} )
+        } filter {
+          case (problem, list) => list.length == 1
+        } map {
+          case (problem, list) => println(problem + ": " + (list map { jp => (jp.prover, jp.cpuTime) }).mkString(", ") )
+        }
+        
+        // Find problems on which one of the solvers in c.solvers is the fastest
+        println()
+        println(s"## Problems on which one of the solvers in ${c.solvers.mkString("{", ",", "}")} is the fastest")
+        println()          
         fjpa filter { _.result == c.desiredOutputStatus } groupBy { _.problem } map {
           case (problem, list) => { (problem, list.sortWith( (jp1, jp2) => jp1.cpuTime < jp2.cpuTime ).head )
             
