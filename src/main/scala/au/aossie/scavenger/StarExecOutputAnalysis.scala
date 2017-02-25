@@ -25,16 +25,16 @@ object StarExecOutputAnalysis {
                     displayCharts: Boolean = true)
 
   val colorer = Map(
-    "LEO-II-1.7.0" -> Color.RED,
+    "LEO-II-1.7.0" -> Color.DARK_GRAY,
     "PD-Scavenger" -> Color.BLUE,
-    "ZenonModulo-0.4.1" -> Color.GREEN,
+    "ZenonModulo-0.4.1" -> Color.ORANGE,
     "Geo-III-2016C" -> Color.YELLOW,
     "SOS-2.0" -> Color.PINK,
     "Otter-3.3" -> Color.CYAN,
-    "EP-Scavenger" -> Color.DARK_GRAY,
+    "EP-Scavenger" -> Color.RED,
     "Beagle-SAT-0.9.47" -> Color.MAGENTA,
     "E-KRHyper-1.4" -> Color.LIGHT_GRAY,
-    "TD-Scavenger" -> Color.ORANGE,
+    "TD-Scavenger" -> Color.GREEN,
     "Zipperpin-FOF-0.4" -> new Color(0x8b0000),
     "Beagle-0.9.47" -> new Color(0xdaa520),
     "Prover9-1109a" -> new Color(0xa0db8e),
@@ -105,7 +105,7 @@ object StarExecOutputAnalysis {
       for (d <- c.dir) {
         val offset = d.split("/").length
         val f0 = new File(d)
-        for (f <- walkTree(f0) if !f.isDirectory && f.toString.contains(".txt") ) {
+        for (f <- walkTree(f0) if !f.isDirectory && f.toString.contains(".txt")) {
           val path = f.toString.split("/")
           val domain = path(offset)
           val proverAux = path(offset + 1).split("___")
