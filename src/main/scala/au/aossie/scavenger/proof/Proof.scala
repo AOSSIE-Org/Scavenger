@@ -1,15 +1,14 @@
 package au.aossie.scavenger.proof
 
+import au.aossie.scavenger.structure.immutable.Clause
+
 import language.implicitConversions
-
-import collection.mutable.{HashMap => MMap, HashSet => MSet, Stack}
+import collection.mutable.{Stack, HashMap => MMap, HashSet => MSet}
 import annotation.tailrec
-
-import au.aossie.scavenger.structure.AbstractClause
 
 // ProofNode tree is rotated clockwise. That means that traversing "left" is bottom-up.
 // Traversing "right" is top-down and we ensure that premises of a proof are processed before that proof.
-class Proof[P <: ProofNode[AbstractClause,P]](val root: P, val leftRight: Boolean = true, val permutation: IndexedSeq[P] = IndexedSeq[P]())
+class Proof[P <: ProofNode[Clause,P]](val root: P, val leftRight: Boolean = true, val permutation: IndexedSeq[P] = IndexedSeq[P]())
 extends Iterable[P]
 {
 
@@ -158,5 +157,5 @@ extends Iterable[P]
 }
 
 object Proof {
-  implicit def apply[P <: ProofNode[AbstractClause,P]](root: P) = new Proof(root)
+  implicit def apply[P <: ProofNode[Clause,P]](root: P) = new Proof(root)
 }

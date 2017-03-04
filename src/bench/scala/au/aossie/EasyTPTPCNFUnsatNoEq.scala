@@ -8,7 +8,7 @@ import au.aossie.scavenger.expression._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import au.aossie.scavenger.structure.immutable.{CNF, SeqClause => Clause}
+import au.aossie.scavenger.structure.immutable.{CNF, Clause}
 import au.aossie.scavenger.parser.TPTP.{CNFAxiomStatement, CNFNegatedConjectureStatement, CNFProblem, CNF => TPTPCNF}
 import au.aossie.scavenger.parser.TPTPCNFParser
 

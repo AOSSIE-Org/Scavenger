@@ -1,6 +1,6 @@
 package au.aossie.scavenger.prover
 
-import au.aossie.scavenger.structure.immutable.{ CNF, SetClause => Clause }
+import au.aossie.scavenger.structure.immutable.{ CNF, Clause }
 import au.aossie.scavenger.expression._
 import org.specs2.mutable.Specification
 

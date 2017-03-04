@@ -2,7 +2,7 @@ package au.aossie.scavenger.structure.mutable
 
 import au.aossie.scavenger.expression.E
 import au.aossie.scavenger.prover._
-import au.aossie.scavenger.structure.immutable.{ Literal, SetClause => Clause }
+import au.aossie.scavenger.structure.immutable.{ Literal, Clause }
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

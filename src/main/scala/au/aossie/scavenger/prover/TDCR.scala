@@ -3,7 +3,7 @@ package au.aossie.scavenger.prover
 import au.aossie.scavenger.expression.formula.Neg
 import au.aossie.scavenger.model.Assignment
 import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
-import au.aossie.scavenger.structure.immutable.{CNF, Literal, SetClause => Clause}
+import au.aossie.scavenger.structure.immutable.{CNF, Literal, Clause}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -65,7 +65,7 @@ object TDCR extends Prover {
             resolvedCache += task
             if (unifyWithRename(unifierUnits, literalUnits).isDefined) {
               val clauseNode = reverseImplicationGraph(clause).head
-              val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
+              val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toClause).head)
               val unitPropagationNode = UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId), literals)
               // TODO: Inside UnitPropagationResolution we redo the same unification that is done in "unifyWithRename". We could probably double the efficiency by avoid this duplicate computation somehow, but this would require a major refactor. It is better to leave it as it is now.
               val newLiteral = unitPropagationNode.conclusion.literal

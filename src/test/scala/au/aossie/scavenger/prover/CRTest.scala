@@ -1,7 +1,7 @@
 package au.aossie.scavenger.prover
 
 import au.aossie.scavenger.expression.Sym
-import au.aossie.scavenger.structure.immutable.{CNF, SetClause => Clause}
+import au.aossie.scavenger.structure.immutable.{CNF, Clause}
 import au.aossie.scavenger.parser.TPTP.{
   CNFAxiomStatement,
   CNFNegatedConjectureStatement,

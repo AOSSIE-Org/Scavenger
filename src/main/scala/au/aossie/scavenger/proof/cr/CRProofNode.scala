@@ -3,7 +3,7 @@ package cr
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.structure.immutable.{ SetClause => Clause, Literal }
+import au.aossie.scavenger.structure.immutable.{ Clause, Literal }
 
 abstract class CRProofNode extends ProofNode[Clause, CRProofNode] {
   def findDecisions(sub: Substitution): Clause = {

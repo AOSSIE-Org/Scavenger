@@ -8,7 +8,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 // TODO: it seems odd to have CNF as a case class, because CNF is like a collection
 // and collections are typically not case classes.
-case class CNF(clauses: Seq[SetClause]) {
+case class CNF(clauses: Seq[Clause]) {
   lazy val variables = clauses.flatMap(_.literals.map(_.unit))
 
   def +(that: CNF): CNF = CNF(clauses ++ that.clauses)

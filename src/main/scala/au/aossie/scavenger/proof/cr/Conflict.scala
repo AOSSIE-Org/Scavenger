@@ -2,7 +2,7 @@ package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.Sym
-import au.aossie.scavenger.structure.immutable.{ SetClause => Clause }
+import au.aossie.scavenger.structure.immutable.Clause
 
 import scala.collection.mutable
 

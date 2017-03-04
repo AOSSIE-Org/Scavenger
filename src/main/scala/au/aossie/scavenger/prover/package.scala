@@ -1,6 +1,6 @@
 package au.aossie.scavenger
 
-import au.aossie.scavenger.structure.immutable.{ Literal, SetClause => Clause }
+import au.aossie.scavenger.structure.immutable.{ Literal, Clause }
 import au.aossie.scavenger.unification.{ MartelliMontanari => unify }
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.expression._
@@ -15,7 +15,7 @@ package object prover {
 
   implicit def varToLit(variable: E): Literal = Literal(variable, negated = false)
 
-  implicit def literalToClause(literal: Literal): Clause = literal.toSetClause
+  implicit def literalToClause(literal: Literal): Clause = literal.toClause
 
 //  implicit class ClauseOperations(val clause: Clause) extends AnyVal {
 //
@@ -29,7 +29,7 @@ package object prover {
   }
 
   implicit class LiteralsAreSequent(val literals: Iterable[Literal]) extends AnyVal {
-    def toSequent: Clause = {
+    def toClause: Clause = {
       val ant = literals.flatMap(l => if (l.negated) Some(l.unit) else None)
       val suc = literals.flatMap(l => if (l.negated) None else Some(l.unit))
       Clause(ant.toSeq: _*)(suc.toSeq: _*)

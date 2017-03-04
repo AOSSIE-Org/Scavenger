@@ -1,13 +1,13 @@
 package au.aossie.scavenger
 
 
+import ammonite.ops._
 import au.aossie.scavenger.expression._
 import au.aossie.scavenger.parser.TPTP.{CNF => TPTPCNF}
 import au.aossie.scavenger.parser.TPTPCNFParser
-import au.aossie.scavenger.prover.{PDCR, ProblemStatus, Satisfiable, Unsatisfiable}
-import au.aossie.scavenger.structure.immutable.{CNF, SeqClause => Clause}
+import au.aossie.scavenger.prover.{PDCR, ProblemStatus, Unsatisfiable}
+import au.aossie.scavenger.structure.immutable.{CNF, Clause}
 import org.specs2.mutable.Specification
-import ammonite.ops._
 
 import scala.collection.mutable
 

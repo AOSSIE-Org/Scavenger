@@ -11,7 +11,7 @@ import au.aossie.scavenger.expression.E
 case class Literal(unit: E, negated: Boolean) {
   def unary_! = Literal(unit, !negated)
 
-  def toSetClause: SetClause = if (negated) SetClause(unit)() else SetClause()(unit)
+  def toClause: Clause = if (negated) Clause(unit)() else Clause()(unit)
 
   def depth = unit.depth
 

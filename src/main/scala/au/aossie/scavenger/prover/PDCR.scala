@@ -1,6 +1,6 @@
 package au.aossie.scavenger.prover
 
-import au.aossie.scavenger.structure.immutable.{ Literal, CNF, SetClause => Clause }
+import au.aossie.scavenger.structure.immutable.{ Literal, CNF, Clause }
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.expression.formula.Neg
 import au.aossie.scavenger.proof.cr.{ CRProof => Proof, _ }
@@ -50,7 +50,7 @@ object PDCR extends Prover {
       val unitClauses = allClauses.filter(_.isUnit).map(_.literal)
       propagatedLiterals ++= unitClauses
       unitClauses.foreach { literal =>
-        ancestor.getOrElseUpdate(literal, mutable.Set.empty) += literal.toSetClause
+        ancestor.getOrElseUpdate(literal, mutable.Set.empty) += literal.toClause
       }
     }
 
@@ -114,7 +114,7 @@ object PDCR extends Prover {
         val literals = clause.literals.take(conclusionId) ++ clause.literals.drop(conclusionId + 1)
         for (unifier <- getUnify(unifiers, literals)) {
           val clauseNode = reverseImplicationGraph(clause).head
-          val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toSetSequent).head)
+          val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toClause).head)
           val unitPropagationNode =
             UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId), literals)
           val newLiteral = unitPropagationNode.conclusion.literal
@@ -153,7 +153,7 @@ object PDCR extends Prover {
       */
     def isAncestor(current: Literal, ancestor: Literal): Boolean = {
       if (current == ancestor) return true
-      if (allClauses contains current.toSetClause) {
+      if (allClauses contains current.toClause) {
         false
       } else if (decisions contains current) {
         false
@@ -236,7 +236,7 @@ object PDCR extends Prover {
         val unitClauses = allClauses.filter(_.isUnit).map(_.literal)
         propagatedLiterals ++= unitClauses
         unitClauses.foreach { literal =>
-          ancestor.getOrElseUpdate(literal, mutable.Set.empty) += literal.toSetClause
+          ancestor.getOrElseUpdate(literal, mutable.Set.empty) += literal.toClause
         }
       }
     }

@@ -22,7 +22,7 @@ object CDCL {
     val unitPropagationQueue = mutable.Queue.empty[Literal] // Queue of literals that should be propagated
 
     for (clause <- cnf.clauses) if (clause.isUnit) {
-      unitPropagationQueue += clause(0) // Unit clauses should be propagated right here
+      unitPropagationQueue += clause.literal // Unit clauses should be propagated right here
     }
 
     /**

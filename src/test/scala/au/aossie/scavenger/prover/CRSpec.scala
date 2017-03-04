@@ -4,7 +4,7 @@ import au.aossie.scavenger.expression._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import au.aossie.scavenger.structure.immutable.{ CNF, SetClause => Clause }
+import au.aossie.scavenger.structure.immutable.{ CNF, Clause }
 import org.specs2.mutable.Specification
 
 /**
