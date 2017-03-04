@@ -2,6 +2,7 @@ package au.aossie.scavenger.structure
 package immutable
 
 import au.aossie.scavenger.expression.E
+import au.aossie.scavenger.util.unicode.unicodeOrElse
 
 import scala.collection.immutable.ListSet
 
@@ -25,6 +26,15 @@ class Clause(val ant: ListSet[E], val suc: ListSet[E]) extends ClauseLike[Clause
 
   def first: Literal = literals.head
   def last: Literal = literals.last
+
+  override def equals(v: Any): Boolean = v match {
+    case that: Clause => (that canEqual this) && (ant == that.ant) && (suc == that.suc)
+    case _ => false
+  }
+  def canEqual(other: Any): Boolean = other.isInstanceOf[Clause]
+
+  override def hashCode: Int = 42*ant.hashCode + suc.hashCode
+  override def toString: String = ant.mkString(", ") + unicodeOrElse(" \u22A2 "," :- ") + suc.mkString(", ")
 
   def map[R](antF: E => R, sucF: E => R): (Set[R], Set[R]) = (ant.map(antF), suc.map(sucF))
 }
