@@ -36,5 +36,5 @@ object ScavengerBuild extends Build {
 
   lazy val project = Project("project", file("."), settings = allSettings)
     .configs(Testing.configs: _*)
-    .settings(Testing.settings: _*)    
+    .settings(Testing.settings: _*)
 }

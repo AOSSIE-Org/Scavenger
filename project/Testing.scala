@@ -3,10 +3,10 @@ import Keys._
 
 object Testing {
 
-  val IntegrationTest = config("integration") extend(Runtime)
-  val EndToEndTest = config("end-to-end") extend(Runtime)
-  val PerformanceTest = config("bench") extend(Runtime)
-  val AdHocTest = config("adhoc") extend(Runtime)
+  val IntegrationTest = config("integration") extend Test
+  val EndToEndTest = config("end-to-end") extend Test
+  val PerformanceTest = config("bench") extend Test
+  val AdHocTest = config("adhoc") extend Test
 
   val configs = Seq(IntegrationTest, EndToEndTest, PerformanceTest, AdHocTest)
 
@@ -57,9 +57,9 @@ object Testing {
     testAll <<= testAll.dependsOn(test in Test)
   )
 
-  lazy val settings = integrationTestSettings ++ 
-                      endToEndTestSettings ++ 
-                      performanceTestSettings ++ 
+  lazy val settings = integrationTestSettings ++
+                      endToEndTestSettings ++
+                      performanceTestSettings ++
                       adhocTestSettings ++
                       testAllQuickSettings ++
                       testAllSettings
