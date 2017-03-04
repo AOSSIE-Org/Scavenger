@@ -1,47 +1,46 @@
 package au.aossie.scavenger.unification
 
-import collection.mutable.{ HashMap => MMap, Set => MSet }
-import au.aossie.scavenger.expression.{ E, Sym, Var, App, Abs }
+import au.aossie.scavenger.expression.{Abs, App, E, Sym, Var}
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.expression.substitution.mutable.{ Substitution => MSub }
+import au.aossie.scavenger.expression.substitution.mutable.{Substitution => MSub}
+
+import scala.annotation.tailrec
 
 object MartelliMontanari {
 
-  def apply(a: E, b: E): Option[Substitution] = apply(List((a,b)))
+  def apply(a: E, b: E): Option[Substitution] = apply(List((a, b)))
 
-  // scalastyle:off cyclomatic.complexity
   def apply(equations: Iterable[(E, E)]): Option[Substitution] = {
-    var eqs = equations.toSeq
     val mgu = new MSub
 
-    var counter = 0
-
-    // scalastyle:off return
-    while (!eqs.isEmpty) {
-      eqs.head match {
-        case (App(f1, a1), App(f2, a2)) => eqs = Seq((f1, f2), (a1, a2)) ++ eqs.tail
-        case (Abs(v1, t1, e1), Abs(v2, t2, e2)) => if (t1 == t2) eqs = Seq((v1, v2), (e1, e2)) ++ eqs.tail else return None
-        case (v1: Sym, v2: Sym) if (v1 == v2) => eqs = eqs.tail
-        case (v: Var, e: E) => {
-          if (v.occursIn(e)) return None
-          // without occur-check
+    @tailrec
+    def applyRec(eqs: List[(E, E)]): Option[Substitution] = {
+      eqs match {
+        case (App(f1, a1), App(f2, a2)) :: eqsTails =>
+          applyRec((f1, f2) :: (a1, a2) :: eqsTails)
+        case (Abs(v1, t1, e1), Abs(v2, t2, e2)) :: eqsTails if t1 == t2 =>
+          applyRec((v1, v2) :: (e1, e2) :: eqsTails)
+        case (Abs(_, _, _), Abs(_, _, _)) :: _ =>
+          None
+        case (v1: Sym, v2: Sym) :: eqsTails if v1 == v2 =>
+          applyRec(eqsTails)
+        case (v: Var, e: E) :: _ if v.occursIn(e) =>
+          None
+        case (v: Var, e: E) :: eqsTails =>
           val sub = Substitution(v -> e)
-          for (p <- mgu) {
-            mgu.update(p._1, sub(p._2))
+          for ((k, v) <- mgu) {
+            mgu.update(k, sub(v))
           }
-          mgu += (v -> e)
-          eqs = for (eq <- eqs.tail) yield {
-            (sub(eq._1), sub(eq._2))
-          }
-
-        }
-        case (e: E, v: Var) => eqs = Seq((v, e)) ++ eqs.tail // TODO: Performance could be improved here.
-        case _ => return None
+          mgu += v -> e
+          applyRec(eqsTails.map { case (leq, req) => (sub(leq), sub(req)) })
+        case (e: E, v: Var) :: eqsTails =>
+          applyRec((v, e) +: eqsTails)
+        case _ :: _ =>
+          None
+        case Nil =>
+          Some(mgu.toImmutable)
       }
     }
-    return Some(mgu.toImmutable)
-    // scalastyle:on return
+    applyRec(equations.toList)
   }
-  // scalastyle:on cyclomatic.complexity
 }
-
