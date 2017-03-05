@@ -1,6 +1,5 @@
 package au.aossie.scavenger.expression
 
-import au.aossie.scavenger.structure.immutable.Clause
 import au.aossie.scavenger.util.unicode._
 
 import scala.collection.mutable.ArrayBuffer
