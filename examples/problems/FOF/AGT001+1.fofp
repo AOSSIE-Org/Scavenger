@@ -40,4 +40,5 @@ include('examples/problems/Axioms/NUM005+1.ax').
 fof(query_1,conjecture,
     ( accept_team(countryamedicalorganization,countryacivilorganization,towna,n6) )).
 
+
 %------------------------------------------------------------------------------
