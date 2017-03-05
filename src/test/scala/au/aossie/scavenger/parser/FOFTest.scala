@@ -10,7 +10,7 @@ object FOFTest {
   def main(args: Array[String]):Unit = {
     val path = pwd / 'examples / 'problems / 'FOF / "FOF.fofp"
     val cnf = TPTPFOFParser.parse(path)
-    println(cnf.clauses.mkString("\n"))
-    println(EPCR.prove(cnf))
+//    println(cnf.clauses.mkString("\n"))
+//    println(EPCR.prove(cnf))
   }
 }
