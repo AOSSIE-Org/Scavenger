@@ -13,10 +13,9 @@ import scala.collection.immutable.ListSet
   */
 object TPTPClausifier {
   def clausify(expr: E): CNF = {
-    val cnfForm = toCNF(skolem(negIn(
+    val cnfForm = toCNF(forallOut(skolem(negIn(
       miniscope(
-        remImpl(expr)))))
-//    println(cnfForm)
+        remImpl(expr))))))
     cnfForm
   }
   def remImpl(f: E): E = f match {
@@ -74,7 +73,7 @@ object TPTPClausifier {
         val (na, index1) = skolemRec(a, curVars + v, toFun, index)
         (All(v, t, na), index1)
       case Ex(v, t, a) =>
-        // TODO: can be collision with original functions from input
+        // TODO: can be collision with original names from input
         val fun = FunctionTerm("skolemize" + index, curVars.toList)
         skolemRec(a, curVars, toFun + (v -> fun), index + 1)
       case Atom(g, args) =>
@@ -96,6 +95,7 @@ object TPTPClausifier {
         val (na, index1) = forallOutRec(a, toOrig, index)
         (Neg(na), index1)
       case All(v, t, a) =>
+        // TODO: can be collision with original names from input
         forallOutRec(a, toOrig + (v -> Var("MYOWNX" + index)), index + 1)
       case Atom(g, args) =>
         (substitute(AppRec(g, args), toOrig), index)
@@ -109,7 +109,8 @@ object TPTPClausifier {
         val (l2, index2) = toCNFRec(b, index1)
         (l1 ++ l2, index2)
       case Or(a, b) =>
-        val z = AppRec(Sym("predicate" + index), List[E]())
+        // TODO: can be collision with original names from input
+      val z = AppRec(Sym("predicate" + index), List[E]())
         val (l1, index1) = toCNFRec(a, index + 1)
         val (l2, index2) = toCNFRec(b, index1)
         (l1.map(_ + z) ++ l2.map(z +: _), index2)
@@ -124,9 +125,9 @@ object TPTPClausifier {
     CNF(toCNFRec(f, 0)._1.toList)
   }
   def substitute(term: E, toFun: Map[Var, E]): E = term match {
-    case FunctionTerm(f, args) => AppRec(f, args.map(substitute(_, toFun)))
-    case Sym(name)             => Sym(name)
-    case Var(name)             => toFun.get(Var(name)) match {
+    case AppRec(f, args) => AppRec(f, args.map(substitute(_, toFun)))
+    case Sym(name)       => Sym(name)
+    case Var(name)       => toFun.get(Var(name)) match {
       case Some(fun) => fun
       case None      => Var(name)
     }
