@@ -7,7 +7,7 @@ import au.aossie.scavenger.parser.TPTP.{FOFAxiomStatement, FOFConjectureStatemen
   * @author Vlad Podtelkin
   */
 object TPTPFOFParser {
-  def parse(filename: Path): Unit = {
+  def parse(filename: Path): CNF = {
     val problem = TPTPFOF.problem(filename)
     val clauses = problem.statements.map {
       case axiom: FOFAxiomStatement => {
@@ -20,5 +20,6 @@ object TPTPFOFParser {
         TPTPClausifier.clausify(conj.formula)
       }
     }.fold(CNF(Seq[Clause]()))(_ + _)
+    clauses
   }
 }

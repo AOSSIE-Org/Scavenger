@@ -1,6 +1,6 @@
-package au.aossie.scavenger.parser
+package au.aossie.scavenger.expression
 
-import au.aossie.scavenger.expression.{Abs, App, AppRec, E, Sym, Var, formula => Form}
+import au.aossie.scavenger.expression.{formula => Form}
 import au.aossie.scavenger.structure.immutable.{CNF, Clause}
 
 import scala.collection.immutable.ListSet

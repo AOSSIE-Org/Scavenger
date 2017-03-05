@@ -1,6 +1,6 @@
 package au.aossie.scavenger.parser
 
-import au.aossie.scavenger.expression.E
+import au.aossie.scavenger.expression.{E, FOFE}
 import au.aossie.scavenger.prover.EPCR
 import au.aossie.scavenger.structure.immutable.CNF
 
@@ -14,8 +14,6 @@ object TPTPClausifier {
       .negationsIn()
       .skolemize()
       .forallOut()
-//    println(cnfForm)
     cnfForm.toCNF
-//    println(cnfForm)
   }
 }
