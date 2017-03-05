@@ -9,13 +9,14 @@ import scala.collection.immutable.ListSet
 
 /**
   * Created by vlad107 on 3/3/17.
+  * Implementation of TPTP algorithm from [[http://www.cs.miami.edu/home/geoff/Papers/Journal/1996_SM96_SACJ.pdf here]]
   */
 object TPTPClausifier {
   def clausify(expr: E): CNF = {
     val cnfForm = toCNF(skolem(negIn(
       miniscope(
         remImpl(expr)))))
-    println(cnfForm)
+//    println(cnfForm)
     cnfForm
   }
   def remImpl(f: E): E = f match {
