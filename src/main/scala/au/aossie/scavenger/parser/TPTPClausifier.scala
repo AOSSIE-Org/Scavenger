@@ -12,30 +12,33 @@ import scala.collection.immutable.ListSet
   * Implementation of TPTP algorithm from [[http://www.cs.miami.edu/home/geoff/Papers/Journal/1996_SM96_SACJ.pdf here]]
   */
 object TPTPClausifier {
-  def clausify(expr: E): CNF = {
-    val cnfForm = toCNF(forallOut(skolem(negIn(
-      miniscope(
-        remImpl(expr))))))
-    cnfForm
+  def apply(expr: E): CNF = {
+    toCNF(
+      forallOut(
+        skolem(
+          negIn(
+            miniscope(
+              remImpl(expr))))))
   }
+
   def remImpl(f: E): E = f match {
     case Neg(g)              => Neg(remImpl(g))
     case And(a, b)           => And(remImpl(a), remImpl(b))
     case Or(a,b)             => Or(remImpl(a), remImpl(b))
     case All(v, t, g)        => All(v, t, remImpl(g))
     case Ex(v, t, g)         => Ex(v, t, remImpl(g))
-    case Atom(g, args)       => f
-    case Imp((a, b))         => Or(Neg(remImpl(a)), remImpl(b))
-    case Equivalence((a, b)) =>
+    case Imp(a, b)         => Or(Neg(remImpl(a)), remImpl(b))
+    case Equivalence(a, b) =>
       val na = remImpl(a)
       val nb = remImpl(b)
       And(Or(Neg(na), nb), Or(Neg(nb), na))
+    case Atom(g, args)       => f
   }
+
   def miniscope(f: E): E = f match {
     case All(v, t, g) if !(g.freeVariables contains v) => miniscope(g)
-    case All(v, t, And(a, b))                          =>
-      And(miniscope(All(v, t, a)), miniscope(All(v, t, b)))
-    case All(v, t, g)          => All(v, t, miniscope(g))
+    case All(v, t, And(a, b))                          => And(miniscope(All(v, t, a)), miniscope(All(v, t, b)))
+    case All(v, t, g)                                  => All(v, t, miniscope(g))
     case Ex(v, t, g) if !(g.freeVariables contains v)  => miniscope(g)
     case Ex(v, t, Or(a, b))                            => Or(miniscope(Ex(v, t, a)), miniscope(Ex(v, t, b)))
     case Ex(v, t, g)                                   => Ex(v, t, miniscope(g))
@@ -44,11 +47,12 @@ object TPTPClausifier {
     case Or(a, b)                                      => Or(miniscope(a), miniscope(b))
     case _                                             => f
   }
+
   def negIn(f: E): E = f match {
     case Neg(And(a, b))    => Or(negIn(Neg(a)), negIn(Neg(b)))
     case Neg(Or(a, b))     => And(negIn(Neg(a)), negIn(Neg(b)))
-    case Neg(Ex(v, t, g))  => All(v, t, negIn(g))
-    case Neg(All(v, t, g)) => Ex(v, t, negIn(g))
+    case Neg(Ex(v, t, g))  => All(v, t, negIn(Neg(g)))
+    case Neg(All(v, t, g)) => Ex(v, t, negIn(Neg(g)))
     case Neg(Neg(g))       => negIn(g)
     case And(a, b)         => And(negIn(a), negIn(b))
     case Or(a, b)          => Or(negIn(a), negIn(b))
@@ -56,6 +60,7 @@ object TPTPClausifier {
     case Ex(v, t, g)       => Ex(v, t, negIn(g))
     case _                 => f
   }
+
   def skolem(f: E): E = {
     def skolemRec(h: E, curVars: Set[Var], toFun: Map[Var, E], index: Int): (E, Int) = h match {
       case Or(a, b) =>
@@ -97,7 +102,7 @@ object TPTPClausifier {
       case All(v, t, a) =>
         // TODO: can be collision with original names from input
         forallOutRec(a, toOrig + (v -> Var("MYOWNX" + index)), index + 1)
-      case Atom(g, args) =>
+      case AppRec(g, args) =>
         (substitute(AppRec(g, args), toOrig), index)
     }
     forallOutRec(f, Map[Var, Var](), 0)._1
@@ -110,7 +115,7 @@ object TPTPClausifier {
         (l1 ++ l2, index2)
       case Or(a, b) =>
         // TODO: can be collision with original names from input
-      val z = AppRec(Sym("predicate" + index), List[E]())
+        val z = AppRec(Sym("predicate" + index), List[E]())
         val (l1, index1) = toCNFRec(a, index + 1)
         val (l2, index2) = toCNFRec(b, index1)
         (l1.map(_ + z) ++ l2.map(z +: _), index2)
@@ -119,18 +124,19 @@ object TPTPClausifier {
         (l.map((c: Clause) => Clause(c.suc.toList: _*)(c.ant.toList: _*)), index1)
       case All(v, t, a) =>
         toCNFRec(a, index)
-      case Atom(g, args) =>
+      case AppRec(g, args) =>
         (ListSet[Clause](Clause()(AppRec(g, args))), index)
     }
     CNF(toCNFRec(f, 0)._1.toList)
   }
+
   def substitute(term: E, toFun: Map[Var, E]): E = term match {
-    case AppRec(f, args) => AppRec(f, args.map(substitute(_, toFun)))
-    case Sym(name)       => Sym(name)
     case Var(name)       => toFun.get(Var(name)) match {
       case Some(fun) => fun
-      case None      => Var(name)
+      case None      => term
     }
+    case Sym(name)       => term
+    case AppRec(f, args) => AppRec(f, args.map(substitute(_, toFun)))
   }
 }
 
