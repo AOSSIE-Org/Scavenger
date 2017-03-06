@@ -42,6 +42,7 @@ extends Base {
 
 
   def problem(fileName : Path) : FOFProblem = extract(fileName,problemParser)
+
 }
 
 class FOFProblem(val statements : List[FOFProblemStatement], val variables : Set[Sym]) {
