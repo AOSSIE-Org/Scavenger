@@ -1,5 +1,6 @@
 package au.aossie.scavenger.parser
 import ammonite.ops.Path
+import au.aossie.scavenger.expression.formula.And
 import au.aossie.scavenger.structure.immutable.{CNF, Clause}
 import au.aossie.scavenger.parser.TPTP.{FOFAxiomStatement, FOFConjectureStatement, FOFNegatedConjectureStatement, FOF => TPTPFOF}
 
@@ -9,17 +10,17 @@ import au.aossie.scavenger.parser.TPTP.{FOFAxiomStatement, FOFConjectureStatemen
 object TPTPFOFParser {
   def parse(filename: Path): CNF = {
     val problem = TPTPFOF.problem(filename)
-    val clauses = problem.statements.map {
+    val formula = problem.statements.map {
       case axiom: FOFAxiomStatement => {
-        TPTPClausifier.clausify(axiom.formula)
+        axiom.formula
       }
       case neg_conj: FOFNegatedConjectureStatement => {
-        TPTPClausifier.clausify(neg_conj.formula)
+        neg_conj.formula
       }
       case conj: FOFConjectureStatement => {
-        TPTPClausifier.clausify(conj.formula)
+        conj.formula
       }
-    }.fold(CNF(Seq[Clause]()))(_ + _)
-    clauses
+    }.reduce(And(_, _))
+    TPTPClausifier(formula)
   }
 }
