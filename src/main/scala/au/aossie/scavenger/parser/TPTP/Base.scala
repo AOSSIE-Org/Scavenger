@@ -75,7 +75,7 @@ trait Base extends TokenParsers with PackratParsers {
       if ((input / up / "Axioms").toIO.exists()) {
         dependenciesDir = Some(input / up)
       } else {
-        dependenciesDir = Some(input / up / up / up)
+        dependenciesDir = Some(input / up / up / up / up)
       }
     }
     phrase(parser)(tokens)
