@@ -1,7 +1,9 @@
 package au.aossie.scavenger.util
 
 package object unicode {
-  def unicodeOrElse(unicode: String, alternative: String) =
-    if (System.getProperty("file.encoding") == "UTF-8") unicode else alternative
+  private val encoding = System.getProperty("file.encoding")
+
+  def unicodeOrElse(unicode: String, alternative: String): String =
+    if (encoding == "UTF-8") unicode else alternative
 }
 

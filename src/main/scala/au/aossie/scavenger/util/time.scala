@@ -1,20 +1,23 @@
 package au.aossie.scavenger.util
 
-package object time {
-  // TODO: Use Duration for time
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
-  case class Timed[+R](result:R, time: Double)
+package object time {
+  case class Timed[+R](result: R, time: FiniteDuration)
+
   def timed[R](f: => R): Timed[R] = {
     System.gc()
-    val now = System.nanoTime
+    val start = System.nanoTime
     val result = f
-    val time = (System.nanoTime.toDouble - now) / 1000000 // in milliseconds
+    val end = System.nanoTime
+    val time: FiniteDuration = (end - start).nanos
     Timed(result, time)
   }
+
   def timed[R](repetitions: Int)(f: => R): Timed[R] = {
-    val Timed(r,t) = timed { f }
-    val averageTime = (for (i <- 1 to repetitions - 1) yield timed(f).time).foldLeft(t)(_ + _) / repetitions
-    Timed(r, averageTime)
+    val averageTime = (1 to repetitions).map(_ => timed(f).time).foldLeft(0 seconds)(_ + _) / repetitions
+    Timed(f, averageTime)
   }
 }
 

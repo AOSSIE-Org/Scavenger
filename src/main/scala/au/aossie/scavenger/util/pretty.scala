@@ -1,14 +1,13 @@
 package au.aossie.scavenger.util
 
 import au.aossie.scavenger.util.math._
-import annotation.tailrec
 
 package object pretty {
-  def blankString(length: Int): String = repString(" ", "", length)
+  def blankString(length: Int): String = " " * length
 
-  def mkStringMultiLine(c:Iterable[Any], leftMargin: Int, width: Int, sep: String) = {
-    val margin = blankString(leftMargin)
-    var counter = margin.length
+  def mkStringMultiLine(c: Iterable[Any], leftMargin: Int, width: Int, sep: String): String = {
+    val margin    = blankString(leftMargin)
+    var counter   = margin.length
     var paragraph = margin
     for (w <- c) {
       paragraph += w + sep
@@ -21,37 +20,24 @@ package object pretty {
     paragraph
   }
 
-
-  def prettyTable[A](t: Seq[Seq[A]], sep: String = "   ", header: Boolean = true) = {
-    val tTrans = t.transpose
-    val widths: Seq[Seq[Int]] = t map {r => r map {e => e.toString.length}}
-    val sepWidth = sep.length
-    val columnWidths: Seq[Int] = {
-      val widthsTrans = widths.transpose
-      widthsTrans map {column => max(column, (x:Int) => x)}
+  def prettyTable[A](t: Seq[Seq[A]], sep: String = "   ", header: Boolean = true): String = {
+    val tTrans       = t.transpose
+    val widths       = t.map(_.map(_.toString.length))
+    val sepWidth     = sep.length
+    val columnWidths = widths.transpose.map(column => max(column, (x: Int) => x))
+    val fixedWidthTableTrans = tTrans.zip(columnWidths).map { columnWidthPair =>
+      val (column, width) = columnWidthPair
+      column.map(e => e.toString + blankString(width - e.toString.length))
     }
-    val fixedWidthTableTrans: Seq[Seq[String]] = {
-      for (columnWidthPair <- (tTrans zip columnWidths)) yield {
-        val (column, width) = columnWidthPair
-        column map {e =>
-          val s = e.toString
-          s + blankString(width - s.length)
-        }
-      }
+    val fixedWidthTable = fixedWidthTableTrans.transpose
+    val headerStr = if (header) {
+      val totalWidth    = (0 /: columnWidths)((w, e) => w + e + sepWidth)
+      val horizontalBar = "=" * totalWidth + "\n"
+      fixedWidthTable.head.mkString("", sep, "\n") + horizontalBar
+    } else {
+      ""
     }
-    val fixedWidthTable: Seq[Seq[String]] = fixedWidthTableTrans.transpose
-    if (header) {
-      val totalWidth = (0 /: columnWidths) {(w, e) => w + e + sepWidth}
-      val horizontalBar = repString("=", "", totalWidth) + "\n"
-      ((fixedWidthTable.head.mkString("", sep, "\n") + horizontalBar ) /: (fixedWidthTable.tail map { row => row.mkString("", sep, "\n") })) {_ + _}
-    }
-    else {
-      ("" /: (fixedWidthTable map { row => row.mkString("", sep, "\n") })) {_ + _}
-    }
-  }
-
-  @tailrec def repString(rep: String, s: String, length: Int): String = {
-    if (length <= 0) s else repString(rep, s + rep, length - 1)
+    val rows = fixedWidthTable.tail.map(row => row.mkString("", sep, "\n"))
+    (headerStr /: rows)(_ + _)
   }
 }
-
