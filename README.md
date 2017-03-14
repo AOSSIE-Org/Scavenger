@@ -1,6 +1,8 @@
-Scavenger is an automated theorem prover based on the new **conflict resolution** calculus,
-which lifts some aspects of the conflict-drive clause learning approach used by sat-solvers to
-logics with quantifiers. 
+Scavenger is an automated theorem prover based on 
+the new **conflict resolution** calculus,
+which lifts some aspects of the 
+conflict-drive clause learning approach 
+used by sat-solvers to logics with quantifiers. 
 
 
 ### Usage Instructions
@@ -59,10 +61,15 @@ The calculus behind Scavenger is described in the [Conflict Resolution paper](ht
  * [Daniyar Itegulov](https://github.com/itegulov)
  * [Ezequiel Postan](https://github.com/EzequielPostan)
 
+### Support
+ 
+ * Scavenger was supported by Google Summer of Code in 2016 and 2017.
+ * A free license of [YourKit](http://www.yourkit.com/) profiler helps us keep Scavenger fast and leak-free
+ * Experiments on thousands of benchmarks are made possible by the [StarExec Cluster](https://www.starexec.org)
 
 ### Job Opportunities
 
- * [Google Summer of Code]() grants may be available in 2017. If you would like to apply, it is never too early to contact us. 
+ * [Google Summer of Code](http://www.aossie.org) grants are available. If you would like to apply, it is never too early to contact us. 
  * If you would like to do a project, M.Sc. thesis or Ph.D. thesis related to Scavenger, please [contact us](mailto:bruno.wp@gmail.com).
 
 
