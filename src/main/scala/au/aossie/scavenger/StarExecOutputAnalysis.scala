@@ -8,6 +8,7 @@ import scalax.chart.api._
 import org.jfree.chart.renderer.xy._
 import org.jfree.chart.axis._
 import java.awt.Color
+import ammonite.ops._
 
 import scala.collection.mutable._
 import scala.language.postfixOps
@@ -25,38 +26,30 @@ object StarExecOutputAnalysis {
                     displayCharts: Boolean = true)
 
   val colorer = Map(
-    "LEO-II-1.7.0" -> Color.DARK_GRAY,
     "PD-Scavenger" -> Color.BLUE,
     "ZenonModulo-0.4.1" -> Color.ORANGE,
     "Geo-III-2016C" -> Color.YELLOW,
     "SOS-2.0" -> Color.PINK,
     "Otter-3.3" -> Color.CYAN,
     "EP-Scavenger" -> Color.RED,
-    "Beagle-SAT-0.9.47" -> Color.MAGENTA,
-    "E-KRHyper-1.4" -> Color.LIGHT_GRAY,
     "TD-Scavenger" -> Color.GREEN,
     "Zipperpin-FOF-0.4" -> new Color(0x8b0000),
     "Beagle-0.9.47" -> new Color(0xdaa520),
     "Prover9-1109a" -> new Color(0xa0db8e),
     "Metis-2.3" -> new Color(0x31698a),
-    "DarwinFM-1.4.5" -> new Color(0x794044),
     "SNARK-20120808r022" -> new Color(0x191970),
     "Bliksem-1.12" -> new Color(0x6dc066),
     "PEPR-0.0ps" -> new Color(0x0e2f44),
     "GrAnDe-1.1" -> new Color(0xffc3a0),
     "CVC4-FOF-1.5.1" -> new Color(0x468499),
     "E-Darwin-1.5" -> new Color(0x008080),
-    "Paradox-3.0" -> new Color(0xffe4e1),
+    "Paradox-3.0" -> new Color(0x794044),
     "ET-0.2" -> new Color(0xffd700),
-    "E-2.0" -> new Color(0xd3ffce),
+    "E-2.0" -> Color.MAGENTA,
     "Z3-4.4.1" -> new Color(0xff7373),
-    "Darwin-1.4.5" -> new Color(0xb0e0e6),
-    "VampireZ3-1.0" -> new Color(0xe6e6fa),
+    "Darwin-1.4.5" -> Color.DARK_GRAY,
     "Vampire-4.1" -> new Color(0x7fffd4),
-    "Vampire-SAT-4.1" -> new Color(0x3399ff),
-    "iProver-2.5" -> new Color(0x6897bb),
-    "Vampire-4.0" -> new Color(0xff4444),
-    "Vampire-SAT-4.0" -> new Color(0x8a2be2)
+    "iProver-2.5" -> new Color(0x6897bb)
   ).withDefaultValue(Color.BLACK)
 
   val parser = new scopt.OptionParser[Config]("starexec-analysis") {
@@ -153,7 +146,7 @@ object StarExecOutputAnalysis {
                               }
         
         
-        val gfjpa = fjpa groupBy { jp => jp.prover } 
+        val gfjpa = fjpa groupBy { jp => jp.prover } filter { case (prover, _) => colorer.contains(prover) }
         
         // Calculate number of problems solved under a given time
         val ppt = (for ((p, pjpa) <- gfjpa) yield {
@@ -190,7 +183,24 @@ object StarExecOutputAnalysis {
         
         // Print problem ranking
         println("Problems Ranked by Difficulty")
-        for (p <- gpfjpa.zipWithIndex) { println(p._2 + ": \t" + p._1._1 + "\t" + p._1._2.length + "\t" + (p._1._2 map {_.cpuTime} reduce {_+_})) }  // FIXME: mapping and reducing the same thing multiple times. This is inneficient.
+        for (p <- gpfjpa.zipWithIndex) { println(p._2 + ": \t" + p._1._1 + "\t" + p._1._2.length + "\t" + (p._1._2 map {_.cpuTime}).sum) }  // FIXME: mapping and reducing the same thing multiple times. This is inneficient.
+
+        val problemsByProver = fjpa.groupBy(_.prover)
+        for (solver <- c.solvers) {
+          println()
+          println(s"## Problems with rating and CPU-time solved by $solver")
+          println()
+          val problemsSolvedByProver = problemsByProver(solver)
+          val ratingProblems = for (problem <- problemsSolvedByProver) yield {
+            val domain = problem.problem.substring(0, 3)
+            val path = pwd/'examples/'problems/"TPTP-v6.4.0"/'Problems/domain/problem.problem
+            val content = read(path)
+            val ratingLine = content.split("\n").find(_.startsWith("% Rating")).get
+            val ratingString = ratingLine.substring("% Rating   : ".length, "% Rating   : ".length + 4)
+            (problem.problem, ratingString.toDouble, problem.cpuTime)
+          }
+          println(ratingProblems.sortBy(_._2).map { case (name, rating, time) => s"$name, $rating, $time" }.mkString("\n"))
+        }
         
         for (s <- c.solvers) {
           println()
