@@ -31,4 +31,4 @@ logBuffered := false
 
 licenses := Seq("CC BY-NC-SA" -> url("http://creativecommons.org/licenses/by-nc-sa/4.0/"))
 
-homepage := Some(url("https://gitlab.com/AOSSIE/Scav"))
+homepage := Some(url("https://www.gitlab.com/aossie/Scavenger"))
