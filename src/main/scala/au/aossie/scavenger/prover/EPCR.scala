@@ -58,7 +58,7 @@ object EPCR extends Prover {
     val cdclClauses: mutable.Set[CRProofNode] = mutable.Set.empty
 
     /**
-      * Stores combinations of (clause, 
+      * Stores combinations of (clause,
       */
     val resolvedCache = mutable.Set.empty[(Clause, Int, Seq[Literal])]
 
@@ -80,9 +80,9 @@ object EPCR extends Prover {
       val unifyCandidates = clause.literals.map(unifiableUnits(_).toSeq)
       for (conclusionId <- unifyCandidates.indices) {
         val isUseful = (
-            for (i <- unifyCandidates.indices) yield {
-              i == conclusionId || unifyCandidates(i).nonEmpty
-            }
+          for (i <- unifyCandidates.indices) yield {
+            i == conclusionId || unifyCandidates(i).nonEmpty
+          }
           ).forall(identity)
         if (isUseful) {
           val unifiers = unifyCandidates.take(conclusionId) ++ unifyCandidates.drop(conclusionId + 1)
@@ -151,6 +151,32 @@ object EPCR extends Prover {
       unifiableUnits.values.foreach(_ --= nonValidLiterals)
     }
 
+    def removeConflictDecisions(node: CRProofNode): Unit = {
+      node match {
+        case Decision(literal) =>
+          removeDecisionLiteral(literal)
+        case conflict @ Conflict(left, right) =>
+          removeConflictDecisions(left)
+          removeConflictDecisions(right)
+        case UnitPropagationResolution(left, _, _, _, _) =>
+          left.foreach(removeConflictDecisions)
+        case ConflictDrivenClauseLearning(conflict) =>
+          removeConflictDecisions(conflict)
+        case _ =>
+      }
+    }
+
+    def addCDCLClauses(newClauses: Set[CRProofNode]): Unit = {
+      resolvedCache.clear()
+      cdclClauses ++= newClauses
+      nonUnitClauses = nonUnitClauses ++ newClauses.map(_.conclusion).filter(!_.isUnit)
+      unifiableUnits.clear()
+      literals = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
+      newClauses.foreach(node =>
+        reverseImplicationGraph.getOrElseUpdate(node.conclusion, ArrayBuffer.empty) += node)
+      updateUnifiableUnits(provedLiterals.toSeq)
+    }
+
     updateUnifiableUnits(provedLiterals.toSeq)
 
     cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(Axiom(clause)))
@@ -179,7 +205,9 @@ object EPCR extends Prover {
       }
 
       if (CDCLClauses.nonEmpty) {
-        reset(CDCLClauses.toSet)
+//        reset(CDCLClauses.toSet)
+        addCDCLClauses(CDCLClauses.toSet)
+        CDCLClauses.foreach(removeConflictDecisions)
       } else if (result.isEmpty) {
         val available = rnd.shuffle((literals -- provedLiterals -- provedLiterals.map(!_)).toSeq)
         if (available.isEmpty) {
