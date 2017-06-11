@@ -1,12 +1,16 @@
 package au.aossie.scavenger.prover
+import au.aossie.scavenger.expression.{E, Var}
 import au.aossie.scavenger.expression.formula.Neg
+import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.model.Assignment
 import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
-import au.aossie.scavenger.structure.immutable.{CNF, Literal, Clause}
+import au.aossie.scavenger.structure.immutable.{CNF, Clause, Literal}
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.Random
+import au.aossie.scavenger.unification.{ MartelliMontanari => unify }
+
 
 /**
   * @author Daniyar Itegulov
@@ -39,13 +43,17 @@ object EPCR extends Prover {
     /**
       * Mutable map showing which value-literals can be unified with the key-literal.
       */
-    val unifiableUnits: mutable.Map[Literal, mutable.Set[Literal]] = mutable.Map.empty
+    val unifiableUnitsIds: mutable.Map[Literal, Int] = mutable.Map.empty
+
+    val unifiableUnitsBuff: ArrayBuffer[mutable.Set[Literal]] = mutable.ArrayBuffer.empty
 
     /**
       * Mutable map showing all possible proofs for every proved clause.
       */
-    val reverseImplicationGraph: mutable.Map[Clause, ArrayBuffer[CRProofNode]] = mutable.Map.empty
+    val reverseImplication: mutable.Map[Clause, Int] = mutable.Map.empty
 
+    val bufferNodes: ArrayBuffer[ArrayBuffer[CRProofNode]] = mutable.ArrayBuffer.empty
+    val nodeById: ArrayBuffer[Clause] = mutable.ArrayBuffer.empty
 
     /**
       * All decisions made at this point.
@@ -57,70 +65,122 @@ object EPCR extends Prover {
       */
     val cdclClauses: mutable.Set[CRProofNode] = mutable.Set.empty
 
-    /**
-      * Stores combinations of (clause,
-      */
-    val resolvedCache = mutable.Set.empty[(Clause, Int, Seq[Literal])]
-
     def updateUnifiableUnits(newLiterals: Seq[Literal]): Unit = {
+      println("making unification table")
       literals ++= newLiterals
       provedLiterals ++= newLiterals
       for (literal <- literals) {
-        val set = unifiableUnits.getOrElseUpdate(literal, mutable.Set.empty)
-        for (newLiteral <- newLiterals) if (newLiteral.negated != literal.negated) {
+        val id = unifiableUnitsIds.getOrElseUpdate(literal, unifiableUnitsBuff.size)
+        if (id == unifiableUnitsBuff.size) {
+          unifiableUnitsBuff += mutable.Set.empty
+        }
+        val set = unifiableUnitsBuff(id)
+        for (newLiteral <- rnd.shuffle(newLiterals)) if ((set.size < 10) && (newLiteral.negated != literal.negated)) {
           unifyWithRename(Seq(literal.unit), Seq(newLiteral.unit)) match {
-            case Some(_) => set += newLiteral
+            case Some(_) =>
+              set += newLiteral
             case None    =>
           }
         }
       }
     }
 
+    def addNode(cl: Clause, node: CRProofNode): Unit = {
+      val reverseId = reverseImplication.getOrElseUpdate(cl, bufferNodes.size)
+      if (reverseId == bufferNodes.size) {
+        bufferNodes += ArrayBuffer.empty
+        nodeById += cl
+      }
+      bufferNodes(reverseId) += node
+    }
+
     def resolve(clause: Clause, result: mutable.Set[Literal]): Unit = {
-      val unifyCandidates = clause.literals.map(unifiableUnits(_).toSeq)
+      val unifyCandidates = clause.literals.map(id => unifiableUnitsBuff(unifiableUnitsIds(id)).toSeq)
       for (conclusionId <- unifyCandidates.indices) {
         val isUseful = (
           for (i <- unifyCandidates.indices) yield {
             i == conclusionId || unifyCandidates(i).nonEmpty
           }
           ).forall(identity)
+
         if (isUseful) {
           val unifiers = unifyCandidates.take(conclusionId) ++ unifyCandidates.drop(conclusionId + 1)
           val literals = clause.literals.take(conclusionId) ++ clause.literals.drop(conclusionId + 1)
-          for (unifier <- combinations(unifiers)) if (!resolvedCache.contains((clause, conclusionId, unifier))) {
-            val task = (clause, conclusionId, unifier)
-            val unifierUnits = unifier.map(_.unit)
-            val literalUnits = literals.map(_.unit)
-            resolvedCache += task
-            if (unifyWithRename(unifierUnits, literalUnits).isDefined) {
-              val clauseNode = reverseImplicationGraph(clause).head
-              val unifierNodes = unifier.map(l => reverseImplicationGraph(l.toClause).head)
-              val unitPropagationNode = UnitPropagationResolution(unifierNodes, clauseNode, clause.literals(conclusionId), literals)
-              // TODO: Inside UnitPropagationResolution we redo the same unification that is done in "unifyWithRename". We could probably double the efficiency by avoid this duplicate computation somehow, but this would require a major refactor. It is better to leave it as it is now.
-              val newLiteral = unitPropagationNode.conclusion.literal
-              if (!result.contains(newLiteral) && !provedLiterals.contains(newLiteral)) {
-                val buffer = reverseImplicationGraph.getOrElseUpdate(newLiteral, ArrayBuffer.empty)
-                buffer += unitPropagationNode
-                result += newLiteral
+
+          def go(unifier: Seq[Literal],
+                 unifierWithSub: Seq[E],
+                 subs: Seq[Substitution],
+                 literalsWithSubst: Seq[Literal],
+                 globalSubst: Substitution,
+                 usedVars: Set[Var],
+                 cur: Int): Unit = {
+
+            if (cur == unifiers.size) {
+                val clauseNode = bufferNodes(reverseImplication(clause)).head
+                val unifierNodes = unifier.map(l => bufferNodes(reverseImplication(l.toClause)).head)
+                val unitPropagationNode =
+                  UnitPropagationResolution(
+                    unifierNodes,
+                    clauseNode,
+                    clause.literals(conclusionId),
+                    literals,
+                    subs,
+                    globalSubst
+                  )
+                val newLiteral = unitPropagationNode.conclusion.literal
+                if (!result.contains(newLiteral) && !provedLiterals.contains(newLiteral)) {
+                  addNode(newLiteral, unitPropagationNode)
+                  result += newLiteral
+                }
+              return
+            }
+
+            for (curUni <- unifiers(cur)) {
+              val substitution = renameVars(curUni.unit, usedVars)
+              val newSubs = subs :+ substitution
+              val leftWithSubst = substitution(curUni.unit)
+              val newUnifierWithSubst = unifierWithSub :+ leftWithSubst
+
+              val unificationProblem = newUnifierWithSubst.zip(literalsWithSubst.take(cur + 1).map(_.unit))
+              val unificationSubst = unify(unificationProblem)
+              if (unificationSubst.isDefined) {
+                go(unifier :+ curUni,
+                  newUnifierWithSubst.map(unificationSubst.get(_)),
+                  newSubs.map(_(unificationSubst.get)),
+                  literalsWithSubst.map(unificationSubst.get(_)),
+                  globalSubst(unificationSubst.get),
+                  usedVars ++ leftWithSubst.variables,
+                  cur + 1
+                 )
               }
             }
           }
+          go(Seq.empty,
+            Seq.empty,
+            Seq.empty,
+            literals,
+            Substitution.empty,
+            literals.map(_.unit.variables.toSet).reduce { _ union _ },
+            0)
         }
       }
     }
 
     def reset(newClauses: Set[CRProofNode]): Unit = {
-      resolvedCache.clear()
       cdclClauses ++= newClauses
       nonUnitClauses = nonUnitClauses ++ newClauses.map(_.conclusion).filter(!_.isUnit)
-      unifiableUnits.clear()
+      unifiableUnitsIds.clear()
+      unifiableUnitsBuff.clear()
       literals = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
       decisions.clear()
-      reverseImplicationGraph.clear()
+      reverseImplication.clear()
+      bufferNodes.clear()
       cnf.clauses.foreach(clause =>
-        reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += Axiom(clause))
+        addNode(clause, Axiom(clause)))
+//        reverseImplicationGraph.getOrElseUpdate(clause, mutable.Set.empty) += Axiom(clause))
       cdclClauses.foreach(node =>
-        reverseImplicationGraph.getOrElseUpdate(node.conclusion, ArrayBuffer.empty) += node)
+        addNode(node.conclusion, node))
+//        reverseImplicationGraph.getOrElseUpdate(node.conclusion, mutable.Set.empty) += node)
       provedLiterals.clear()
       provedLiterals ++= cnf.clauses.filter(_.isUnit).map(_.literal)
       provedLiterals ++= cdclClauses.map(_.conclusion).filter(_.isUnit).map(_.literal)
@@ -144,11 +204,13 @@ object EPCR extends Prover {
         }
       }
       for (literal <- provedLiterals) {
-        reverseImplicationGraph(literal) = reverseImplicationGraph(literal).filter(valid)
+        val reverseId = reverseImplication(literal)
+        bufferNodes(reverseId) = bufferNodes(reverseId).filter(valid)
       }
-      val nonValidLiterals = reverseImplicationGraph.filter(_._2.isEmpty).keys.map(_.literal)
+      val nonValidLiterals = bufferNodes.zipWithIndex.filter(_._1.isEmpty).map(_._2).map(nodeById(_).literal)
       provedLiterals --= nonValidLiterals
-      unifiableUnits.values.foreach(_ --= nonValidLiterals)
+      literals --= nonValidLiterals
+      unifiableUnitsBuff.foreach(_ --= nonValidLiterals)
     }
 
     def removeConflictDecisions(node: CRProofNode): Unit = {
@@ -160,26 +222,26 @@ object EPCR extends Prover {
           removeConflictDecisions(right)
         case UnitPropagationResolution(left, _, _, _, _) =>
           left.foreach(removeConflictDecisions)
-        case ConflictDrivenClauseLearning(conflict) =>
-          removeConflictDecisions(conflict)
-        case _ =>
+        case ConflictDrivenClauseLearning(_) =>
+        case Axiom(_) =>
       }
     }
 
     def addCDCLClauses(newClauses: Set[CRProofNode]): Unit = {
-      resolvedCache.clear()
       cdclClauses ++= newClauses
       nonUnitClauses = nonUnitClauses ++ newClauses.map(_.conclusion).filter(!_.isUnit)
-      unifiableUnits.clear()
       literals = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
       newClauses.foreach(node =>
-        reverseImplicationGraph.getOrElseUpdate(node.conclusion, ArrayBuffer.empty) += node)
+        addNode(node.conclusion, node))
+//        reverseImplicationGraph.getOrElseUpdate(node.conclusion, mutable.Set.empty) += node)
+      unifiableUnitsBuff.clear()
+      unifiableUnitsIds.clear()
       updateUnifiableUnits(provedLiterals.toSeq)
     }
 
     updateUnifiableUnits(provedLiterals.toSeq)
 
-    cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(Axiom(clause)))
+    cnf.clauses.foreach(clause => addNode(clause, Axiom(clause)))
 
     while (true) {
       val result = mutable.Set.empty[Literal]
@@ -187,14 +249,15 @@ object EPCR extends Prover {
         resolve(clause, result)
       }
 
-      updateUnifiableUnits(result.toSeq)
+      val resultSeq = result.toSeq
+      updateUnifiableUnits(resultSeq)
 
       val CDCLClauses = mutable.Set.empty[CRProofNode]
-      provedLiterals.filter(unifiableUnits(_).nonEmpty).foreach { conflictLiteral =>
+      provedLiterals.filter(l => unifiableUnitsBuff(unifiableUnitsIds(l)).nonEmpty).foreach { conflictLiteral =>
         for {
-          otherLiteral <- unifiableUnits(conflictLiteral)
-          conflictNode <- reverseImplicationGraph(conflictLiteral)
-          otherNode    <- reverseImplicationGraph(otherLiteral)
+          otherLiteral <- unifiableUnitsBuff(unifiableUnitsIds(conflictLiteral))
+          conflictNode <- bufferNodes(reverseImplication(conflictLiteral))
+          otherNode    <- bufferNodes(reverseImplication(otherLiteral))
           conflict = Conflict(conflictNode, otherNode)
         } {
           val cdclNode  = ConflictDrivenClauseLearning(conflict)
@@ -205,21 +268,23 @@ object EPCR extends Prover {
       }
 
       if (CDCLClauses.nonEmpty) {
-//        reset(CDCLClauses.toSet)
-        addCDCLClauses(CDCLClauses.toSet)
-        CDCLClauses.foreach(removeConflictDecisions)
+        reset(CDCLClauses.toSet)
+//        addCDCLClauses(CDCLClauses.toSet)
+//        CDCLClauses.foreach(removeConflictDecisions)
       } else if (result.isEmpty) {
         val available = rnd.shuffle((literals -- provedLiterals -- provedLiterals.map(!_)).toSeq)
         if (available.isEmpty) {
           reset(Set.empty)
         } else {
-          val decisionLiteral = available.head
-          decisions += decisionLiteral
-          if (decisions.contains(!decisionLiteral)) {
-            removeDecisionLiteral(!decisionLiteral)
+          for (avId <- 0 until 1.min(available.size)) {
+            val decisionLiteral = available(avId)
+            decisions += decisionLiteral
+            if (decisions.contains(!decisionLiteral)) {
+              removeDecisionLiteral(!decisionLiteral)
+            }
+            addNode(decisionLiteral, Decision(decisionLiteral))
+            updateUnifiableUnits(Seq(decisionLiteral))
           }
-          reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
-          updateUnifiableUnits(Seq(decisionLiteral))
         }
       } else if (cnf.clauses.forall(clause => clause.literals.exists(provedLiterals.contains))) {
         val literals      = provedLiterals ++ decisions
