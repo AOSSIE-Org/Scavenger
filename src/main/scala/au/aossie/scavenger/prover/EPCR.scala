@@ -1,4 +1,5 @@
 package au.aossie.scavenger.prover
+
 import au.aossie.scavenger.expression.{E, Var}
 import au.aossie.scavenger.expression.formula.Neg
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
@@ -65,21 +66,25 @@ object EPCR extends Prover {
       */
     val cdclClauses: mutable.Set[CRProofNode] = mutable.Set.empty
 
+    val MAX_UNIFIERS_CNT = 20
+
     def updateUnifiableUnits(newLiterals: Seq[Literal]): Unit = {
-      println("making unification table")
       literals ++= newLiterals
       provedLiterals ++= newLiterals
+
       for (literal <- literals) {
         val id = unifiableUnitsIds.getOrElseUpdate(literal, unifiableUnitsBuff.size)
         if (id == unifiableUnitsBuff.size) {
           unifiableUnitsBuff += mutable.Set.empty
         }
         val set = unifiableUnitsBuff(id)
-        for (newLiteral <- rnd.shuffle(newLiterals)) if ((set.size < 10) && (newLiteral.negated != literal.negated)) {
-          unifyWithRename(Seq(literal.unit), Seq(newLiteral.unit)) match {
-            case Some(_) =>
-              set += newLiteral
-            case None    =>
+        for (newLiteral <- rnd.shuffle(newLiterals)) {
+          if ((set.size < MAX_UNIFIERS_CNT) && (newLiteral.negated != literal.negated)) {
+            unifyWithRename(Seq(literal.unit), Seq(newLiteral.unit)) match {
+              case Some(_) =>
+                set += newLiteral
+              case None =>
+            }
           }
         }
       }
@@ -116,33 +121,32 @@ object EPCR extends Prover {
                  cur: Int): Unit = {
 
             if (cur == unifiers.size) {
-                val clauseNode = bufferNodes(reverseImplication(clause)).head
-                val unifierNodes = unifier.map(l => bufferNodes(reverseImplication(l.toClause)).head)
-                val unitPropagationNode =
-                  UnitPropagationResolution(
-                    unifierNodes,
-                    clauseNode,
-                    clause.literals(conclusionId),
-                    literals,
-                    subs,
-                    globalSubst
-                  )
-                val newLiteral = unitPropagationNode.conclusion.literal
-                if (!result.contains(newLiteral) && !provedLiterals.contains(newLiteral)) {
-                  addNode(newLiteral, unitPropagationNode)
-                  result += newLiteral
-                }
+              val clauseNode = bufferNodes(reverseImplication(clause)).head
+              val unifierNodes = unifier.map(l => bufferNodes(reverseImplication(l.toClause)).head)
+              val unitPropagationNode =
+                UnitPropagationResolution(
+                  unifierNodes,
+                  clauseNode,
+                  clause.literals(conclusionId),
+                  literals,
+                  subs,
+                  globalSubst
+                )
+              val newLiteral = unitPropagationNode.conclusion.literal
+              if (!result.contains(newLiteral) && !provedLiterals.contains(newLiteral)) {
+                addNode(newLiteral, unitPropagationNode)
+                result += newLiteral
+              }
               return
             }
 
             for (curUni <- unifiers(cur)) {
-              val substitution = renameVars(curUni.unit, usedVars)
-              val newSubs = subs :+ substitution
-              val leftWithSubst = substitution(curUni.unit)
+              val substitution = renameVars(globalSubst(curUni.unit), usedVars)
+              val newSubs = subs :+ globalSubst(substitution)
+              val leftWithSubst = substitution(globalSubst(curUni.unit))
               val newUnifierWithSubst = unifierWithSub :+ leftWithSubst
 
-              val unificationProblem = newUnifierWithSubst.zip(literalsWithSubst.take(cur + 1).map(_.unit))
-              val unificationSubst = unify(unificationProblem)
+              val unificationSubst = unify(leftWithSubst, literalsWithSubst(cur).unit)
               if (unificationSubst.isDefined) {
                 go(unifier :+ curUni,
                   newUnifierWithSubst.map(unificationSubst.get(_)),
@@ -151,10 +155,11 @@ object EPCR extends Prover {
                   globalSubst(unificationSubst.get),
                   usedVars ++ leftWithSubst.variables,
                   cur + 1
-                 )
+                )
               }
             }
           }
+
           go(Seq.empty,
             Seq.empty,
             Seq.empty,
@@ -189,6 +194,7 @@ object EPCR extends Prover {
 
     def removeDecisionLiteral(decisionLiteral: Literal): Unit = {
       decisions -= decisionLiteral
+
       def valid(node: CRProofNode): Boolean = {
         node match {
           case Decision(literal) if literal == decisionLiteral =>
@@ -203,6 +209,7 @@ object EPCR extends Prover {
             left.forall(valid) && valid(right)
         }
       }
+
       for (literal <- provedLiterals) {
         val reverseId = reverseImplication(literal)
         bufferNodes(reverseId) = bufferNodes(reverseId).filter(valid)
@@ -295,5 +302,6 @@ object EPCR extends Prover {
     }
     Error // this line is unreachable.
   }
+
   // scalastyle:on
 }
