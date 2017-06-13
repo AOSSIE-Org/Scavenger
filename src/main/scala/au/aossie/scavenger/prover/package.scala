@@ -87,23 +87,36 @@ package object prover {
   // TODO: This method should be moved to the unification package
   def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
     if (left.zip(right).forall { case (x, y) => x == y }) {
-      return Some(Seq.fill(left.size)(Substitution.empty), Substitution.empty)
+      Some(Seq.fill(left.size)(Substitution.empty), Substitution.empty)
+    } else if (left.zip(right).exists {
+      case (App(f1: Sym, _), App(f2: Sym, _)) => f1 != f2
+      case (Sym(c1), Sym(c2)) => c1 != c2
+      case (App(_, _), Sym(_)) => true
+      case (Sym(_), App(_, _)) => true
+      case _ => false
+    }) {
+      None
+    } else {
+      var usedVars = right map {
+        _.variables.toSet
+      } reduce {
+        _ union _
+      }
+      val newLeftWithSub = for (oneLeft <- left) yield {
+        val substitution = renameVars(oneLeft, usedVars)
+        val newLeft = substitution(oneLeft)
+        usedVars ++= newLeft.variables
+        (newLeft, substitution)
+      }
+      val newLeft = newLeftWithSub.map(_._1)
+      val subs = newLeftWithSub.map(_._2)
+      val unificationProblem = newLeft.zip(right)
+      val unificationSubstitution = unify(unificationProblem)
+      unificationSubstitution.map(s => {
+        val unifiedSubs = subs.map(_ (s))
+        (unifiedSubs, s)
+      })
     }
-    var usedVars = right map { _.variables.toSet } reduce { _ union _ }
-    val newLeftWithSub = for (oneLeft <- left) yield {
-      val substitution = renameVars(oneLeft, usedVars)
-      val newLeft = substitution(oneLeft)
-      usedVars ++= newLeft.variables
-      (newLeft, substitution)
-    }
-    val newLeft = newLeftWithSub.map(_._1)
-    val subs = newLeftWithSub.map(_._2)
-    val unificationProblem = newLeft.zip(right)
-    val unificationSubstitution = unify(unificationProblem)
-    unificationSubstitution.map(s => {
-      val unifiedSubs = subs.map(_(s))
-      (unifiedSubs, s)
-    })
   }
 
   /**
