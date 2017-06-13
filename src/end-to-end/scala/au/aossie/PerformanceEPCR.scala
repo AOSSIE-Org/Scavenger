@@ -33,10 +33,10 @@ class PerformanceEPCR extends Specification {
 
   // TODO: Implement a timeout as described here: https://etorreborre.github.io/specs2/guide/SPECS2-3.5/org.specs2.guide.TimeoutExamples.html
 
-  "Scavenger" should {
-//    "find a counter-model for SYN056-1" in { test("SYN056-1").isInstanceOf[Satisfiable] shouldEqual true }
+//  "Scavenger" should {
+////    "find a counter-model for SYN056-1" in { test("SYN056-1").isInstanceOf[Satisfiable] shouldEqual true }
 //    "prove SYN143-1" in { test("SYN143-1").isInstanceOf[Unsatisfiable] shouldEqual true }
 //    "prove SYN708-1" in { test("SYN708-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
-    "prove SYN645-1" in { test("SYN645-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-  }
+////    "prove SYN645-1" in { test("SYN645-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//  }
 }
