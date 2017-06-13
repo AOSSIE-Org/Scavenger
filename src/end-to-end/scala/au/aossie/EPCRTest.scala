@@ -9,7 +9,12 @@ import ammonite.ops._
   */
 object EPCRTest {
   def main(args: Array[String]): Unit = {
-    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'SYN / s"SYN645-1.p")
+//    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'NUM / s"NUM002-1.p")  // simple number theory problem
+//    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'PUZ / s"PUZ010-1.p") // einstain problem
+//    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'GRP / s"GRP124-1.004.p") //
+//    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'MSC / s"MSC007-1.008.p") //
+//    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'LCL / s"LCL003-1.p") //
+    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'SWV / s"SWV002-1.p") //
     println(tp)
     println(EPCR.prove(tp))
   }

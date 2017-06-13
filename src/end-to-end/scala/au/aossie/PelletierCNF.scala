@@ -4,7 +4,7 @@ import ammonite.ops._
 import au.aossie.scavenger.expression._
 import au.aossie.scavenger.parser.TPTP.{CNF => TPTPCNF}
 import au.aossie.scavenger.parser.TPTPCNFParser
-import au.aossie.scavenger.prover.{EPCR, ProblemStatus, Unsatisfiable}
+import au.aossie.scavenger.prover.{EPCR, ProblemStatus, Prover, Unsatisfiable}
 import au.aossie.scavenger.structure.immutable.{CNF, Clause}
 import org.specs2.mutable.Specification
 
@@ -16,7 +16,6 @@ import scala.collection.mutable
   *
   */
 class PelletierCNF extends Specification {
-
 
   // TODO: This is not the right place for this function
   // TODO: remove this function from here once we have a better way to distinguish constants and variables
@@ -32,10 +31,10 @@ class PelletierCNF extends Specification {
     variables
   }
 
-  def test(testName: String): ProblemStatus = {
+  def test(testName: String, prover: Prover = EPCR): ProblemStatus = {
     val p = TPTPCNFParser.parse(pwd / 'examples / 'problems / 'Pelletier / s"$testName.p")
     implicit val vars = getUppercaseVariables(p)
-    EPCR.prove(p)
+    prover.prove(p)
   }
 
   // TODO: Implement a timeout as described here: https://etorreborre.github.io/specs2/guide/SPECS2-3.5/org.specs2.guide.TimeoutExamples.html
