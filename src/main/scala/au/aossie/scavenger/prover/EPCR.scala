@@ -112,6 +112,16 @@ object EPCR extends Prover {
           val unifiers = unifyCandidates.take(conclusionId) ++ unifyCandidates.drop(conclusionId + 1)
           val literals = clause.literals.take(conclusionId) ++ clause.literals.drop(conclusionId + 1)
 
+
+          /**
+            * Recursively generates UnitPropagationResolution checking unification on each step.
+            * 
+            * @param unifier chosen literals
+            * @param subs substitutions for literals to ensure that variables in different literals are different
+            * @param literalsWithSubst literals with unique variables
+            * @param globalSubst same global MGU for all literals
+            * @param cur number of chosen literals
+            */
           def go(unifier: Seq[Literal],
                  unifierWithSub: Seq[E],
                  subs: Seq[Substitution],
