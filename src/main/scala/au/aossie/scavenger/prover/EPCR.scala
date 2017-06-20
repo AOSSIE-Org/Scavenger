@@ -240,23 +240,26 @@ object EPCR extends Prover {
         case conflict @ Conflict(left, right) =>
           removeConflictDecisions(left)
           removeConflictDecisions(right)
-        case UnitPropagationResolution(left, _, _, _, _) =>
+        case UnitPropagationResolution(left, right, _, _, _) =>
           left.foreach(removeConflictDecisions)
-        case ConflictDrivenClauseLearning(_) =>
+          removeConflictDecisions(right)
+        case ConflictDrivenClauseLearning(conflict) =>
+          removeConflictDecisions(conflict)
         case Axiom(_) =>
       }
     }
 
     def addCDCLClauses(newClauses: Set[CRProofNode]): Unit = {
       cdclClauses ++= newClauses
-      nonUnitClauses = nonUnitClauses ++ newClauses.map(_.conclusion).filter(!_.isUnit)
+      nonUnitClauses ++= newClauses.map(_.conclusion).filter(!_.isUnit)
       literals = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
+
       newClauses.foreach(node =>
         addNode(node.conclusion, node))
-//        reverseImplicationGraph.getOrElseUpdate(node.conclusion, mutable.Set.empty) += node)
-      unifiableUnitsBuff.clear()
-      unifiableUnitsIds.clear()
-      updateUnifiableUnits(provedLiterals.toSeq)
+
+      val newProvedLiterals = newClauses.map(_.conclusion).filter(_.isUnit).map(_.literal)
+      provedLiterals ++= newProvedLiterals
+      updateUnifiableUnits(newProvedLiterals.toSeq)
     }
 
     // already proved literals
@@ -291,15 +294,16 @@ object EPCR extends Prover {
       }
 
       if (CDCLClauses.nonEmpty) {
-        reset(CDCLClauses.toSet)
-//        CDCLClauses.foreach(removeConflictDecisions)
-//        addCDCLClauses(CDCLClauses.toSet)
+//        reset(CDCLClauses.toSet)
+        CDCLClauses.foreach(removeConflictDecisions)
+        addCDCLClauses(CDCLClauses.toSet)
       } else if (result.isEmpty) {
         val available = rnd.shuffle((literals -- provedLiterals -- provedLiterals.map(!_)).toSeq)
         if (available.isEmpty) {
           reset(Set.empty)
         } else {
           val decisionLiteral = available.head
+          print(decisionLiteral)
           provedLiterals += decisionLiteral
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
