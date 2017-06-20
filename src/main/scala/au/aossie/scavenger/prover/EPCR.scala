@@ -39,20 +39,21 @@ object EPCR extends Prover {
     /**
       * All literals used in `nonUnitClauses`.
       */
+    // TODO: not only in nonUnitClauses but in all proved clauses
     var literals: Set[Literal] = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
 
     /**
       * Mutable map showing which value-literals can be unified with the key-literal.
       */
+    // TODO: is it necessarily to use Ids and Buff?
     val unifiableUnitsIds: mutable.Map[Literal, Int] = mutable.Map.empty
-
     val unifiableUnitsBuff: ArrayBuffer[mutable.Set[Literal]] = mutable.ArrayBuffer.empty
 
     /**
       * Mutable map showing all possible proofs for every proved clause.
       */
+    // TODO: is it necessarily so many structures for one nature?
     val reverseImplication: mutable.Map[Clause, Int] = mutable.Map.empty
-
     val bufferNodes: ArrayBuffer[ArrayBuffer[CRProofNode]] = mutable.ArrayBuffer.empty
     val nodeById: ArrayBuffer[Clause] = mutable.ArrayBuffer.empty
 
@@ -66,20 +67,21 @@ object EPCR extends Prover {
       */
     val cdclClauses: mutable.Set[CRProofNode] = mutable.Set.empty
 
-    val MAX_UNIFIERS_CNT = 20
+    val MAX_UNIFIERS_COUNT = 20
 
     def updateUnifiableUnits(newLiterals: Seq[Literal]): Unit = {
+
       literals ++= newLiterals
-      provedLiterals ++= newLiterals
 
       for (literal <- literals) {
-        val id = unifiableUnitsIds.getOrElseUpdate(literal, unifiableUnitsBuff.size)
-        if (id == unifiableUnitsBuff.size) {
+        val indexByLiteral = unifiableUnitsIds.getOrElseUpdate(literal, unifiableUnitsBuff.size)
+        if (indexByLiteral == unifiableUnitsBuff.size) {
           unifiableUnitsBuff += mutable.Set.empty
         }
-        val set = unifiableUnitsBuff(id)
+        val set = unifiableUnitsBuff(indexByLiteral)
+        // TODO: analyze randomness here
         for (newLiteral <- rnd.shuffle(newLiterals)) {
-          if ((set.size < MAX_UNIFIERS_CNT) && (newLiteral.negated != literal.negated)) {
+          if ((set.size < MAX_UNIFIERS_COUNT) && (newLiteral.negated != literal.negated)) {
             unifyWithRename(Seq(literal.unit), Seq(newLiteral.unit)) match {
               case Some(_) =>
                 set += newLiteral
@@ -88,6 +90,7 @@ object EPCR extends Prover {
           }
         }
       }
+
     }
 
     def addNode(cl: Clause, node: CRProofNode): Unit = {
@@ -115,7 +118,7 @@ object EPCR extends Prover {
 
           /**
             * Recursively generates UnitPropagationResolution checking unification on each step.
-            * 
+            *
             * @param unifier chosen literals
             * @param subs substitutions for literals to ensure that variables in different literals are different
             * @param literalsWithSubst literals with unique variables
@@ -184,21 +187,21 @@ object EPCR extends Prover {
     def reset(newClauses: Set[CRProofNode]): Unit = {
       cdclClauses ++= newClauses
       nonUnitClauses = nonUnitClauses ++ newClauses.map(_.conclusion).filter(!_.isUnit)
-      unifiableUnitsIds.clear()
-      unifiableUnitsBuff.clear()
       literals = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
+
       decisions.clear()
+
       reverseImplication.clear()
       bufferNodes.clear()
-      cnf.clauses.foreach(clause =>
-        addNode(clause, Axiom(clause)))
-//        reverseImplicationGraph.getOrElseUpdate(clause, mutable.Set.empty) += Axiom(clause))
-      cdclClauses.foreach(node =>
-        addNode(node.conclusion, node))
-//        reverseImplicationGraph.getOrElseUpdate(node.conclusion, mutable.Set.empty) += node)
+      cnf.clauses.foreach(clause => addNode(clause, Axiom(clause)))
+      cdclClauses.foreach(node => addNode(node.conclusion, node))
+
       provedLiterals.clear()
       provedLiterals ++= cnf.clauses.filter(_.isUnit).map(_.literal)
       provedLiterals ++= cdclClauses.map(_.conclusion).filter(_.isUnit).map(_.literal)
+
+      unifiableUnitsIds.clear()
+      unifiableUnitsBuff.clear()
       updateUnifiableUnits(provedLiterals.toSeq)
     }
 
@@ -256,19 +259,22 @@ object EPCR extends Prover {
       updateUnifiableUnits(provedLiterals.toSeq)
     }
 
+    // already proved literals
     updateUnifiableUnits(provedLiterals.toSeq)
 
     cnf.clauses.foreach(clause => addNode(clause, Axiom(clause)))
 
     while (true) {
       val result = mutable.Set.empty[Literal]
-      for (clause <- nonUnitClauses) if (!clause.literals.exists(provedLiterals.contains)) {
-        resolve(clause, result)
-      }
+      for (clause <- nonUnitClauses)
+        if (!clause.literals.exists(provedLiterals.contains)) { // if clause has not already proven
+          resolve(clause, result)
+        }
 
-      val resultSeq = result.toSeq
-      updateUnifiableUnits(resultSeq)
+      provedLiterals ++= result
+      updateUnifiableUnits(result.toSeq)
 
+      // find clauses of kind `A & !B` where there is some unification for {A = B}
       val CDCLClauses = mutable.Set.empty[CRProofNode]
       provedLiterals.filter(l => unifiableUnitsBuff(unifiableUnitsIds(l)).nonEmpty).foreach { conflictLiteral =>
         for {
@@ -286,22 +292,21 @@ object EPCR extends Prover {
 
       if (CDCLClauses.nonEmpty) {
         reset(CDCLClauses.toSet)
-//        addCDCLClauses(CDCLClauses.toSet)
 //        CDCLClauses.foreach(removeConflictDecisions)
+//        addCDCLClauses(CDCLClauses.toSet)
       } else if (result.isEmpty) {
         val available = rnd.shuffle((literals -- provedLiterals -- provedLiterals.map(!_)).toSeq)
         if (available.isEmpty) {
           reset(Set.empty)
         } else {
-          for (avId <- 0 until 1.min(available.size)) {
-            val decisionLiteral = available(avId)
-            decisions += decisionLiteral
-            if (decisions.contains(!decisionLiteral)) {
-              removeDecisionLiteral(!decisionLiteral)
-            }
-            addNode(decisionLiteral, Decision(decisionLiteral))
-            updateUnifiableUnits(Seq(decisionLiteral))
+          val decisionLiteral = available.head
+          provedLiterals += decisionLiteral
+          decisions += decisionLiteral
+          if (decisions.contains(!decisionLiteral)) {
+            removeDecisionLiteral(!decisionLiteral)
           }
+          addNode(decisionLiteral, Decision(decisionLiteral))
+          updateUnifiableUnits(Seq(decisionLiteral))
         }
       } else if (cnf.clauses.forall(clause => clause.literals.exists(provedLiterals.contains))) {
         val literals      = provedLiterals ++ decisions
