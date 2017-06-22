@@ -205,15 +205,13 @@ object EPCR extends Prover {
       updateUnifiableUnits(provedLiterals.toSeq)
     }
 
-    def removeDecisionLiteral(decisionLiteral: Literal): Unit = {
-      decisions -= decisionLiteral
+    def removeDecisionLiterals(decisionLiterals: mutable.HashSet[Literal]): Unit = {
+      decisions --= decisionLiterals
 
       def valid(node: CRProofNode): Boolean = {
         node match {
-          case Decision(literal) if literal == decisionLiteral =>
-            false
-          case Decision(_) =>
-            true
+          case Decision(literal)  =>
+            decisions.contains(literal)
           case Axiom(_) =>
             true
           case ConflictDrivenClauseLearning(_) =>
@@ -233,18 +231,19 @@ object EPCR extends Prover {
       unifiableUnitsBuff.foreach(_ --= nonValidLiterals)
     }
 
-    def removeConflictDecisions(node: CRProofNode): Unit = {
+    def getAllConflictDecisions(node: CRProofNode, acc: mutable.Set[Literal]): Unit = {
       node match {
         case Decision(literal) =>
-          removeDecisionLiteral(literal)
+//          removeDecisionLiteral(literal)
+          acc += literal
         case conflict @ Conflict(left, right) =>
-          removeConflictDecisions(left)
-          removeConflictDecisions(right)
+          getAllConflictDecisions(left, acc)
+          getAllConflictDecisions(right, acc)
         case UnitPropagationResolution(left, right, _, _, _) =>
-          left.foreach(removeConflictDecisions)
-          removeConflictDecisions(right)
+          left.foreach(getAllConflictDecisions(_, acc))
+          getAllConflictDecisions(right, acc)
         case ConflictDrivenClauseLearning(conflict) =>
-          removeConflictDecisions(conflict)
+          getAllConflictDecisions(conflict, acc)
         case Axiom(_) =>
       }
     }
@@ -295,7 +294,9 @@ object EPCR extends Prover {
 
       if (CDCLClauses.nonEmpty) {
 //        reset(CDCLClauses.toSet)
-        CDCLClauses.foreach(removeConflictDecisions)
+        val conflictLiterals: mutable.HashSet[Literal] = mutable.HashSet.empty
+        CDCLClauses.foreach(getAllConflictDecisions(_, conflictLiterals))
+        removeDecisionLiterals(conflictLiterals)
         addCDCLClauses(CDCLClauses.toSet)
       } else if (result.isEmpty) {
         val available = rnd.shuffle((literals -- provedLiterals -- provedLiterals.map(!_)).toSeq)
@@ -303,11 +304,11 @@ object EPCR extends Prover {
           reset(Set.empty)
         } else {
           val decisionLiteral = available.head
-          print(decisionLiteral)
+          println(decisionLiteral)
           provedLiterals += decisionLiteral
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
-            removeDecisionLiteral(!decisionLiteral)
+            removeDecisionLiterals(mutable.HashSet(!decisionLiteral))
           }
           addNode(decisionLiteral, Decision(decisionLiteral))
           updateUnifiableUnits(Seq(decisionLiteral))
