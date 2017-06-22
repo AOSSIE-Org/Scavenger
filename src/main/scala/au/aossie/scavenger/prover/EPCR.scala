@@ -19,8 +19,8 @@ import au.aossie.scavenger.unification.{ MartelliMontanari => unify }
 object EPCR extends Prover {
 
   val rnd = new Random(132374)
-  val MAX_ACCURATE_REMOVAL = 0
-  val MAX_CDCL_AT_ONCE = 2000
+  val MAX_ACCURATE_REMOVAL = 1
+  val MAX_CDCL_AT_ONCE = 5000
 
 
   // scalastyle:off
