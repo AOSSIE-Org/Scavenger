@@ -19,6 +19,9 @@ import au.aossie.scavenger.unification.{ MartelliMontanari => unify }
 object EPCR extends Prover {
 
   val rnd = new Random(132374)
+  val MAX_ACCURATE_REMOVAL = 0
+  val MAX_CDCL_AT_ONCE = 2000
+
 
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
@@ -135,6 +138,7 @@ object EPCR extends Prover {
 
             if (cur == unifiers.size) {
               val clauseNode = bufferNodes(reverseImplication(clause)).head
+//              println(unifier.map(l => bufferNodes(reverseImplication(l.toClause))))
               val unifierNodes = unifier.map(l => bufferNodes(reverseImplication(l.toClause)).head)
               val unitPropagationNode =
                 UnitPropagationResolution(
@@ -193,6 +197,7 @@ object EPCR extends Prover {
 
       reverseImplication.clear()
       bufferNodes.clear()
+
       cnf.clauses.foreach(clause => addNode(clause, Axiom(clause)))
       cdclClauses.foreach(node => addNode(node.conclusion, node))
 
@@ -221,11 +226,15 @@ object EPCR extends Prover {
         }
       }
 
-      for (literal <- provedLiterals) {
+      for (literal <- reverseImplication.keys) {
         val reverseId = reverseImplication(literal)
         bufferNodes(reverseId) = bufferNodes(reverseId).filter(valid)
       }
-      val nonValidLiterals = bufferNodes.zipWithIndex.filter(_._1.isEmpty).map(_._2).map(nodeById(_).literal)
+      val nonValidClauses = reverseImplication
+        .filter(cl => bufferNodes(cl._2).isEmpty).keys
+      val nonValidLiterals = nonValidClauses
+        .filter(_.isUnit)
+        .map(_.literal)
       provedLiterals --= nonValidLiterals
       literals --= nonValidLiterals
       unifiableUnitsBuff.foreach(_ --= nonValidLiterals)
@@ -266,6 +275,8 @@ object EPCR extends Prover {
 
     cnf.clauses.foreach(clause => addNode(clause, Axiom(clause)))
 
+    var cntAccurateRemoval = 0
+
     while (true) {
       val result = mutable.Set.empty[Literal]
       for (clause <- nonUnitClauses)
@@ -278,33 +289,46 @@ object EPCR extends Prover {
 
       // find clauses of kind `A & !B` where there is some unification for {A = B}
       val CDCLClauses = mutable.Set.empty[CRProofNode]
-      provedLiterals.filter(l => unifiableUnitsBuff(unifiableUnitsIds(l)).nonEmpty).foreach { conflictLiteral =>
-        for {
-          otherLiteral <- unifiableUnitsBuff(unifiableUnitsIds(conflictLiteral))
-          conflictNode <- bufferNodes(reverseImplication(conflictLiteral))
-          otherNode    <- bufferNodes(reverseImplication(otherLiteral))
-          conflict = Conflict(conflictNode, otherNode)
-        } {
-          val cdclNode  = ConflictDrivenClauseLearning(conflict)
-          val newClause = cdclNode.conclusion
-          if (newClause == Clause.empty) return Unsatisfiable(Some(Proof(conflict)))
-          CDCLClauses += cdclNode
+      rnd.shuffle(provedLiterals)
+        .filter(l => unifiableUnitsBuff(unifiableUnitsIds(l)).nonEmpty)
+        .foreach {
+          conflictLiteral =>
+            if (CDCLClauses.size < MAX_CDCL_AT_ONCE) {
+              for {
+                otherLiteral <- rnd.shuffle(unifiableUnitsBuff(unifiableUnitsIds(conflictLiteral)))
+                conflictNode <- rnd.shuffle(bufferNodes(reverseImplication(conflictLiteral)))
+                otherNode <- rnd.shuffle(bufferNodes(reverseImplication(otherLiteral)))
+                conflict = Conflict(conflictNode, otherNode)
+              } {
+                val cdclNode = ConflictDrivenClauseLearning(conflict)
+                val newClause = cdclNode.conclusion
+                if (newClause == Clause.empty) return Unsatisfiable(Some(Proof(conflict)))
+                if (CDCLClauses.size < MAX_CDCL_AT_ONCE) {
+                  CDCLClauses += cdclNode
+                }
+              }
+            }
         }
-      }
 
       if (CDCLClauses.nonEmpty) {
-//        reset(CDCLClauses.toSet)
-        val conflictLiterals: mutable.HashSet[Literal] = mutable.HashSet.empty
-        CDCLClauses.foreach(getAllConflictDecisions(_, conflictLiterals))
-        removeDecisionLiterals(conflictLiterals)
-        addCDCLClauses(CDCLClauses.toSet)
+//        println(s"found ${CDCLClauses.size} conflicts")
+        cntAccurateRemoval += 1
+        if (cntAccurateRemoval - 1 == MAX_ACCURATE_REMOVAL) {
+          cntAccurateRemoval = 0
+          reset(CDCLClauses.toSet)
+        } else {
+          val conflictLiterals: mutable.HashSet[Literal] = mutable.HashSet.empty
+          CDCLClauses.foreach(getAllConflictDecisions(_, conflictLiterals))
+          removeDecisionLiterals(conflictLiterals)
+          addCDCLClauses(CDCLClauses.toSet)
+        }
       } else if (result.isEmpty) {
         val available = rnd.shuffle((literals -- provedLiterals -- provedLiterals.map(!_)).toSeq)
         if (available.isEmpty) {
           reset(Set.empty)
         } else {
           val decisionLiteral = available.head
-          println(decisionLiteral)
+//          println(decisionLiteral)
           provedLiterals += decisionLiteral
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
