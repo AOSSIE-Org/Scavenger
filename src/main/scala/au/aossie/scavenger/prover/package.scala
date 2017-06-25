@@ -1,7 +1,7 @@
 package au.aossie.scavenger
 
-import au.aossie.scavenger.structure.immutable.{ Literal, Clause }
-import au.aossie.scavenger.unification.{ MartelliMontanari => unify }
+import au.aossie.scavenger.structure.immutable.{Literal, Clause}
+import au.aossie.scavenger.unification.{MartelliMontanari => unify}
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.expression._
 
@@ -17,9 +17,9 @@ package object prover {
 
   implicit def literalToClause(literal: Literal): Clause = literal.toClause
 
-//  implicit class ClauseOperations(val clause: Clause) extends AnyVal {
-//
-//  }
+  //  implicit class ClauseOperations(val clause: Clause) extends AnyVal {
+  //
+  //  }
 
   implicit class UnitSequent(val sequent: Clause) extends AnyVal {
     def literal: Literal =
@@ -43,7 +43,7 @@ package object prover {
     * with quantified variables in right. It's necessary for unification
     * to work correctly.
     *
-    * @param left where quantified variables should be renamed
+    * @param left     where quantified variables should be renamed
     * @param usedVars already used variables
     * @return proper substitution to rename without variable collisions
     */
@@ -77,24 +77,40 @@ package object prover {
     *
     * While right expressions have common variables.
     *
-    * @param left expressions to be unified, where variables are considered different
+    * @param left  expressions to be unified, where variables are considered different
     * @param right expressions to be unified, where variables are common
     * @return Some(leftSubs, rightSub) where leftSubs contains substitution for all left expressions and rightSub
-    *           is the signle substitution for all right expressions
+    *         is the signle substitution for all right expressions
     *         None if there is no substitution.
     */
+
+  def bad(left: E, right: E): Boolean = (left, right) match {
+    case (Var(_), _) =>
+      false
+    case (_, Var(_)) =>
+      false
+    case (Sym(c1), Sym(c2)) =>
+      c1 != c2
+    case (App(_, _), Sym(_)) =>
+      true
+    case (Sym(_), App(_, _)) =>
+      true
+    case (App(f1: Sym, _), App(f2: Sym, _)) if f1 != f2 =>
+      true
+    case (AppRec(_: Sym, lArgs), AppRec(_: Sym, rArgs)) if lArgs.size != rArgs.size =>
+      true
+    case (AppRec(_: Sym, lArgs), AppRec(_: Sym, rArgs)) =>
+//      false
+      lArgs.zip(rArgs).exists { case (l, r) => bad(l, r) }
+    case _ =>
+      false
+  }
 
   // TODO: This method should be moved to the unification package
   def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
     if (left.zip(right).forall { case (x, y) => x == y }) {
       Some(Seq.fill(left.size)(Substitution.empty), Substitution.empty)
-    } else if (left.zip(right).exists {
-      case (App(f1: Sym, _), App(f2: Sym, _)) => f1 != f2
-      case (Sym(c1), Sym(c2)) => c1 != c2
-      case (App(_, _), Sym(_)) => true
-      case (Sym(_), App(_, _)) => true
-      case _ => false
-    }) {
+    } else if (left.zip(right).exists{ case (l, r) => bad(l, r)}) {
       None
     } else {
       var usedVars = right map {
