@@ -288,6 +288,7 @@ object EPCR extends Prover {
               left.foreach(getAllConflictDecisions(_, acc))
               getAllConflictDecisions(right, acc)
             case ConflictDrivenClauseLearning(conflict) =>
+              getAllConflictDecisions(conflict, acc)
             case Axiom(_) =>
           }
       }
