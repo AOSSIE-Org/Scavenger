@@ -26,6 +26,12 @@ case class UnitPropagationResolution private (
   override def conclusion: Clause = desired
 
   override def premises: Seq[CRProofNode] = left :+ right
+
+  override def hashCode(): Int = super.hashCode()
+  override def equals(obj: Any): Boolean = obj match {
+    case ref: AnyRef => this eq ref
+    case _ => false
+  }
 }
 
 object UnitPropagationResolution {

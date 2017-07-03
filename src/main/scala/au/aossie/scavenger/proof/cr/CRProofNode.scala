@@ -6,6 +6,7 @@ import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.structure.immutable.{ Clause, Literal }
 
 abstract class CRProofNode extends ProofNode[Clause, CRProofNode] {
+
   def findDecisions(sub: Substitution): Clause = {
     this match {
       case Decision(literal) =>
@@ -36,5 +37,11 @@ abstract class CRProofNode extends ProofNode[Clause, CRProofNode] {
       case _ =>
         Seq.empty
     }
+  }
+
+  override def hashCode(): Int = super.hashCode()
+  override def equals(obj: Any): Boolean = obj match {
+    case ref: AnyRef => this eq ref
+    case _ => false
   }
 }
