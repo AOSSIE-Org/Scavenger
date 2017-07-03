@@ -47,7 +47,7 @@ package object prover {
     * @param usedVars already used variables
     * @return proper substitution to rename without variable collisions
     */
-  def renameVars(left: E, usedVars: Set[Var]): Substitution = {
+  def renameVars(left: E, usedVars: mutable.Set[Var]): Substitution = {
     // TODO: check that modifications done in this function due to Sym to Var refactoring did not intriduce bugs
 
     //val sharedVars = unifiableVars(left) intersect usedVars // Variables which should be renamed
@@ -113,11 +113,11 @@ package object prover {
     } else if (left.zip(right).exists{ case (l, r) => bad(l, r)}) {
       None
     } else {
-      var usedVars = right map {
-        _.variables.toSet
+      var usedVars: mutable.Set[Var] = mutable.Set(right map {
+        _.variables
       } reduce {
-        _ union _
-      }
+        _ ++ _
+      }: _*)
       val newLeftWithSub = for (oneLeft <- left) yield {
         val substitution = renameVars(oneLeft, usedVars)
         val newLeft = substitution(oneLeft)
