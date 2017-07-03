@@ -11,6 +11,8 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.Random
 import au.aossie.scavenger.unification.{MartelliMontanari => unify}
+import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 
 /**
@@ -24,8 +26,9 @@ object EPCR extends Prover {
   // TODO: Do research about this constants
   val MAX_CNT_CANDIDATES: Int = 40
   val MAX_CNT_WITHOUT_DECISIONS: Int = 10
+  val MAX_PROVED_LITERALS_SIZE: Int = 10000
 
-  // TODO: Bad practice to use predefined name(could be a collision)
+  // TODO: Bad practice to use predefined name(could be collision)
   val VARIABLE_NAME: String = "___VARIABLE___"
 
   /**
@@ -36,6 +39,9 @@ object EPCR extends Prover {
 
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
+    val logger = Logger(LoggerFactory.getLogger("prover"))
+
+
     if (cnf.clauses.contains(Clause.empty)) {
       return Unsatisfiable(Some(Proof(Axiom(Clause.empty))))
     }
@@ -228,7 +234,7 @@ object EPCR extends Prover {
     }
 
     def reset(newClauses: Set[CRProofNode]): Unit = {
-//      println("RESET")
+      logger.debug("RESET")
       cdclClauses ++= newClauses
       nonUnitClauses ++= newClauses.map(_.conclusion).filter(!_.isUnit)
       literals = nonUnitClauses
@@ -247,7 +253,7 @@ object EPCR extends Prover {
       provedLiterals.clear()
       addProvedLiterals(cnf.clauses.filter(_.isUnit).map(_.literal))
       addProvedLiterals(cdclClauses.toSeq.map(_.conclusion).filter(_.isUnit).map(_.literal))
-//      println(s"provedLiterals.size = ${provedLiterals.size}")
+      logger.debug(s"provedLiterals.size = ${provedLiterals.size}")
     }
 
     def removeDecisionLiterals(decisionLiterals: mutable.HashSet[Literal]): Unit = {
@@ -347,16 +353,18 @@ object EPCR extends Prover {
     var cntWithoutDecisions = 0
 
     while (true) {
+      logger.debug(s"new iteration:  provedLiterals(${provedLiterals.size})")
       val propagatedLiterals = mutable.Set.empty[Literal]
       for (clause <- nonUnitClauses)
         if (!clause.literals.exists(provedLiterals.contains)) {
           resolveUnitPropagations(clause, propagatedLiterals)
         }
+      logger.debug(s"propagated ${propagatedLiterals.size}")
       addProvedLiterals(propagatedLiterals.toSeq)
+
       // find clauses of kind `A & !B` where there is some unification for {A = B}
       val CDCLClauses = mutable.Set.empty[CRProofNode]
 
-//      println(provedLiterals.size)
       val provedLiteralBuckets: mutable.Map[String, ListBuffer[Literal]] = mutable.Map.empty
       for (literal <- provedLiterals.toSeq) {
         val bucketName = getBucketByExpr(literal.unit)
@@ -369,6 +377,13 @@ object EPCR extends Prover {
               provedLiteralBuckets.getOrElse(VARIABLE_NAME, ListBuffer.empty[Literal])
           }
         }
+
+        // NOTE: debug only
+//        for (otherLiteral <- candidateLiterals if (literal.negated != otherLiteral.negated) && unifyWithRename(Seq(literal.unit), Seq(otherLiteral.unit)).isDefined) {
+//          println(s"conflict(${bufferNodes(reverseImplication(literal)).size}, ${bufferNodes(reverseImplication(otherLiteral)).size})")
+//          println(s"conflict($literal, $otherLiteral)")
+//        }
+
         for {
           otherLiteral <- candidateLiterals if (literal.negated != otherLiteral.negated) && unifyWithRename(Seq(literal.unit), Seq(otherLiteral.unit)).isDefined
           conflictNode <- bufferNodes(reverseImplication(literal))
@@ -385,10 +400,8 @@ object EPCR extends Prover {
           provedLiteralBuckets.getOrElseUpdate(bucketName, ListBuffer.empty).append(literal)
         }
       }
-//      println("here")
-
       if (CDCLClauses.nonEmpty) {
-        println(s"found ${CDCLClauses.size} conflicts")
+        logger.debug(s"found ${CDCLClauses.size} conflicts")
 
         val acc: mutable.HashSet[Literal] = mutable.HashSet.empty
         memGetConflictDecisions.clear()
@@ -399,14 +412,15 @@ object EPCR extends Prover {
         memIsValid.clear()
         removeDecisionLiterals(acc)
         addCDCLClauses(CDCLClauses.toSet)
-        //        reset(CDCLClauses.toSet)
-      } else if (propagatedLiterals.isEmpty || (cntWithoutDecisions >= MAX_CNT_WITHOUT_DECISIONS)) {
-//        println("MAKE NEW DECISION")
+      } else if (propagatedLiterals.isEmpty ||
+            (cntWithoutDecisions >= MAX_CNT_WITHOUT_DECISIONS) ||
+            (provedLiterals.size > MAX_PROVED_LITERALS_SIZE)) {
         cntWithoutDecisions = 0
         val available = (literals -- provedLiterals -- provedLiterals.map(!_)).toSeq
         if (available.isEmpty) {
           reset(Set.empty)
         } else {
+          logger.debug("NEW DECISION")
           val decisionLiteral = makeDecision(available)
           addNode(decisionLiteral.toClause, Decision(decisionLiteral))
           addProvedLiterals(Seq(decisionLiteral))
