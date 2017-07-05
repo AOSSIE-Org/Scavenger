@@ -23,22 +23,86 @@ class EPCR(maxCountCandidates: Int = 40,
            maxProvedLiteralsSize: Int = 10000,
            bump: Double = 1.0,
            decayFactor: Double = 0.9) extends Prover {
-  // TODO: Do research about these constants
+//   TODO: Do research about these constants
 
 //   TODO: Think about every usage of randomness
   val rnd = new Random(107)
 
   // FIXME: Bad practice to use predefined name(could be collision)
   val VARIABLE_NAME: String = "___VARIABLE___"
-  
+
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
     val logger = Logger(LoggerFactory.getLogger("prover"))
 
-
     if (cnf.clauses.contains(Clause.empty)) {
       return Unsatisfiable(Some(Proof(Axiom(Clause.empty))))
     }
+
+    val initialClauses = cnf.clauses.to[ListBuffer]
+
+    val predicates = cnf.predicates
+    val isEqualityReasoning = predicates.contains((Sym("="), 2))
+    if (isEqualityReasoning) {
+      /**
+        * symmetry axiom
+        */
+      initialClauses.append(
+        Clause(AppRec(Sym("="), Seq(Var("A"), Var("B"))))(AppRec(Sym("="), Seq(Var("A"), Var("B")))))
+      /**
+        * reflexivity axiom
+        */
+      initialClauses.append(Clause()(AppRec(Sym("="), Seq(Var("A"), Var("B")))))
+      /**
+        * transitivity axiom
+        */
+      initialClauses.append(Clause(AppRec(Sym("="), Seq(Var("A"), Var("B"))),
+        AppRec(Sym("="), Seq(Var("B"), Var("C"))))(AppRec(Sym("="), Seq(Var("A"), Var("C")))))
+      /** congruence axioms for predicates
+       */
+      predicates.foreach { case (predicate, arity) =>
+        // TODO: add support for airty > 13
+        if (2 * arity <= 26) {
+          val leftVariables =
+            List.range('A'.toInt, 'A'.toInt + arity).map(ind => Var(ind.toChar.toString))
+          val rightVariables =
+            List.range('A'.toInt + arity, 'A'.toInt + 2 * arity).map(ind => Var(ind.toChar.toString))
+          val equalities = leftVariables.zip(rightVariables).map {
+            case (left, right) => AppRec(Sym("="), Seq(left, right))
+          }
+          val predicateOnLeft = AppRec(predicate, leftVariables)
+          val predicateOnRight = AppRec(predicate, rightVariables)
+          val congAxiom = Clause(equalities :+ predicateOnLeft: _*)(predicateOnRight)
+          println(congAxiom)
+          initialClauses.append(congAxiom)
+        } else {
+          logger.warn(s"predicates with arity(=$arity) > 13 not supported")
+        }
+      }
+      /** congruence axioms for functions
+        */
+      val funs = cnf.functionSymbols
+      funs.foreach { case (fun, arity) =>
+        if (2 * arity <= 26) {
+          val leftVariables =
+            List.range('A'.toInt, 'A'.toInt + arity).map(ind => Var(ind.toChar.toString))
+          val rightVariables =
+            List.range('A'.toInt + arity, 'A'.toInt + 2 * arity).map(ind => Var(ind.toChar.toString))
+          val equalities = leftVariables.zip(rightVariables).map {
+            case (left, right) => AppRec(Sym("="), Seq(left, right))
+          }
+          val leftFun = AppRec(fun, leftVariables)
+          val rightFun = AppRec(fun, rightVariables)
+          val predicateOnRight = AppRec(Sym("="), Seq(leftFun, rightFun))
+          val congAxiom = Clause(equalities: _*)(predicateOnRight)
+          println(congAxiom)
+          initialClauses.append(congAxiom)
+        } else {
+          logger.warn(s"functions with arity(=$arity) > 13 not supported")
+        }
+      }
+    }
+    println(initialClauses)
 
     /**
       * Mutable set of proved literals initialized with the input CNF's unit clauses.
@@ -48,7 +112,7 @@ class EPCR(maxCountCandidates: Int = 40,
     /**
       * Non-unit clauses from the input CNF plus CDCL clauses.
       */
-    var nonUnitClauses: mutable.Set[Clause] = mutable.Set(cnf.clauses.filter(!_.isUnit): _*)
+    var nonUnitClauses: mutable.Set[Clause] = mutable.Set(initialClauses.filter(!_.isUnit): _*)
 
     /**
       * All literals used in `nonUnitClauses`.
@@ -238,14 +302,14 @@ class EPCR(maxCountCandidates: Int = 40,
       reverseImplication.clear()
       bufferNodes.clear()
 
-      cnf.clauses.foreach(clause => addNode(clause, Axiom(clause)))
+      initialClauses.foreach(clause => addNode(clause, Axiom(clause)))
       cdclClauses.foreach(node => addNode(node.conclusion, node))
 
       unifiableUnitsIds.clear()
       unifiableUnitsBuff.clear()
 
       provedLiterals.clear()
-      addProvedLiterals(cnf.clauses.filter(_.isUnit).map(_.literal))
+      addProvedLiterals(initialClauses.filter(_.isUnit).map(_.literal))
       addProvedLiterals(cdclClauses.toSeq.map(_.conclusion).filter(_.isUnit).map(_.literal))
       logger.debug(s"provedLiterals.size = ${provedLiterals.size}")
     }
@@ -340,8 +404,8 @@ class EPCR(maxCountCandidates: Int = 40,
         name
     }
 
-    addProvedLiterals(cnf.clauses.filter(_.isUnit).map(_.literal))
-    cnf.clauses.foreach(clause => addNode(clause, Axiom(clause)))
+    addProvedLiterals(initialClauses.filter(_.isUnit).map(_.literal))
+    initialClauses.foreach(clause => addNode(clause, Axiom(clause)))
     updateVSIDS(literals.toSeq)
 
     var cntWithoutDecisions = 0
@@ -423,7 +487,7 @@ class EPCR(maxCountCandidates: Int = 40,
             removeDecisionLiterals(mutable.HashSet(!decisionLiteral))
           }
         }
-      } else if (cnf.clauses.forall(clause => clause.literals.exists(provedLiterals.contains))) {
+      } else if (initialClauses.forall(clause => clause.literals.exists(provedLiterals.contains))) {
         val literals = provedLiterals ++ decisions
         val trueLiterals = literals.filter(_.polarity).map(_.unit).toSet
         val falseLiterals = literals.filterNot(_.polarity).map(_.unit).map(x => Neg(x)).toSet
