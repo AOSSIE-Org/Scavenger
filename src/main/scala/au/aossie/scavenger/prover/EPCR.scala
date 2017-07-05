@@ -18,24 +18,28 @@ import org.slf4j.LoggerFactory
 /**
   * @author Daniyar Itegulov
   */
-object EPCR extends Prover {
+class EPCR(maxCountCandidates: Int = 40,
+           maxCountWithoutDecisions: Int = 10,
+           maxProvedLiteralsSize: Int = 10000,
+           bump: Double = 1.0,
+           decayFactor: Double = 0.9) extends Prover {
 
   // TODO: Think about every usage of randomness
   val rnd = new Random(107)
 
-  // TODO: Do research about this constants
-  val MAX_CNT_CANDIDATES: Int = 40
-  val MAX_CNT_WITHOUT_DECISIONS: Int = 10
-  val MAX_PROVED_LITERALS_SIZE: Int = 10000
+  // TODO: Do research about these constants
+//  val MAX_CNT_CANDIDATES: Int = 40
+//  val MAX_CNT_WITHOUT_DECISIONS: Int = 10
+//  val MAX_PROVED_LITERALS_SIZE: Int = 10000
 
-  // TODO: Bad practice to use predefined name(could be collision)
+  // FIXME: Bad practice to use predefined name(could be collision)
   val VARIABLE_NAME: String = "___VARIABLE___"
 
   /**
     * Constants for VSIDS heuristic
     */
-  val BUMP: Double = 1.0
-  val DECAY_FACTOR: Double = 0.9
+//  val BUMP: Double = 1.0
+//  val DECAY_FACTOR: Double = 0.9
 
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
@@ -195,7 +199,7 @@ object EPCR extends Prover {
             // NOTE: Looking at all possible unifications turns to large complexity of this part of resolving
             // TODO: Think about to check only random K unifiers
             val candidates = {
-              rnd.shuffle(unifiers(cur)).take(MAX_CNT_CANDIDATES)
+              rnd.shuffle(unifiers(cur)).take(maxCountCandidates)
             }
             for (curUni <- candidates) {
               val substitution = renameVars(curUni.unit, usedVars)
@@ -314,8 +318,8 @@ object EPCR extends Prover {
       }
 
     def updateVSIDS(newLiterals: Seq[Literal]): Unit = {
-      literals.foreach(lit => activity.update(lit, activity.getOrElseUpdate(lit, 0) * DECAY_FACTOR))
-      newLiterals.foreach(lit => activity.update(lit, activity.getOrElseUpdate(lit, 0) + BUMP))
+      literals.foreach(lit => activity.update(lit, activity.getOrElseUpdate(lit, 0) * decayFactor))
+      newLiterals.foreach(lit => activity.update(lit, activity.getOrElseUpdate(lit, 0) + bump))
     }
 
     def addCDCLClauses(newClauses: Set[CRProofNode]): Unit = {
@@ -332,7 +336,7 @@ object EPCR extends Prover {
     }
 
     def makeDecision(available: Seq[Literal]): Literal = {
-      // TODO: bad constant usage
+      // FIXME: bad constant usage
       rnd.shuffle(available.sortWith(activity(_) > activity(_)).take(10)).head
     }
 
@@ -413,8 +417,8 @@ object EPCR extends Prover {
         removeDecisionLiterals(acc)
         addCDCLClauses(CDCLClauses.toSet)
       } else if (propagatedLiterals.isEmpty ||
-            (cntWithoutDecisions >= MAX_CNT_WITHOUT_DECISIONS) ||
-            (provedLiterals.size > MAX_PROVED_LITERALS_SIZE)) {
+            (cntWithoutDecisions >= maxCountWithoutDecisions) ||
+            (provedLiterals.size > maxProvedLiteralsSize)) {
         cntWithoutDecisions = 0
         val available = (literals -- provedLiterals -- provedLiterals.map(!_)).toSeq
         if (available.isEmpty) {
@@ -445,3 +449,5 @@ object EPCR extends Prover {
 
   // scalastyle:on
 }
+
+object EPCR extends EPCR(40, 10, 10000, 1.0, 0.9)
