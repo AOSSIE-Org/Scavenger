@@ -13,7 +13,7 @@ import scala.collection.immutable.ListSet
  *  @since   0.1
  */
 class Clause(val ant: ListSet[E], val suc: ListSet[E]) extends ClauseLike[Clause] {
-  def literals: Seq[Literal] = ant.toSeq.map(Literal(_, negated = true)) ++ suc.toSeq.map(Literal(_, negated = false))
+  def literals: Seq[Literal] = ant.toSeq.map(Literal(_, polarity = false)) ++ suc.toSeq.map(Literal(_, polarity = true))
 
   def +(f:E) = new Clause(ant, suc + f)
   def +:(f:E) = new Clause(ant + f, suc)

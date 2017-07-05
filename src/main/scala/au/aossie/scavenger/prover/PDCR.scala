@@ -60,7 +60,7 @@ object PDCR extends Prover {
      */
     literals.foreach(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty))
     for (literal <- literals) {
-      for (other <- allClauses) if (other.isUnit && other.literal.negated != literal.negated) {
+      for (other <- allClauses) if (other.isUnit && other.literal.polarity != literal.polarity) {
         unifyWithRename(Seq(literal.unit), Seq(other.literal.unit)) match {
           case Some(_) => unifiableUnits(literal) += other.literal
           case None    =>
@@ -192,7 +192,7 @@ object PDCR extends Prover {
       propagatedLiterals ++= result
       result.foreach(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty))
       for (literal <- literals) {
-        for (other <- result) if (other.negated != literal.negated) {
+        for (other <- result) if (other.polarity != literal.polarity) {
           unifyWithRename(Seq(literal.unit), Seq(other.unit)) match {
             case Some(_) => unifiableUnits(literal) += other
             case None    =>
@@ -224,7 +224,7 @@ object PDCR extends Prover {
 
       literals.foreach(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty))
       for (literal <- literals) {
-        for (other <- allClauses) if (other.isUnit && other.literal.negated != literal.negated) {
+        for (other <- allClauses) if (other.isUnit && other.literal.polarity != literal.polarity) {
           unifyWithRename(Seq(literal.unit), Seq(other.literal.unit)) match {
             case Some(_) => unifiableUnits(literal) += other.literal
             case None    =>
@@ -352,8 +352,8 @@ object PDCR extends Prover {
                    clause.literals.exists(propagatedLiterals.contains) ||
                      clause.literals.forall(uselessDecisions.contains))) {
         val literals      = propagatedLiterals ++ decisions
-        val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
-        val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
+        val trueLiterals  = literals.filter(_.polarity).map(_.unit).toSet
+        val falseLiterals = literals.filterNot(_.polarity).map(_.unit).map(x => Neg(x)).toSet
         return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
       } else if (result.nonEmpty) {
         uselessDecisions.clear()

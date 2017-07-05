@@ -17,5 +17,5 @@ abstract class AbstractSubstitution {
     rec(e, Set())
   }
 
-  def apply(literal: Literal): Literal = Literal(apply(literal.unit), literal.negated)
+  def apply(literal: Literal): Literal = Literal(apply(literal.unit), literal.polarity)
 }

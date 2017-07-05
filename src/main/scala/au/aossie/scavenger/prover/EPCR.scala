@@ -109,7 +109,7 @@ object EPCR extends Prover {
         }
         val set = unifiableUnitsBuff(indexByLiteral)
         for (newLiteral <- newLiterals) {
-          if (newLiteral.negated != literal.negated) {
+          if (newLiteral.polarity != literal.polarity) {
             unifyWithRename(Seq(literal.unit), Seq(newLiteral.unit)) match {
               case Some(_) =>
                 set += newLiteral
@@ -385,7 +385,7 @@ object EPCR extends Prover {
 //        }
 
         for {
-          otherLiteral <- candidateLiterals if (literal.negated != otherLiteral.negated) && unifyWithRename(Seq(literal.unit), Seq(otherLiteral.unit)).isDefined
+          otherLiteral <- candidateLiterals if (literal.polarity != otherLiteral.polarity) && unifyWithRename(Seq(literal.unit), Seq(otherLiteral.unit)).isDefined
           conflictNode <- bufferNodes(reverseImplication(literal))
           otherNode <- bufferNodes(reverseImplication(otherLiteral))
           conflict = Conflict(conflictNode, otherNode)
@@ -431,8 +431,8 @@ object EPCR extends Prover {
         }
       } else if (cnf.clauses.forall(clause => clause.literals.exists(provedLiterals.contains))) {
         val literals = provedLiterals ++ decisions
-        val trueLiterals = literals.filterNot(_.negated).map(_.unit).toSet
-        val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
+        val trueLiterals = literals.filter(_.polarity).map(_.unit).toSet
+        val falseLiterals = literals.filterNot(_.polarity).map(_.unit).map(x => Neg(x)).toSet
         return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
       } else {
         // TODO: think about that case...

@@ -13,7 +13,7 @@ import scala.language.implicitConversions
   */
 package object prover {
 
-  implicit def varToLit(variable: E): Literal = Literal(variable, negated = false)
+  implicit def varToLit(variable: E): Literal = Literal(variable, polarity = true)
 
   implicit def literalToClause(literal: Literal): Clause = literal.toClause
 
@@ -23,15 +23,15 @@ package object prover {
 
   implicit class UnitSequent(val sequent: Clause) extends AnyVal {
     def literal: Literal =
-      if (sequent.ant.size == 1 && sequent.suc.isEmpty) Literal(sequent.ant.head, negated = true)
-      else if (sequent.ant.isEmpty && sequent.suc.size == 1) Literal(sequent.suc.head, negated = false)
+      if (sequent.ant.size == 1 && sequent.suc.isEmpty) Literal(sequent.ant.head, polarity = false)
+      else if (sequent.ant.isEmpty && sequent.suc.size == 1) Literal(sequent.suc.head, polarity = true)
       else throw new IllegalStateException("Given SeqSequent is not a unit")
   }
 
   implicit class LiteralsAreSequent(val literals: Iterable[Literal]) extends AnyVal {
     def toClause: Clause = {
-      val ant = literals.flatMap(l => if (l.negated) Some(l.unit) else None)
-      val suc = literals.flatMap(l => if (l.negated) None else Some(l.unit))
+      val ant = literals.flatMap(l => if (!l.polarity) Some(l.unit) else None)
+      val suc = literals.flatMap(l => if (!l.polarity) None else Some(l.unit))
       Clause(ant.toSeq: _*)(suc.toSeq: _*)
     }
   }

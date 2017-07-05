@@ -15,7 +15,7 @@ case class Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)
   extends CRProofNode {
   require(leftPremise.conclusion.isUnit, "Left premise should be a unit clause")
   require(rightPremise.conclusion.isUnit, "Right premise should be a unit clause")
-  require(leftPremise.conclusion.literal.negated != rightPremise.conclusion.literal.negated, "Left and right premises should have different negation")
+  require(leftPremise.conclusion.literal.polarity != rightPremise.conclusion.literal.polarity, "Left and right premises should have different negation")
 
   private val leftAux = leftPremise.conclusion.literals.head.unit
   private val rightAux = rightPremise.conclusion.literals.head.unit

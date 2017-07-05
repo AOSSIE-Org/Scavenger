@@ -41,7 +41,7 @@ object UnitPropagationResolution {
     val rightLiterals = right.conclusion.literals.filterNot(_ == desired)
     require(desiredRightLiterals.forall(rightLiterals.contains))
     require(rightLiterals.forall(desiredRightLiterals.contains))
-    if (!leftLiterals.zip(desiredRightLiterals).forall { case (f, s) => f.negated != s.negated }) {
+    if (!leftLiterals.zip(desiredRightLiterals).forall { case (f, s) => f.polarity != s.polarity }) {
       throw new IllegalArgumentException("Left literals and right clause aren't unifiable")
     } else {
       unifyWithRename(leftLiterals.map(_.unit), desiredRightLiterals.map(_.unit)) match {
@@ -64,7 +64,7 @@ object UnitPropagationResolution {
     val rightLiterals = right.conclusion.literals.filterNot(_ == desired)
     require(desiredRightLiterals.forall(rightLiterals.contains))
     require(rightLiterals.forall(desiredRightLiterals.contains))
-    if (!leftLiterals.zip(desiredRightLiterals).forall { case (f, s) => f.negated != s.negated }) {
+    if (!leftLiterals.zip(desiredRightLiterals).forall { case (f, s) => f.polarity != s.polarity }) {
       throw new IllegalArgumentException("Left literals and right clause aren't unifiable")
     } else {
       UnitPropagationResolution(left, right, globalSubst(desired), subst, globalSubst)

@@ -38,7 +38,7 @@ object TDCR extends Prover {
       propagatedLiterals ++= newLiterals
       for (literal <- literals) {
         val set = unifiableUnits.getOrElseUpdate(literal, mutable.Set.empty)
-        for (newLiteral <- newLiterals) if (newLiteral.depth <= termDepthThreshold && newLiteral.negated != literal.negated) {
+        for (newLiteral <- newLiterals) if (newLiteral.depth <= termDepthThreshold && newLiteral.polarity != literal.polarity) {
           unifyWithRename(Seq(literal.unit), Seq(newLiteral.unit)) match {
             case Some(_) => set += newLiteral
             case None    =>
@@ -179,8 +179,8 @@ object TDCR extends Prover {
       } else if (termDepthThreshold >= maxInitialTermDepth &&
                  cnf.clauses.forall(clause => clause.literals.exists(propagatedLiterals.contains))) {
         val literals      = propagatedLiterals ++ decisions
-        val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
-        val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
+        val trueLiterals  = literals.filter(_.polarity).map(_.unit).toSet
+        val falseLiterals = literals.filterNot(_.polarity).map(_.unit).map(x => Neg(x)).toSet
         return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
       }
     }
