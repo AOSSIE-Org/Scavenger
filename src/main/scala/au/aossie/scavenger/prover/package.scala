@@ -1,7 +1,7 @@
 package au.aossie.scavenger
 
 import au.aossie.scavenger.structure.immutable.{Literal, Clause}
-import au.aossie.scavenger.unification.{MartelliMontanari => unify, Tools}
+import au.aossie.scavenger.unification.{MartelliMontanari => unify, tools}
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.expression._
 
@@ -87,7 +87,7 @@ package object prover {
   def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
     if (left.zip(right).forall { case (x, y) => x == y }) {
       Some(Seq.fill(left.size)(Substitution.empty), Substitution.empty)
-    } else if (left.zip(right).exists{ case (l, r) => Tools.isUnifyablePreChecking(l, r)}) {
+    } else if (left.zip(right).exists{ case (l, r) => tools.isUnifyablePreChecking(l, r)}) {
       None
     } else {
       var usedVars: mutable.Set[Var] = mutable.Set(right map {
