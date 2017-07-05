@@ -73,7 +73,6 @@ class EPCR(maxCountCandidates: Int = 40,
           val predicateOnLeft = AppRec(predicate, leftVariables)
           val predicateOnRight = AppRec(predicate, rightVariables)
           val congAxiom = Clause(equalities :+ predicateOnLeft: _*)(predicateOnRight)
-          println(congAxiom)
           initialClauses.append(congAxiom)
         } else {
           logger.warn(s"predicates with arity(=$arity) > 13 not supported")
@@ -95,14 +94,12 @@ class EPCR(maxCountCandidates: Int = 40,
           val rightFun = AppRec(fun, rightVariables)
           val predicateOnRight = AppRec(Sym("="), Seq(leftFun, rightFun))
           val congAxiom = Clause(equalities: _*)(predicateOnRight)
-          println(congAxiom)
           initialClauses.append(congAxiom)
         } else {
           logger.warn(s"functions with arity(=$arity) > 13 not supported")
         }
       }
     }
-    println(initialClauses)
 
     /**
       * Mutable set of proved literals initialized with the input CNF's unit clauses.
