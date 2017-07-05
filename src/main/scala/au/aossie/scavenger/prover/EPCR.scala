@@ -42,22 +42,25 @@ class EPCR(maxCountCandidates: Int = 40,
     val initialClauses = cnf.clauses.to[ListBuffer]
 
     val predicates = cnf.predicates
-    val isEqualityReasoning = predicates.contains((Sym("="), 2))
+    val isEqualityReasoning = predicates.contains((new Sym("=") with Infix, 2))
     if (isEqualityReasoning) {
+      logger.info("Equality reasoning problem")
       /**
         * symmetry axiom
         */
       initialClauses.append(
-        Clause(AppRec(Sym("="), Seq(Var("A"), Var("B"))))(AppRec(Sym("="), Seq(Var("A"), Var("B")))))
+        Clause(AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("B"))))
+              (AppRec(new Sym("=") with Infix, Seq(Var("B"), Var("A")))))
       /**
         * reflexivity axiom
         */
-      initialClauses.append(Clause()(AppRec(Sym("="), Seq(Var("A"), Var("B")))))
+      initialClauses.append(Clause()(AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("B")))))
       /**
         * transitivity axiom
         */
-      initialClauses.append(Clause(AppRec(Sym("="), Seq(Var("A"), Var("B"))),
-        AppRec(Sym("="), Seq(Var("B"), Var("C"))))(AppRec(Sym("="), Seq(Var("A"), Var("C")))))
+      initialClauses.append(
+        Clause(AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("B"))), AppRec(new Sym("=") with Infix, Seq(Var("B"), Var("C"))))
+        (AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("C")))))
       /** congruence axioms for predicates
        */
       predicates.foreach { case (predicate, arity) =>
@@ -68,7 +71,7 @@ class EPCR(maxCountCandidates: Int = 40,
           val rightVariables =
             List.range('A'.toInt + arity, 'A'.toInt + 2 * arity).map(ind => Var(ind.toChar.toString))
           val equalities = leftVariables.zip(rightVariables).map {
-            case (left, right) => AppRec(Sym("="), Seq(left, right))
+            case (left, right) => AppRec(new Sym("=") with Infix, Seq(left, right))
           }
           val predicateOnLeft = AppRec(predicate, leftVariables)
           val predicateOnRight = AppRec(predicate, rightVariables)
@@ -82,13 +85,14 @@ class EPCR(maxCountCandidates: Int = 40,
         */
       val funs = cnf.functionSymbols
       funs.foreach { case (fun, arity) =>
+        // TODO: for arity > 13
         if (2 * arity <= 26) {
           val leftVariables =
             List.range('A'.toInt, 'A'.toInt + arity).map(ind => Var(ind.toChar.toString))
           val rightVariables =
             List.range('A'.toInt + arity, 'A'.toInt + 2 * arity).map(ind => Var(ind.toChar.toString))
           val equalities = leftVariables.zip(rightVariables).map {
-            case (left, right) => AppRec(Sym("="), Seq(left, right))
+            case (left, right) => AppRec(new Sym("=") with Infix, Seq(left, right))
           }
           val leftFun = AppRec(fun, leftVariables)
           val rightFun = AppRec(fun, rightVariables)
