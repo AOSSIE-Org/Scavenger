@@ -68,23 +68,7 @@ package object prover {
     new Substitution(kvs.toMap)
   }
 
-  /**
-    * Pairwise unification (zipped) with renaming of mutual variables.
-    * Left expressions are considered to have different variables:
-    *
-    * If left(0) contains Var("X") and left(1) contains Var("X"), then left(1)'s variable will
-    * be renamed to Var("X'").
-    *
-    * While right expressions have common variables.
-    *
-    * @param left  expressions to be unified, where variables are considered different
-    * @param right expressions to be unified, where variables are common
-    * @return Some(leftSubs, rightSub) where leftSubs contains substitution for all left expressions and rightSub
-    *         is the signle substitution for all right expressions
-    *         None if there is no substitution.
-    */
-
-  def bad(left: E, right: E): Boolean = (left, right) match {
+  def isUnifyablePreChecking(left: E, right: E): Boolean = (left, right) match {
     case (Var(_), _) =>
       false
     case (_, Var(_)) =>
@@ -101,16 +85,31 @@ package object prover {
       true
     case (AppRec(_: Sym, lArgs), AppRec(_: Sym, rArgs)) =>
 //      false
-      lArgs.zip(rArgs).exists { case (l, r) => bad(l, r) }
+      lArgs.zip(rArgs).exists { case (l, r) => isUnifyablePreChecking(l, r) }
     case _ =>
       false
   }
 
+  /**
+    * Pairwise unification (zipped) with renaming of mutual variables.
+    * Left expressions are considered to have different variables:
+    *
+    * If left(0) contains Var("X") and left(1) contains Var("X"), then left(1)'s variable will
+    * be renamed to Var("X'").
+    *
+    * While right expressions have common variables.
+    *
+    * @param left  expressions to be unified, where variables are considered different
+    * @param right expressions to be unified, where variables are common
+    * @return Some(leftSubs, rightSub) where leftSubs contains substitution for all left expressions and rightSub
+    *         is the signle substitution for all right expressions
+    *         None if there is no substitution.
+    */
   // TODO: This method should be moved to the unification package
   def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
     if (left.zip(right).forall { case (x, y) => x == y }) {
       Some(Seq.fill(left.size)(Substitution.empty), Substitution.empty)
-    } else if (left.zip(right).exists{ case (l, r) => bad(l, r)}) {
+    } else if (left.zip(right).exists{ case (l, r) => isUnifyablePreChecking(l, r)}) {
       None
     } else {
       var usedVars: mutable.Set[Var] = mutable.Set(right map {
