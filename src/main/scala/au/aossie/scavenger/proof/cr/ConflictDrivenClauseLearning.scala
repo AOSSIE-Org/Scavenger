@@ -6,14 +6,18 @@ import au.aossie.scavenger.structure.immutable.Clause
 /**
   * @author Daniyar Itegulov
   */
-case class ConflictDrivenClauseLearning(conflict: Conflict) extends CRProofNode {
+class ConflictDrivenClauseLearning(val conflict: Conflict) extends CRProofNode {
   val conflictDrivenClause = conflict.findDecisions(Substitution.empty)
   override def conclusion: Clause = conflictDrivenClause
   override def premises: Seq[CRProofNode] = Seq(conflict)
+}
 
-  override def hashCode(): Int = super.hashCode()
-  override def equals(obj: Any): Boolean = obj match {
-    case ref: AnyRef => this eq ref
-    case _ => false
+object ConflictDrivenClauseLearning {
+  def apply(conflict: Conflict) =
+    new ConflictDrivenClauseLearning(conflict)
+
+  def unapply(p: CRProofNode) = p match {
+    case p: ConflictDrivenClauseLearning => Some(p.conflict)
+    case _ => None
   }
 }

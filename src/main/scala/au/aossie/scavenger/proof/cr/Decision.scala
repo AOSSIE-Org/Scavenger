@@ -5,15 +5,17 @@ import au.aossie.scavenger.structure.immutable.{ Literal, Clause }
 /**
   * @author Daniyar Itegulov
   */
-case class Decision(literal: Literal) extends CRProofNode {
+class Decision(val literal: Literal) extends CRProofNode {
 
   override def conclusion: Clause = literal.toClause
   override def premises: Seq[CRProofNode] = Seq.empty
+}
 
-  override def hashCode(): Int = super.hashCode()
-  override def equals(obj: Any): Boolean = obj match {
-    case ref: AnyRef => this eq ref
-    case _ => false
+object Decision {
+  def apply(literal: Literal) = new Decision(literal)
+  def unapply(p: CRProofNode) = p match {
+    case p: Decision => Some(p.literal)
+    case _ => None
   }
 }
 

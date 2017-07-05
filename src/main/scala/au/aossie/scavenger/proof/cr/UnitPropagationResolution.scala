@@ -12,26 +12,19 @@ import scala.collection.mutable
   *
   * @author Daniyar Itegulov
   */
-case class UnitPropagationResolution private (
-    left: Seq[CRProofNode],
-    right: CRProofNode,
-    desired: Literal,
-    leftMgus: Seq[Substitution],
-    rightMgu: Substitution)
+class UnitPropagationResolution (
+    val left: Seq[CRProofNode],
+    val right: CRProofNode,
+    val desired: Literal,
+    val leftMgus: Seq[Substitution],
+    val rightMgu: Substitution)
     extends CRProofNode {
   require(left.forall(_.conclusion.width == 1), "All left conclusions should be unit")
   require(left.size + 1 == right.conclusion.width,
           "There should be enough left premises to derive desired")
 
   override def conclusion: Clause = desired
-
   override def premises: Seq[CRProofNode] = left :+ right
-
-  override def hashCode(): Int = super.hashCode()
-  override def equals(obj: Any): Boolean = obj match {
-    case ref: AnyRef => this eq ref
-    case _ => false
-  }
 }
 
 object UnitPropagationResolution {
@@ -47,7 +40,7 @@ object UnitPropagationResolution {
       unifyWithRename(leftLiterals.map(_.unit), desiredRightLiterals.map(_.unit)) match {
         case Some((leftMgus, rightMgu)) =>
           val newDesired = rightMgu(desired)
-          UnitPropagationResolution(left, right, newDesired, leftMgus, rightMgu)
+          new UnitPropagationResolution(left, right, newDesired, leftMgus, rightMgu)
         case _ =>
           throw new IllegalArgumentException("Left literals and right clause aren't unifiable")
       }
@@ -67,7 +60,11 @@ object UnitPropagationResolution {
     if (!leftLiterals.zip(desiredRightLiterals).forall { case (f, s) => f.polarity != s.polarity }) {
       throw new IllegalArgumentException("Left literals and right clause aren't unifiable")
     } else {
-      UnitPropagationResolution(left, right, globalSubst(desired), subst, globalSubst)
+      new UnitPropagationResolution(left, right, globalSubst(desired), subst, globalSubst)
     }
+  }
+  def unapply(p: CRProofNode) = p match {
+    case p: UnitPropagationResolution => Some((p.left, p.right, p.desired, p.leftMgus, p.rightMgu))
+    case _ => None
   }
 }

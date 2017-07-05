@@ -38,10 +38,4 @@ abstract class CRProofNode extends ProofNode[Clause, CRProofNode] {
         Seq.empty
     }
   }
-
-  override def hashCode(): Int = super.hashCode()
-  override def equals(obj: Any): Boolean = obj match {
-    case ref: AnyRef => this eq ref
-    case _ => false
-  }
 }
