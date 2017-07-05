@@ -23,24 +23,14 @@ class EPCR(maxCountCandidates: Int = 40,
            maxProvedLiteralsSize: Int = 10000,
            bump: Double = 1.0,
            decayFactor: Double = 0.9) extends Prover {
-
-  // TODO: Think about every usage of randomness
-  val rnd = new Random(107)
-
   // TODO: Do research about these constants
-//  val MAX_CNT_CANDIDATES: Int = 40
-//  val MAX_CNT_WITHOUT_DECISIONS: Int = 10
-//  val MAX_PROVED_LITERALS_SIZE: Int = 10000
+
+//   TODO: Think about every usage of randomness
+  val rnd = new Random(107)
 
   // FIXME: Bad practice to use predefined name(could be collision)
   val VARIABLE_NAME: String = "___VARIABLE___"
-
-  /**
-    * Constants for VSIDS heuristic
-    */
-//  val BUMP: Double = 1.0
-//  val DECAY_FACTOR: Double = 0.9
-
+  
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
     val logger = Logger(LoggerFactory.getLogger("prover"))
