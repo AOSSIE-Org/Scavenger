@@ -2,7 +2,8 @@ package au.aossie.scavenger.expression
 
 import au.aossie.scavenger.util.unicode._
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
+import scala.collection.mutable.{ArrayBuffer, HashSet}
 
 sealed abstract class E {
   def logicalSize: Int
@@ -63,7 +64,19 @@ sealed abstract class E {
     }
     rec(this)
   }
-  
+
+  lazy val functionSymbols: mutable.HashSet[(Sym, Int)] = {
+    def rec(e: E, syms: HashSet[(Sym, Int)]): Unit = e match {
+      case Var(_) =>
+      case sym@Sym(_) =>
+      case AppRec(f: Sym, args) =>
+        syms.add((f, args.size))
+        args.foreach(rec(_, syms))
+    }
+    val syms = HashSet.empty[(Sym, Int)]
+    rec(this, syms)
+    syms
+  }
 }
 
 case class Sym(val name: String) extends E {

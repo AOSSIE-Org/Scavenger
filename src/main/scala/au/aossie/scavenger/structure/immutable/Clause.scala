@@ -1,7 +1,7 @@
 package au.aossie.scavenger.structure
 package immutable
 
-import au.aossie.scavenger.expression.E
+import au.aossie.scavenger.expression.{AppRec, E, Sym}
 import au.aossie.scavenger.util.unicode.unicodeOrElse
 
 import scala.collection.immutable.ListSet
@@ -14,6 +14,20 @@ import scala.collection.immutable.ListSet
  */
 class Clause(val ant: ListSet[E], val suc: ListSet[E]) extends ClauseLike[Clause] {
   def literals: Seq[Literal] = ant.toSeq.map(Literal(_, polarity = false)) ++ suc.toSeq.map(Literal(_, polarity = true))
+  def predicates: Seq[(Sym, Int)] = {
+    (ant.map {
+      case AppRec(fun: Sym, args) => (fun, args.size)
+    } ++ suc.map {
+      case AppRec(fun: Sym, args) => (fun, args.size)
+    }).toSeq
+  }
+  def functionSymbols: Seq[(Sym, Int)] = {
+    (ant.flatMap {
+      case AppRec(fun: Sym, args) => args.flatMap(_.functionSymbols)
+    } ++ suc.flatMap {
+      case AppRec(fun: Sym, args) => args.flatMap(_.functionSymbols)
+    }).toSeq
+  }
 
   def +(f:E) = new Clause(ant, suc + f)
   def +:(f:E) = new Clause(ant + f, suc)
