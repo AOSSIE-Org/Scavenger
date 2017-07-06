@@ -6,6 +6,8 @@ import au.aossie.scavenger.prover.{PDCR, EPCR, Satisfiable, TDCR, Unsatisfiable}
 import au.aossie.scavenger.parser.TPTPCNFParser
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
+import au.aossie.scavenger.exporter.tptp.TPTPExporter
+import au.aossie.scavenger.proof.Proof
 
 import scala.collection.mutable
 
@@ -107,10 +109,10 @@ object CLI {
         val path   = Path.apply(input, pwd)
         val cnf    = parser.parse(path, c.dependenciesDir)
         solver.prove(cnf) match {
-          case Unsatisfiable(p) =>
+          case Unsatisfiable(Some(p)) =>
             c.output.write(s"% SZS status Unsatisfiable for $input")
             c.output.write("\n")
-            c.output.write(p)
+            new TPTPExporter(c.output).write(p)
           case Satisfiable(m) =>
             c.output.write(s"% SZS status Satisfiable for $input")
             c.output.write("\n")

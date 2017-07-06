@@ -1,11 +1,10 @@
 package au.aossie.scavenger.exporter
 
-import java.io.FileWriter
+import java.io.Writer
 
-abstract class BasicFileExporter(filename: String) extends Exporter {
+import au.aossie.scavenger.util.io.Output
+
+abstract class BasicFileExporter(w: Output) extends Exporter {
   def extension: String
-  val w = new FileWriter(filename + "." + extension)
   def write(s: Array[Char], off: Int, len: Int) = w.write(s,off,len)
-  def close() = w.close()
-  def flush() = w.flush()
 }

@@ -1,28 +1,29 @@
 package au.aossie.scavenger.exporter.tptp
 
+import java.io.Writer
+
 import au.aossie.scavenger.exporter.BasicFileExporter
 import au.aossie.scavenger.expression.E
 import au.aossie.scavenger.proof.Proof
-import au.aossie.scavenger.proof.cr.{Axiom, Decision, CRProofNode, Conflict, ConflictDrivenClauseLearning, UnitPropagationResolution}
+import au.aossie.scavenger.proof.cr.{Axiom, CRProofNode, Conflict, ConflictDrivenClauseLearning, Decision, UnitPropagationResolution}
 import au.aossie.scavenger.structure.immutable.Clause
-
-import scala.collection.mutable
+import au.aossie.scavenger.util.io.Output
 
 /**
   * Created by vlad107 on 7/5/17.
   */
-class TPTPFileExporter(filename: String) extends BasicFileExporter(filename) {
+class TPTPExporter(out: Output) extends BasicFileExporter(out) {
   override def extension: String = "s"
 
-  override def write(e: E): Unit = write(e.toString)
+  override def write(e: E): Unit = out.write(e.toString)
 
-  override def write(s: Clause): Unit = write(s.toString)
+  override def write(s: Clause): Unit = out.write(s.toString)
 
   override def write(p: Proof[CRProofNode]): Unit = {
     var sequenceNumber = 0
     p.foldDown[Int] { (node, r: Seq[Int]) =>
       sequenceNumber += 1
-      // TODO: store this status from input
+      // TODO: can be not only axiom, but for example conjecture
       val formula_role = node match {
         case p: Axiom => "axiom"
         case _ => "plain"
@@ -39,11 +40,12 @@ class TPTPFileExporter(filename: String) extends BasicFileExporter(filename) {
         case Decision(_) =>
           "decision"
       }
-      write(s"cnf($sequenceNumber,$formula_role,\n" +
+      out.write(s"cnf($sequenceNumber,$formula_role,\n" +
         s"    ${node.conclusion},\n" +
-        s"    inference($ruleName,[],[${r.mkString(",")}]).\n")
+        s"    inference($ruleName,[status(thm)],[${r.mkString(",")}]).\n")
       sequenceNumber
     }
-    //      write(s"cnf($sequenceNumber,$,\n")
   }
+
+  override def write(a: Any): Unit = out.write(a.toString)
 }
