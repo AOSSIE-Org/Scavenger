@@ -19,8 +19,8 @@ class UnitPropagationResolution (
     val leftMgus: Seq[Substitution],
     val rightMgu: Substitution)
     extends CRProofNode {
-  require(left.forall(_.conclusion.width == 1), "All left conclusions should be unit")
-  require(left.size + 1 == right.conclusion.width,
+  assert(left.forall(_.conclusion.width == 1), "All left conclusions should be unit")
+  assert(left.size + 1 == right.conclusion.width,
           "There should be enough left premises to derive desired")
 
   override def conclusion: Clause = desired
@@ -32,8 +32,8 @@ object UnitPropagationResolution {
     val leftLiterals = left.map(_.conclusion.literals.head)
     // Find such desired index that remaining right literals will be unifiable with left literals
     val rightLiterals = right.conclusion.literals.filterNot(_ == desired)
-    require(desiredRightLiterals.forall(rightLiterals.contains))
-    require(rightLiterals.forall(desiredRightLiterals.contains))
+    assert(desiredRightLiterals.forall(rightLiterals.contains))
+    assert(rightLiterals.forall(desiredRightLiterals.contains))
     if (!leftLiterals.zip(desiredRightLiterals).forall { case (f, s) => f.polarity != s.polarity }) {
       throw new IllegalArgumentException("Left literals and right clause aren't unifiable")
     } else {
@@ -55,8 +55,8 @@ object UnitPropagationResolution {
     val leftLiterals = left.map(_.conclusion.literals.head)
     // Find such desired index that remaining right literals will be unifiable with left literals
     val rightLiterals = right.conclusion.literals.filterNot(_ == desired)
-    require(desiredRightLiterals.forall(rightLiterals.contains))
-    require(rightLiterals.forall(desiredRightLiterals.contains))
+    assert(desiredRightLiterals.forall(rightLiterals.contains))
+    assert(rightLiterals.forall(desiredRightLiterals.contains))
     if (!leftLiterals.zip(desiredRightLiterals).forall { case (f, s) => f.polarity != s.polarity }) {
       throw new IllegalArgumentException("Left literals and right clause aren't unifiable")
     } else {

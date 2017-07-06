@@ -267,7 +267,7 @@ object PDCR extends Prover {
         val decisionLiteral = rnd.shuffle(clause.literals).head
         decisions += decisionLiteral
         ancestor(decisionLiteral) = mutable.Set.empty
-        require(
+        assert(
           !reverseImplicationGraph.contains(decisionLiteral) || reverseImplicationGraph(
             decisionLiteral).isEmpty)
         reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
