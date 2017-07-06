@@ -48,7 +48,7 @@ extends Base {
     }
 
 
-  def problem(fileName : Path) : CNFProblem = extract(fileName,problemParser)
+  def problem(fileName : Path, _dependenciesDir: Option[Path]) : CNFProblem = extract(fileName, _dependenciesDir, problemParser)
 
 }
 

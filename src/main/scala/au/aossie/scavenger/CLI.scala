@@ -17,7 +17,8 @@ object CLI {
   case class Config(inputs: Seq[String] = Seq(),
                     configuration: String = "CR",
                     format: Option[String] = None,
-                    output: Output = StandardOutput)
+                    output: Output = StandardOutput,
+                    dependenciesDir: Option[Path] = None)
 
   val configurations = Map(
     "PD" -> PDCR,
@@ -36,6 +37,10 @@ object CLI {
     opt[String]('a', "algorithm") action { (v, c) =>
       c.copy(configuration = v)
     } text "use <alg> to solve the problem" valueName "<alg>"
+
+    opt[String]('d', "dependencies") action { (v, c) =>
+      c.copy(dependenciesDir = Some(pwd / RelPath(v)))
+    }
 
     note(
       s"""
@@ -100,7 +105,7 @@ object CLI {
       for (input <- c.inputs) {
         val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), TPTPCNFParser)
         val path   = Path.apply(input, pwd)
-        val cnf    = parser.parse(path)
+        val cnf    = parser.parse(path, c.dependenciesDir)
         solver.prove(cnf) match {
           case Unsatisfiable(p) =>
             c.output.write(s"% SZS status Unsatisfiable for $input")

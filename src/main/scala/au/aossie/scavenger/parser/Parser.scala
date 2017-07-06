@@ -7,6 +7,6 @@ import au.aossie.scavenger.structure.immutable.CNF
   * @author Daniyar Itegulov
   */
 trait Parser {
-  def parse(filename: Path): CNF
+  def parse(filename: Path, _dependenciesDir: Option[Path]): CNF
 }
 

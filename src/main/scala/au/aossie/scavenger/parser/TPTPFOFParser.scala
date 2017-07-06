@@ -8,8 +8,8 @@ import au.aossie.scavenger.parser.TPTP.{FOFAxiomStatement, FOFConjectureStatemen
   * @author Vlad Podtelkin
   */
 object TPTPFOFParser {
-  def parse(filename: Path): CNF = {
-    val problem = TPTPFOF.problem(filename)
+  def parse(filename: Path, _dependenciesDir: Option[Path] = None): CNF = {
+    val problem = TPTPFOF.problem(filename, _dependenciesDir)
     val formula = problem.statements.map {
       case axiom: FOFAxiomStatement => {
         axiom.formula
