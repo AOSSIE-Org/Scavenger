@@ -7,7 +7,7 @@ import au.aossie.scavenger.expression._
   */
 object tools {
 
-  def isUnifyablePreChecking(left: E, right: E): Boolean = (left, right) match {
+  def disunifiableQuickCheck(left: E, right: E): Boolean = (left, right) match {
     case (Var(_), _) =>
       false
     case (_, Var(_)) =>
@@ -18,12 +18,11 @@ object tools {
       true
     case (Sym(_), App(_, _)) =>
       true
-    case (App(f1: Sym, _), App(f2: Sym, _)) if f1 != f2 =>
-      true
-    case (AppRec(_: Sym, lArgs), AppRec(_: Sym, rArgs)) if lArgs.size != rArgs.size =>
-      true
-    case (AppRec(_: Sym, lArgs), AppRec(_: Sym, rArgs)) =>
-      lArgs.zip(rArgs).exists { case (l, r) => isUnifyablePreChecking(l, r) }
+    case (AppRec(Sym(fun1), lArgs), AppRec(Sym(fun2), rArgs)) =>
+      if ((fun1 != fun2) || (lArgs.size != rArgs.size))
+        true
+      else
+        lArgs.zip(rArgs).exists { case (l, r) => disunifiableQuickCheck(l, r) }
     case _ =>
       false
   }

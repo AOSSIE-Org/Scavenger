@@ -87,7 +87,7 @@ package object prover {
   def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
     if (left.zip(right).forall { case (x, y) => x == y }) {
       Some(Seq.fill(left.size)(Substitution.empty), Substitution.empty)
-    } else if (left.zip(right).exists{ case (l, r) => tools.isUnifyablePreChecking(l, r)}) {
+    } else if (left.zip(right).exists{ case (l, r) => tools.disunifiableQuickCheck(l, r)}) {
       None
     } else {
       var usedVars: mutable.Set[Var] = mutable.Set(right map {
