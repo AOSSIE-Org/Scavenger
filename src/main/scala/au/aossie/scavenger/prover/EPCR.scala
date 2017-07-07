@@ -54,7 +54,7 @@ class EPCR(maxCountCandidates: Int = 40,
       /**
         * reflexivity axiom
         */
-      initialClauses.append(Clause()(AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("B")))))
+      initialClauses.append(Clause()(AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("A")))))
       /**
         * transitivity axiom
         */
