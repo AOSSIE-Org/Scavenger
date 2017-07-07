@@ -15,7 +15,7 @@ class Conflict(val leftPremise: CRProofNode, val rightPremise: CRProofNode)
   extends CRProofNode {
   assert(leftPremise.conclusion.isUnit, "Left premise should be a unit clause")
   assert(rightPremise.conclusion.isUnit, "Right premise should be a unit clause")
-  assert(leftPremise.conclusion.literal.polarity != rightPremise.conclusion.literal.polarity, "Left and right premises should have different negation")
+  assert(leftPremise.conclusion.literal.polarity != rightPremise.conclusion.literal.polarity, "Left and right premises should have different polarity")
 
   val leftAux = leftPremise.conclusion.literals.head.unit
   val rightAux = rightPremise.conclusion.literals.head.unit
