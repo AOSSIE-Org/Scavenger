@@ -352,9 +352,8 @@ object PDCR extends Prover {
                    clause.literals.exists(propagatedLiterals.contains) ||
                      clause.literals.forall(uselessDecisions.contains))) {
         val literals      = propagatedLiterals ++ decisions
-        val trueLiterals  = literals.filter(_.polarity).map(_.unit).toSet
-        val falseLiterals = literals.filterNot(_.polarity).map(_.unit).map(x => Neg(x)).toSet
-        return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
+        val (positiveLiterals, negativeLiterals) = literals.partition(_.polarity)
+        return Satisfiable(Some(new Assignment(positiveLiterals.map(_.unit).toSet ++ negativeLiterals.map(_.unit).toSet)))
       } else if (result.nonEmpty) {
         uselessDecisions.clear()
       }

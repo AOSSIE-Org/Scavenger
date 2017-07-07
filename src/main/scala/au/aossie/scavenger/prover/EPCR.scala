@@ -490,9 +490,8 @@ class EPCR(maxCountCandidates: Int = 40,
         }
       } else if (initialClauses.forall(clause => clause.literals.exists(provedLiterals.contains))) {
         val literals = provedLiterals ++ decisions
-        val trueLiterals = literals.filter(_.polarity).map(_.unit).toSet
-        val falseLiterals = literals.filterNot(_.polarity).map(_.unit).map(x => Neg(x)).toSet
-        return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
+        val (positiveLiterals, negativeLiterals) = literals.partition(_.polarity)
+        return Satisfiable(Some(new Assignment(positiveLiterals.map(_.unit).toSet ++ negativeLiterals.map(_.unit).toSet)))
       } else {
         // TODO: think about that case...
         cntWithoutDecisions += 1

@@ -179,9 +179,8 @@ object TDCR extends Prover {
       } else if (termDepthThreshold >= maxInitialTermDepth &&
                  cnf.clauses.forall(clause => clause.literals.exists(propagatedLiterals.contains))) {
         val literals      = propagatedLiterals ++ decisions
-        val trueLiterals  = literals.filter(_.polarity).map(_.unit).toSet
-        val falseLiterals = literals.filterNot(_.polarity).map(_.unit).map(x => Neg(x)).toSet
-        return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
+        val (positiveLiterals, negativeLiterals) = literals.partition(_.polarity)
+        return Satisfiable(Some(new Assignment(positiveLiterals.map(_.unit).toSet ++ negativeLiterals.map(_.unit).toSet)))
       }
     }
     Error // this line is unreachable.
