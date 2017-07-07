@@ -67,20 +67,20 @@ trait Base extends TokenParsers with PackratParsers {
   type Tokens = TPTPTokens
 
   // Parsing methods
-  def parse[Target](input: Path, _dependenciesDir: Option[Path], parser: Parser[Target]) = {
+  def parse[Target](input: Path, dependenciesDir: Option[Path], parser: Parser[Target]) = {
     val fileContent = scala.io.Source.fromFile(input.toIO).mkString
     val tokens      = new lexical.Scanner(fileContent)
-    _dependenciesDir match {
+    dependenciesDir match {
       case Some(dir) =>
-        dependenciesDir = Some(dir)
+        this.dependenciesDir = Some(dir)
       case None =>
         dependenciesDir match {
           case Some(_) =>
           case None =>
             if ((input / up / "Axioms").toIO.exists()) {
-              dependenciesDir = Some(input / up)
+              this.dependenciesDir = Some(input / up)
             } else {
-              dependenciesDir = Some(input / up / up / up / up)
+              this.dependenciesDir = Some(input / up / up / up / up)
             }
         }
     }
@@ -100,8 +100,8 @@ trait Base extends TokenParsers with PackratParsers {
     new lexical.Scanner(input)
   }
 
-  def extract[Target](fileName: Path, _dependenciesDir: Option[Path], parser: Parser[Target]): Target = {
-    parse(fileName, _dependenciesDir, parser) match {
+  def extract[Target](fileName: Path, dependenciesDir: Option[Path], parser: Parser[Target]): Target = {
+    parse(fileName, dependenciesDir, parser) match {
       case Success(p2, _)      => p2
       case Error(message, _)   => throw new Exception("Error: " + message)
       case Failure(message, _) => throw new Exception("Failure: " + message)
