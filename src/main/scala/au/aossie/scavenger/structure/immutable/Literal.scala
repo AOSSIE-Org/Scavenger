@@ -13,10 +13,4 @@ case class Literal(unit: E, polarity: Boolean) {
   def depth = unit.depth
 
   override def toString: String = if (!polarity) s"$unit ⊢" else s"⊢ $unit"
-
-  override def hashCode(): Int = toString.hashCode
-  override def equals(other: Any): Boolean = other match {
-    case lit: Literal => toString == lit.toString
-    case _ => false
-  }
 }
