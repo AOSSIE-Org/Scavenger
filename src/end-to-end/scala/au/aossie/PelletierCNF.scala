@@ -75,17 +75,17 @@ class PelletierCNF extends Specification {
     "prove SYN071-1" in { test("SYN071-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN072-1" in { test("SYN072-1").isInstanceOf[Unsatisfiable] shouldEqual true }
     "prove SYN073-1" in { test("SYN073-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN074-1" in { test("SYN074-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN075-1" in { test("SYN075-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN076-1" in { test("SYN076-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN077-1" in { test("SYN077-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN078-1" in { test("SYN078-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN079-1" in { test("SYN079-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN080-1" in { test("SYN080-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN081-1" in { test("SYN081-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN082-1" in { test("SYN082-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN083-1" in { test("SYN083-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-    "prove SYN084-1" in { test("SYN084-1").isInstanceOf[Satisfiable] shouldEqual true }
+//          "prove SYN074-1" in { test("SYN074-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove SYN075-1" in { test("SYN075-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove SYN076-1" in { test("SYN076-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove SYN077-1" in { test("SYN077-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove SYN078-1" in { test("SYN078-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove SYN079-1" in { test("SYN079-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove SYN080-1" in { test("SYN080-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove SYN081-1" in { test("SYN081-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove SYN082-1" in { test("SYN082-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove SYN083-1" in { test("SYN083-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove SYN084-1" in { test("SYN084-1").isInstanceOf[Satisfiable] shouldEqual true }
   }
 }
 
