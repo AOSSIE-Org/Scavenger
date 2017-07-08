@@ -18,12 +18,13 @@ import org.slf4j.LoggerFactory
 /**
   * @author Daniyar Itegulov
   */
-class EPCR(maxCountCandidates: Int = 10000,
-           maxCountWithoutDecisions: Int = 10,
+class EPCR(maxCountCandidates: Int = 50,
+           maxCountWithoutDecisions: Int = 5,
            maxProvedLiteralsSize: Int = 10000,
            initialBump: Double = 1.0,
            decayFactor: Double = 0.99,
-           maxActivity: Double = 1e10) extends Prover {
+           maxActivity: Double = 1e10,
+           randomDecisionsPercent: Double = 5) extends Prover {
 //   TODO: Do research about these constants
 
 //   TODO: Think about every usage of randomness
@@ -417,13 +418,13 @@ class EPCR(maxCountCandidates: Int = 10000,
     }
 
     /**
-      * Implementation of miniSAT version of VSDIDS heuristic
+      * Implementation of miniSAT version of VSIDS heuristic
       * @param available set of candidates for choosing as a new decision
       * @return new decision
       */
     def makeDecision(available: Seq[Literal]): Literal = {
       val res = {
-        if (rnd.nextInt(100) >= 2) {
+        if (rnd.nextInt(100) >= randomDecisionsPercent) {
           val availableActivities = available.map(getActivity)
           val p = rnd.nextDouble * availableActivities.sum
           var curP = 0.0
@@ -530,7 +531,7 @@ class EPCR(maxCountCandidates: Int = 10000,
           addNode(decisionLiteral.toClause, Decision(decisionLiteral))
           addProvedLiterals(Seq(decisionLiteral))
           val decisionActivity = getActivity(decisionLiteral)
-//          println(s"NEW DECISION: $decisionLiteral")
+//          println(s"NEW DECISION: $decisionLiteral, activity: $decisionActivity")
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
             removeDecisionLiterals(mutable.HashSet(!decisionLiteral))
@@ -552,4 +553,4 @@ class EPCR(maxCountCandidates: Int = 10000,
   // scalastyle:on
 }
 
-object EPCR extends EPCR(40, 10, 10000, 1.0, 0.99, 1e10)
+object EPCR extends EPCR(50, 5, 10000, 1.0, 0.99, 1e10, 5)
