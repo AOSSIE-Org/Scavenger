@@ -40,9 +40,13 @@ class TPTPExporter(out: Output) extends BasicFileExporter(out) {
         case Decision(_) =>
           "decision"
       }
+      val status = node match {
+        case p: Axiom => "status(thm)"
+        case _ => ""
+      }
       out.write(s"cnf($sequenceNumber,$formula_role,\n" +
-        s"    ${node.conclusion},\n" +
-        s"    inference($ruleName,[status(thm)],[${r.mkString(",")}]).\n")
+        s"    ${node.conclusion.toTPTPString},\n" +
+        s"    inference($ruleName,[$status],[${r.mkString(",")}]).\n")
       sequenceNumber
     }
   }

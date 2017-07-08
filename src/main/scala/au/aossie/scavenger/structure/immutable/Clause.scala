@@ -29,6 +29,21 @@ class Clause(val ant: ListSet[E], val suc: ListSet[E]) extends ClauseLike[Clause
     }).toSeq
   }
 
+  lazy val toTPTPString: String = {
+    if (ant.isEmpty && suc.isEmpty) {
+      "$false"
+    } else {
+      val splitter = {
+        if (ant.isEmpty || suc.isEmpty) {
+          ""
+        } else {
+          " | "
+        }
+      }
+      ant.map(expr => s"~(${expr.toString})").mkString(" | ") + splitter + suc.mkString(" | ")
+    }
+  }
+
   def +(f:E) = new Clause(ant, suc + f)
   def +:(f:E) = new Clause(ant + f, suc)
   def -(f:E) =  new Clause(ant, suc - f)
