@@ -110,9 +110,11 @@ object CLI {
         val cnf    = parser.parse(path, c.dependenciesDir)
         solver.prove(cnf) match {
           case Unsatisfiable(Some(p)) =>
-            c.output.write(s"% SZS status Unsatisfiable for $input")
-            c.output.write("\n")
+            val problemName = input.drop(input.lastIndexOf("/") + 1)
+            c.output.write(s"% SZS status Unsatisfiable for $problemName\n")
+            c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
             new TPTPExporter(c.output).write(p)
+            c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
           case Satisfiable(m) =>
             c.output.write(s"% SZS status Satisfiable for $input")
             c.output.write("\n")
