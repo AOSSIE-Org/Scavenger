@@ -18,11 +18,12 @@ import org.slf4j.LoggerFactory
 /**
   * @author Daniyar Itegulov
   */
-class EPCR(maxCountCandidates: Int = 40,
+class EPCR(maxCountCandidates: Int = 10000,
            maxCountWithoutDecisions: Int = 10,
            maxProvedLiteralsSize: Int = 10000,
-           bump: Double = 1.0,
-           decayFactor: Double = 0.9) extends Prover {
+           initialBump: Double = 1.0,
+           decayFactor: Double = 0.99,
+           maxActivity: Double = 1e10) extends Prover {
 //   TODO: Do research about these constants
 
 //   TODO: Think about every usage of randomness
@@ -30,6 +31,11 @@ class EPCR(maxCountCandidates: Int = 40,
 
   // FIXME: Bad practice to use predefined name(could be collision)
   val VARIABLE_NAME: String = "___VARIABLE___"
+
+  /**
+    * Minisat implementation
+    */
+  var incSym: Double = initialBump
 
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
@@ -142,12 +148,12 @@ class EPCR(maxCountCandidates: Int = 40,
     /**
       * Set of clauses proved using CDCL rule.
       */
-    val cdclClauses: mutable.Set[CRProofNode] = mutable.Set.empty
+    val cdclClauses: mutable.Map[Clause, CRProofNode] = mutable.Map.empty
 
     /**
       * VSIDS haracteristic helps to choose decision.
       */
-    val activity: mutable.Map[Literal, Double] = mutable.HashMap.empty
+    val activity: mutable.Map[Sym, Double] = mutable.HashMap.empty
 
     /**
       * Memorization for isValidCheck method.
@@ -294,7 +300,7 @@ class EPCR(maxCountCandidates: Int = 40,
 
     def reset(newClauses: Set[CRProofNode]): Unit = {
       logger.debug("RESET")
-      cdclClauses ++= newClauses
+      cdclClauses ++= newClauses.map(node => (node.conclusion, node))
       nonUnitClauses ++= newClauses.map(_.conclusion).filter(!_.isUnit)
       literals = nonUnitClauses
         .flatMap(_.literals)(collection.breakOut)
@@ -304,14 +310,14 @@ class EPCR(maxCountCandidates: Int = 40,
       bufferNodes.clear()
 
       initialClauses.foreach(clause => addNode(clause, Axiom(clause)))
-      cdclClauses.foreach(node => addNode(node.conclusion, node))
+      cdclClauses.foreach(clauseNode => addNode(clauseNode._1, clauseNode._2))
 
       unifiableUnitsIds.clear()
       unifiableUnitsBuff.clear()
 
       provedLiterals.clear()
       addProvedLiterals(initialClauses.filter(_.isUnit).map(_.literal))
-      addProvedLiterals(cdclClauses.toSeq.map(_.conclusion).filter(_.isUnit).map(_.literal))
+      addProvedLiterals(cdclClauses.toSeq.map(_._1).filter(_.isUnit).map(_.literal))
       logger.debug(s"provedLiterals.size = ${provedLiterals.size}")
     }
 
@@ -372,27 +378,65 @@ class EPCR(maxCountCandidates: Int = 40,
         }
       }
 
-    def updateVSIDS(newLiterals: Seq[Literal]): Unit = {
-      literals.foreach(lit => activity.update(lit, activity.getOrElseUpdate(lit, 0) * decayFactor))
-      newLiterals.foreach(lit => activity.update(lit, activity.getOrElseUpdate(lit, 0) + bump))
+    def bumpActivity(literal: Literal): Unit = {
+      val syms = literal.unit.functionSymbols.map(_._1)
+      var overhead: Boolean = false
+      syms.foreach { sym =>
+        activity.update(sym, activity.getOrElseUpdate(sym, 0) + incSym)
+        overhead |= (activity(sym) >= maxActivity)
+      }
+      if (overhead) {
+        activity.transform {
+          case (key, value) => value / maxActivity
+        }
+        incSym /= maxActivity
+      }
     }
 
-    def addCDCLClauses(newClauses: Set[CRProofNode]): Unit = {
-      cdclClauses ++= newClauses
+    def updateInc(): Unit = incSym /= decayFactor
+
+    def addCDCLClauses(nodes: Set[CRProofNode]): Unit = {
+      val newClauses = nodes.filterNot(node => cdclClauses.contains(node.conclusion))
+      cdclClauses ++= newClauses.map(node => (node.conclusion, node))
       nonUnitClauses ++= newClauses.map(_.conclusion).filter(!_.isUnit)
 
       literals = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
-      updateVSIDS(newClauses.flatMap(_.conclusion.literals)(collection.breakOut))
+      newClauses.toSeq.flatMap(_.conclusion.literals)(collection.breakOut).foreach(bumpActivity)
+      updateInc()
 
       newClauses.foreach(node =>
         addNode(node.conclusion, node))
 
       addProvedLiterals(newClauses.toSeq.map(_.conclusion).filter(_.isUnit).map(_.literal))
+
+      logger.debug(s"added ${newClauses.size} new conflicts")
     }
 
+    def getActivity(literal: Literal): Double = {
+      literal.unit.functionSymbols.map(symArity => activity.getOrElse(symArity._1, 0.0)).sum
+    }
+
+    /**
+      * Implementation of miniSAT version of VSDIDS heuristic
+      * @param available set of candidates for choosing as a new decision
+      * @return new decision
+      */
     def makeDecision(available: Seq[Literal]): Literal = {
-      // FIXME: bad constant usage
-      rnd.shuffle(available.sortWith(activity(_) > activity(_)).take(10)).head
+      val res = {
+        if (rnd.nextInt(100) >= 2) {
+          val availableActivities = available.map(getActivity)
+          val p = rnd.nextDouble * availableActivities.sum
+          var curP = 0.0
+          for ((literal, act) <- available.zip(availableActivities)) {
+            curP += act
+            if (p <= curP) {
+              return literal
+            }
+          }
+        }
+        available(rnd.nextInt(available.size))
+      }
+      res
     }
 
     def getBucketByExpr(expr: E): String = expr match {
@@ -407,7 +451,6 @@ class EPCR(maxCountCandidates: Int = 40,
 
     addProvedLiterals(initialClauses.filter(_.isUnit).map(_.literal))
     initialClauses.foreach(clause => addNode(clause, Axiom(clause)))
-    updateVSIDS(literals.toSeq)
 
     var cntWithoutDecisions = 0
 
@@ -460,12 +503,16 @@ class EPCR(maxCountCandidates: Int = 40,
         }
       }
       if (CDCLClauses.nonEmpty) {
-        logger.debug(s"found ${CDCLClauses.size} conflicts")
-
         val acc: mutable.HashSet[Literal] = mutable.HashSet.empty
         memGetConflictDecisions.clear()
         CDCLClauses.foreach {
-          case ConflictDrivenClauseLearning(cl) => getAllConflictDecisions(cl, acc)
+          case ConflictDrivenClauseLearning(cl) =>
+            val localAcc = mutable.HashSet.empty[Literal]
+            getAllConflictDecisions(cl, localAcc)
+            if (localAcc.size > 1) {
+              localAcc -= localAcc.maxBy(getActivity)
+            }
+            acc ++= localAcc
         }
 
         memIsValid.clear()
@@ -479,10 +526,11 @@ class EPCR(maxCountCandidates: Int = 40,
         if (available.isEmpty) {
           reset(Set.empty)
         } else {
-          logger.debug("NEW DECISION")
           val decisionLiteral = makeDecision(available)
           addNode(decisionLiteral.toClause, Decision(decisionLiteral))
           addProvedLiterals(Seq(decisionLiteral))
+          val decisionActivity = getActivity(decisionLiteral)
+//          println(s"NEW DECISION: $decisionLiteral")
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
             removeDecisionLiterals(mutable.HashSet(!decisionLiteral))
@@ -504,4 +552,4 @@ class EPCR(maxCountCandidates: Int = 40,
   // scalastyle:on
 }
 
-object EPCR extends EPCR(40, 10, 10000, 1.0, 0.9)
+object EPCR extends EPCR(40, 10, 10000, 1.0, 0.99, 1e10)
