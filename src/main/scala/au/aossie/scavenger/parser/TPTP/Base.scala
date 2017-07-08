@@ -67,10 +67,10 @@ trait Base extends TokenParsers with PackratParsers {
   type Tokens = TPTPTokens
 
   // Parsing methods
-  def parse[Target](input: Path, dependenciesDir: Option[Path], parser: Parser[Target]) = {
+  def parse[Target](input: Path, argDependenciesDir: Option[Path], parser: Parser[Target]) = {
     val fileContent = scala.io.Source.fromFile(input.toIO).mkString
     val tokens      = new lexical.Scanner(fileContent)
-    dependenciesDir match {
+    argDependenciesDir match {
       case Some(dir) =>
         this.dependenciesDir = Some(dir)
       case None =>
