@@ -34,12 +34,15 @@ class PerformanceEPCR extends Specification {
 
   // TODO: Implement a timeout as described here: https://etorreborre.github.io/specs2/guide/SPECS2-3.5/org.specs2.guide.TimeoutExamples.html
 
-  "Scavenger" should {
-    "prove MSC004-1" in { test("MSC004-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
-    "prove SYN352-1" in { test("SYN352-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
-    "prove SET011-1" in { test("SET011-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
-    "prove COM011-2" in { test("COM011-2").isInstanceOf[Unsatisfiable] shouldEqual true } //
-    "prove NLP001-1" in { test("NLP001-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
-
-  }
+//  "Scavenger" should {
+//    "prove MSC004-1" in { test("MSC004-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
+//    "prove SYN352-1" in { test("SYN352-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
+//    "prove SET011-1" in { test("SET011-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
+//    "prove COM011-2" in { test("COM011-2").isInstanceOf[Unsatisfiable] shouldEqual true } //
+//    "prove NLP001-1" in { test("NLP001-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
+////    "prove SET007-1" in { test("SET007-1").isInstanceOf[Unsatisfiable] shouldEqual true } // works in scavenger-20, TL now
+////    "prove SWV321-2" in { test("SWV321-2").isInstanceOf[Unsatisfiable] shouldEqual true } //
+//
+//
+//  }
 }
