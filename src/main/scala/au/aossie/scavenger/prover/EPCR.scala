@@ -25,9 +25,9 @@ class EPCR(maxCountCandidates: Int = 1000,
            decayFactor: Double = 0.99,
            maxActivity: Double = 1e10,
            randomDecisionsPercent: Double = 5) extends Prover {
-//   TODO: Do research about these constants
+  //   TODO: Do research about these constants
 
-//   TODO: Think about every usage of randomness
+  //   TODO: Think about every usage of randomness
   val rnd = new Random(107)
 
   // FIXME: Bad practice to use predefined name(could be collision)
@@ -57,7 +57,7 @@ class EPCR(maxCountCandidates: Int = 1000,
         */
       initialClauses.append(
         Clause(AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("B"))))
-              (AppRec(new Sym("=") with Infix, Seq(Var("B"), Var("A")))))
+        (AppRec(new Sym("=") with Infix, Seq(Var("B"), Var("A")))))
       /**
         * reflexivity axiom
         */
@@ -69,7 +69,7 @@ class EPCR(maxCountCandidates: Int = 1000,
         Clause(AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("B"))), AppRec(new Sym("=") with Infix, Seq(Var("B"), Var("C"))))
         (AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("C")))))
       /** congruence axioms for predicates
-       */
+        */
       predicates.foreach { case (predicate, arity) =>
         // TODO: add support for airty > 13
         if (2 * arity <= 26) {
@@ -153,7 +153,8 @@ class EPCR(maxCountCandidates: Int = 1000,
       clauses.clear
       clauses ++= nClauses
     }
-    to3CNF(initialClauses)
+
+//    to3CNF(initialClauses)
 
     /**
       * Mutable set of proved literals initialized with the input CNF's unit clauses.
@@ -244,100 +245,101 @@ class EPCR(maxCountCandidates: Int = 1000,
 
     def resolveUnitPropagations(clause: Clause, result: mutable.Set[Literal]): Unit = {
       // TODO: Isn't it important which node we will choose?
-      val clauseNode = rnd.shuffle(bufferNodes(reverseImplication(clause))).head
+      for (clauseNode <- bufferNodes(reverseImplication(clause))) {
 
-      // TODO: Think about to shuffle literals to avoid worst case in the bruteforce.
-      val shuffledLiterals = clause.literals
+        // TODO: Think about to shuffle literals to avoid worst case in the bruteforce.
+        val shuffledLiterals = clause.literals
 
-      val unifyCandidates = shuffledLiterals.map(id => unifiableUnitsBuff(unifiableUnitsIds(id)).toSeq)
-      for (conclusionId <- unifyCandidates.indices) {
-        // TODO: Think about other cut offs.
-        if (unifyCandidates.indices.forall(id => id == conclusionId || unifyCandidates(id).nonEmpty)) {
+        val unifyCandidates = shuffledLiterals.map(id => unifiableUnitsBuff(unifiableUnitsIds(id)).toSeq)
+        for (conclusionId <- unifyCandidates.indices) {
+          // TODO: Think about other cut offs.
+          if (unifyCandidates.indices.forall(id => id == conclusionId || unifyCandidates(id).nonEmpty)) {
 
-          val unifiers: Seq[Seq[Literal]] = unifyCandidates.take(conclusionId) ++ unifyCandidates.drop(conclusionId + 1)
-          val literals: Seq[Literal] = shuffledLiterals.take(conclusionId) ++ shuffledLiterals.drop(conclusionId + 1)
+            val unifiers: Seq[Seq[Literal]] = unifyCandidates.take(conclusionId) ++ unifyCandidates.drop(conclusionId + 1)
+            val literals: Seq[Literal] = shuffledLiterals.take(conclusionId) ++ shuffledLiterals.drop(conclusionId + 1)
 
-          def newPropagation(chosenUnifiers: mutable.Seq[Literal],
-                             subs: mutable.Seq[Substitution],
-                             globalSubst: Substitution,
-                             usedVars: mutable.Set[Var]): Unit = {
-            val unifierNodes = chosenUnifiers.map(l => bufferNodes(reverseImplication(l.toClause)).head)
-            val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
-            val unitPropagationNode =
-              UnitPropagationResolution(
-                unifierNodes,
-                clauseNode,
-                shuffledLiterals(conclusionId),
-                literals,
-                subs,
-                globalSubst
-              )
-            val newLiteral = unitPropagationNode.conclusion.literal
-            if (!result.contains(newLiteral) && !provedLiterals.contains(newLiteral)) {
-              addNode(newLiteral.toClause, unitPropagationNode)
-              result += newLiteral
-            }
-          }
-
-          /**
-            * Recursively generates UnitPropagationResolution and verifies unification on each step.
-            *
-            * @param chosenUnifiers    chosen literals
-            * @param subs              substitutions for literals to ensure that variables in different literals are different
-            * @param literalsWithSubst literals with unique variables
-            * @param globalSubst       same global MGU for all literals
-            * @param cur               number of chosen literals
-            */
-          def go(chosenUnifiers: mutable.Seq[Literal],
-                 unifierWithSub: Seq[E],
-                 subs: mutable.Seq[Substitution],
-                 literalsWithSubst: Seq[Literal],
-                 globalSubst: Substitution,
-                 usedVars: mutable.Set[Var],
-                 cur: Int): Unit = {
-
-            if (cur == unifiers.size) {
-              newPropagation(chosenUnifiers, subs, globalSubst, usedVars)
-              return
-            }
-
-            // NOTE: Looking at all possible unifications turns to large complexity of this part of resolving
-            // TODO: Think about to check only random K unifiers
-            val candidates = {
-              rnd.shuffle(unifiers(cur)).take(maxCountCandidates)
-            }
-            for (curUni <- candidates) {
-              val substitution = renameVars(curUni.unit, usedVars)
-              val newSubs = subs :+ substitution(globalSubst)
-              val leftWithSubst = globalSubst(substitution(curUni.unit))
-              val newUnifierWithSubst = unifierWithSub :+ leftWithSubst
-
-              // NOTE: Very dangerous to call pure unify method
-              val unificationSubst = unify(leftWithSubst, literalsWithSubst(cur).unit)
-              unificationSubst match {
-                case Some(uniSubst) =>
-                  go(chosenUnifiers :+ curUni,
-                    newUnifierWithSubst.map(unificationSubst.get(_)),
-                    newSubs.map(_ (unificationSubst.get)),
-                    literalsWithSubst.map(unificationSubst.get(_)),
-                    globalSubst(unificationSubst.get),
-                    usedVars ++ leftWithSubst.variables,
-                    cur + 1
-                  )
-                case None =>
+            def newPropagation(chosenUnifiers: mutable.Seq[Literal],
+                               subs: mutable.Seq[Substitution],
+                               globalSubst: Substitution,
+                               usedVars: mutable.Set[Var]): Unit = {
+              val unifierNodes = chosenUnifiers.map(l => bufferNodes(reverseImplication(l.toClause)).head)
+              val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
+              val unitPropagationNode =
+                UnitPropagationResolution(
+                  unifierNodes,
+                  clauseNode,
+                  shuffledLiterals(conclusionId),
+                  literals,
+                  subs,
+                  globalSubst
+                )
+              val newLiteral = unitPropagationNode.conclusion.literal
+              if (!result.contains(newLiteral) && !provedLiterals.contains(newLiteral)) {
+                addNode(newLiteral.toClause, unitPropagationNode)
+                result += newLiteral
               }
             }
-          }
 
-          go(mutable.Seq.empty,
-            Seq.empty,
-            mutable.Seq.empty,
-            literals,
-            Substitution.empty,
-            mutable.Set[Var](literals.map(_.unit.variables).reduce {
-              _ ++ _
-            }: _*),
-            0)
+            /**
+              * Recursively generates UnitPropagationResolution and verifies unification on each step.
+              *
+              * @param chosenUnifiers    chosen literals
+              * @param subs              substitutions for literals to ensure that variables in different literals are different
+              * @param literalsWithSubst literals with unique variables
+              * @param globalSubst       same global MGU for all literals
+              * @param cur               number of chosen literals
+              */
+            def go(chosenUnifiers: mutable.Seq[Literal],
+                   unifierWithSub: Seq[E],
+                   subs: mutable.Seq[Substitution],
+                   literalsWithSubst: Seq[Literal],
+                   globalSubst: Substitution,
+                   usedVars: mutable.Set[Var],
+                   cur: Int): Unit = {
+
+              if (cur == unifiers.size) {
+                newPropagation(chosenUnifiers, subs, globalSubst, usedVars)
+                return
+              }
+
+              // NOTE: Looking at all possible unifications turns to large complexity of this part of resolving
+              // TODO: Think about to check only random K unifiers
+              val candidates = {
+                rnd.shuffle(unifiers(cur)).take(maxCountCandidates)
+              }
+              for (curUni <- candidates) {
+                val substitution = renameVars(curUni.unit, usedVars)
+                val newSubs = subs :+ substitution(globalSubst)
+                val leftWithSubst = globalSubst(substitution(curUni.unit))
+                val newUnifierWithSubst = unifierWithSub :+ leftWithSubst
+
+                // NOTE: Very dangerous to call pure unify method
+                val unificationSubst = unify(leftWithSubst, literalsWithSubst(cur).unit)
+                unificationSubst match {
+                  case Some(uniSubst) =>
+                    go(chosenUnifiers :+ curUni,
+                      newUnifierWithSubst.map(unificationSubst.get(_)),
+                      newSubs.map(_ (unificationSubst.get)),
+                      literalsWithSubst.map(unificationSubst.get(_)),
+                      globalSubst(unificationSubst.get),
+                      usedVars ++ leftWithSubst.variables,
+                      cur + 1
+                    )
+                  case None =>
+                }
+              }
+            }
+
+            go(mutable.Seq.empty,
+              Seq.empty,
+              mutable.Seq.empty,
+              literals,
+              Substitution.empty,
+              mutable.Set[Var](literals.map(_.unit.variables).reduce {
+                _ ++ _
+              }: _*),
+              0)
+          }
         }
       }
     }
@@ -423,8 +425,7 @@ class EPCR(maxCountCandidates: Int = 1000,
       }
 
     def bumpActivity(literal: Literal): Unit = {
-      val syms = literal.unit.functionSymbols.map(_._1)
-      println(literal)
+      val syms = literal.predicates.map(_._1)
       var overhead: Boolean = false
       syms.foreach { sym =>
         activity.update(sym, activity.getOrElseUpdate(sym, 0) + incSym)
@@ -458,13 +459,15 @@ class EPCR(maxCountCandidates: Int = 1000,
     }
 
     def getActivity(literal: Literal): Double = {
-      literal.unit.functionSymbols.map {
+      val funs = literal.predicates
+      funs.map {
         case (sym, arity) => activity.getOrElse(sym, 0.0)
-      }.sum
+      }.sum * 1.0 / funs.size
     }
 
     /**
       * Implementation of miniSAT version of VSIDS heuristic
+      *
       * @param available set of candidates for choosing as a new decision
       * @return new decision
       */
@@ -472,11 +475,13 @@ class EPCR(maxCountCandidates: Int = 1000,
       val res = {
         if (rnd.nextInt(101) >= randomDecisionsPercent) {
           val availableActivities = available.map(getActivity)
-          println(availableActivities.max)
-          val p = rnd.nextDouble * availableActivities.sum
+          val availableActivitiesSum = availableActivities.sum
+//          val alpha = (math.log(incSym) - math.log(available.size)) * availableActivitiesSum / availableActivities.max
+          val probs = availableActivities.map(act => math.exp(act * 20 / availableActivitiesSum))
+          val p = rnd.nextDouble * probs.sum
           var curP = 0.0
-          for ((literal, act) <- available.zip(availableActivities)) {
-            curP += act
+          for ((literal, prob) <- available.zip(probs)) {
+            curP += prob
             if (p <= curP) {
               return literal
             }
@@ -529,10 +534,10 @@ class EPCR(maxCountCandidates: Int = 1000,
         }
 
         // NOTE: debug only
-//        for (otherLiteral <- candidateLiterals if (literal.negated != otherLiteral.negated) && unifyWithRename(Seq(literal.unit), Seq(otherLiteral.unit)).isDefined) {
-//          println(s"conflict(${bufferNodes(reverseImplication(literal)).size}, ${bufferNodes(reverseImplication(otherLiteral)).size})")
-//          println(s"conflict($literal, $otherLiteral)")
-//        }
+        //        for (otherLiteral <- candidateLiterals if (literal.negated != otherLiteral.negated) && unifyWithRename(Seq(literal.unit), Seq(otherLiteral.unit)).isDefined) {
+        //          println(s"conflict(${bufferNodes(reverseImplication(literal)).size}, ${bufferNodes(reverseImplication(otherLiteral)).size})")
+        //          println(s"conflict($literal, $otherLiteral)")
+        //        }
 
         for {
           otherLiteral <- candidateLiterals if (literal.polarity != otherLiteral.polarity) && unifyWithRename(Seq(literal.unit), Seq(otherLiteral.unit)).isDefined
@@ -562,8 +567,8 @@ class EPCR(maxCountCandidates: Int = 1000,
         removeDecisionLiterals(acc)
         addCDCLClauses(CDCLClauses.toSet)
       } else if (propagatedLiterals.isEmpty ||
-            (cntWithoutDecisions >= maxCountWithoutDecisions) ||
-            (provedLiterals.size > maxProvedLiteralsSize)) {
+        (cntWithoutDecisions >= maxCountWithoutDecisions) ||
+        (provedLiterals.size > maxProvedLiteralsSize)) {
         cntWithoutDecisions = 0
         val available = (literals -- provedLiterals -- provedLiterals.map(!_)).toSeq
         if (available.isEmpty) {
@@ -572,8 +577,8 @@ class EPCR(maxCountCandidates: Int = 1000,
           val decisionLiteral = makeDecision(available)
           addNode(decisionLiteral.toClause, Decision(decisionLiteral))
           addProvedLiterals(Seq(decisionLiteral))
-          val decisionActivity = getActivity(decisionLiteral)
-          println(s"NEW DECISION: $decisionLiteral, activity: $decisionActivity")
+//          val decisionActivity = getActivity(decisionLiteral)
+//          println(s"NEW DECISION: $decisionLiteral, activity: $decisionActivity")
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
             removeDecisionLiterals(mutable.HashSet(!decisionLiteral))
@@ -602,4 +607,4 @@ object EPCR extends EPCR(
   initialBump = 1.0,
   decayFactor = 0.99,
   maxActivity = 1e10,
-  randomDecisionsPercent = 10)
+  randomDecisionsPercent = 5)
