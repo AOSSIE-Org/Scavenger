@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory
 /**
   * @author Daniyar Itegulov
   */
-class EPCR(maxCountCandidates: Int = 50,
-           maxCountWithoutDecisions: Int = 5,
+class EPCR(maxCountCandidates: Int = 1000,
+           maxCountWithoutDecisions: Int = 10,
            maxProvedLiteralsSize: Int = 10000,
            initialBump: Double = 1.0,
            decayFactor: Double = 0.99,
@@ -90,7 +90,7 @@ class EPCR(maxCountCandidates: Int = 50,
       }
       /** congruence axioms for functions
         */
-      val funs = cnf.functionSymbols
+      val funs = cnf.functionSymbols.filter(_._2 > 0)
       funs.foreach { case (fun, arity) =>
         // TODO: for arity > 13
         if (2 * arity <= 26) {
@@ -111,6 +111,49 @@ class EPCR(maxCountCandidates: Int = 50,
         }
       }
     }
+
+    def to3CNF(clauses: ListBuffer[Clause]): Unit = {
+
+      def genNewSym(usedSyms: mutable.HashSet[Sym]): Sym = {
+        val c = (rnd.nextInt(26) + 'a'.toInt).toChar
+        var i = 0
+        while (usedSyms.contains(Sym(s"$c$i"))) i += 1
+        val newSym = Sym(s"$c$i")
+        usedSyms.add(newSym)
+        newSym
+      }
+
+      def literalsToClause(literals: Literal*): Clause = {
+        val (positiveLiterals, negativeLiterals) = literals.partition(_.polarity)
+        Clause(negativeLiterals.map(_.unit): _*)(positiveLiterals.map(_.unit): _*)
+      }
+
+      val usedSyms = clauses.flatMap(clause =>
+        clause.literals.flatMap(_.unit.functionSymbols.map(_._1))
+      )(collection.breakOut).to[mutable.HashSet]
+      val nClauses = ListBuffer.empty[Clause]
+      for (clause <- clauses) {
+        var lits = clause.literals.to[ArrayBuffer]
+        while (lits.size > 3) {
+          val nlits = ArrayBuffer.empty[Literal]
+          for (idx <- 0 until lits.length / 2) {
+            val tmpSym = genNewSym(usedSyms)
+            val args = (lits(idx * 2).unit.variables ++ lits(idx * 2 + 1).unit.variables).distinct
+            val fun = Literal(AppRec(tmpSym, args), true)
+            nClauses += literalsToClause(!fun, lits(idx * 2), lits(idx * 2 + 1))
+            nClauses += literalsToClause(!lits(idx * 2), fun)
+            nClauses += literalsToClause(!lits(idx * 2 + 1), fun)
+            nlits += fun
+          }
+          if (lits.length % 2 == 1) nlits += lits.last
+          lits = nlits
+        }
+        nClauses += literalsToClause(lits: _*)
+      }
+      clauses.clear
+      clauses ++= nClauses
+    }
+    to3CNF(initialClauses)
 
     /**
       * Mutable set of proved literals initialized with the input CNF's unit clauses.
@@ -381,6 +424,7 @@ class EPCR(maxCountCandidates: Int = 50,
 
     def bumpActivity(literal: Literal): Unit = {
       val syms = literal.unit.functionSymbols.map(_._1)
+      println(literal)
       var overhead: Boolean = false
       syms.foreach { sym =>
         activity.update(sym, activity.getOrElseUpdate(sym, 0) + incSym)
@@ -414,7 +458,9 @@ class EPCR(maxCountCandidates: Int = 50,
     }
 
     def getActivity(literal: Literal): Double = {
-      literal.unit.functionSymbols.map(symArity => activity.getOrElse(symArity._1, 0.0)).sum
+      literal.unit.functionSymbols.map {
+        case (sym, arity) => activity.getOrElse(sym, 0.0)
+      }.sum
     }
 
     /**
@@ -424,8 +470,9 @@ class EPCR(maxCountCandidates: Int = 50,
       */
     def makeDecision(available: Seq[Literal]): Literal = {
       val res = {
-        if (rnd.nextInt(100) >= randomDecisionsPercent) {
+        if (rnd.nextInt(101) >= randomDecisionsPercent) {
           val availableActivities = available.map(getActivity)
+          println(availableActivities.max)
           val p = rnd.nextDouble * availableActivities.sum
           var curP = 0.0
           for ((literal, act) <- available.zip(availableActivities)) {
@@ -508,12 +555,7 @@ class EPCR(maxCountCandidates: Int = 50,
         memGetConflictDecisions.clear()
         CDCLClauses.foreach {
           case ConflictDrivenClauseLearning(cl) =>
-            val localAcc = mutable.HashSet.empty[Literal]
-            getAllConflictDecisions(cl, localAcc)
-            if (localAcc.size > 1) {
-              localAcc -= localAcc.maxBy(getActivity)
-            }
-            acc ++= localAcc
+            getAllConflictDecisions(cl, acc)
         }
 
         memIsValid.clear()
@@ -531,7 +573,7 @@ class EPCR(maxCountCandidates: Int = 50,
           addNode(decisionLiteral.toClause, Decision(decisionLiteral))
           addProvedLiterals(Seq(decisionLiteral))
           val decisionActivity = getActivity(decisionLiteral)
-//          println(s"NEW DECISION: $decisionLiteral, activity: $decisionActivity")
+          println(s"NEW DECISION: $decisionLiteral, activity: $decisionActivity")
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
             removeDecisionLiterals(mutable.HashSet(!decisionLiteral))
@@ -553,4 +595,11 @@ class EPCR(maxCountCandidates: Int = 50,
   // scalastyle:on
 }
 
-object EPCR extends EPCR(50, 5, 10000, 1.0, 0.99, 1e10, 5)
+object EPCR extends EPCR(
+  maxCountCandidates = 1000,
+  maxCountWithoutDecisions = 5,
+  maxProvedLiteralsSize = 10000,
+  initialBump = 1.0,
+  decayFactor = 0.99,
+  maxActivity = 1e10,
+  randomDecisionsPercent = 10)

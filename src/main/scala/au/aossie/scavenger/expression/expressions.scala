@@ -69,6 +69,7 @@ sealed abstract class E {
     def rec(e: E, syms: HashSet[(Sym, Int)]): Unit = e match {
       case Var(_) =>
       case sym@Sym(_) =>
+        syms.add((sym, 0))
       case AppRec(f: Sym, args) =>
         syms.add((f, args.size))
         args.foreach(rec(_, syms))
