@@ -439,6 +439,21 @@ class EPCR(maxCountCandidates: Int = 1000,
       }
     }
 
+    def bumpActivityMiniSAT(node: CRProofNode): Unit = node match {
+      case Decision(literal) =>
+        bumpActivity(literal)
+      case Axiom(clause) =>
+        clause.literals.foreach(bumpActivity)
+      case ConflictDrivenClauseLearning(conflict) =>
+        bumpActivityMiniSAT(conflict)
+      case Conflict(left, right) =>
+        bumpActivityMiniSAT(left)
+        bumpActivityMiniSAT(right)
+      case UnitPropagationResolution(left, right, _, _, _) =>
+        left.foreach(bumpActivityMiniSAT)
+        bumpActivityMiniSAT(right)
+    }
+
     def updateInc(): Unit = incSym /= decayFactor
 
     def addCDCLClauses(nodes: Set[CRProofNode]): Unit = {
@@ -447,7 +462,8 @@ class EPCR(maxCountCandidates: Int = 1000,
       nonUnitClauses ++= newClauses.map(_.conclusion).filter(!_.isUnit)
 
       literals = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
-      newClauses.toSeq.flatMap(_.conclusion.literals)(collection.breakOut).foreach(bumpActivity)
+//      newClauses.toSeq.flatMap(_.conclusion.literals)(collection.breakOut).foreach(bumpActivity)
+      newClauses.foreach(bumpActivityMiniSAT)
       updateInc()
 
       newClauses.foreach(node =>
@@ -498,7 +514,7 @@ class EPCR(maxCountCandidates: Int = 1000,
         VARIABLE_NAME
       case Sym(name) =>
         name
-      case AppRec(Sym(name), args) =>
+      case AppRec(Sym(name), _) =>
         name
     }
 
