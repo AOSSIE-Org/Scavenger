@@ -6,13 +6,20 @@ import au.aossie.scavenger.util.unicode.unicodeOrElse
 
 import scala.collection.immutable.ListSet
 
+sealed trait ClauseType
+case object AxiomClause extends ClauseType
+case object ConjectureClause extends ClauseType
+case object NegConjectureClause extends ClauseType
+case object HypothesisClause extends ClauseType
+case object UndefClause extends ClauseType
+
 /**
  *
  *  @author  Bruno Woltzenlogel Paleo
  *  @version 0.1
  *  @since   0.1
  */
-class Clause(val ant: ListSet[E], val suc: ListSet[E]) extends ClauseLike[Clause] {
+class Clause(val ant: ListSet[E], val suc: ListSet[E], val tp: ClauseType = UndefClause) extends ClauseLike[Clause] {
   def literals: Seq[Literal] = ant.toSeq.map(Literal(_, polarity = false)) ++ suc.toSeq.map(Literal(_, polarity = true))
   def predicates: Seq[(Sym, Int)] = {
     (ant.map {
