@@ -76,6 +76,7 @@ class Clause(val ant: ListSet[E], val suc: ListSet[E], val tp: ClauseType = Unde
 }
 
 object Clause {
+  def apply(tp: ClauseType)(left: E*)(right: E*)  = new Clause(ListSet(left: _*), ListSet(right: _*), tp)
   def apply(left: E*)(right: E*)  = new Clause(ListSet(left: _*), ListSet(right: _*))
   def empty = new Clause(ListSet.empty, ListSet.empty)
 }
