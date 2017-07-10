@@ -78,3 +78,10 @@ case class CNFNegatedConjectureStatement(name : String, ant : List[E], suc : Lis
     "cnf(" + name + ",negated_conjecture,{ " + initialNegation + ant.mkString(", ~ ") + " --> " + suc.mkString(",") + "})"
   }
 }
+
+case class CNFHypothesisStatement(name : String, ant : List[E], suc : List[E]) extends CNFProblemStatement {
+  override def toString : String = {
+    val initialNegation = if (ant.isEmpty) "" else "~ "
+    "cnf(" + name + ",hypothesis,{ " + initialNegation + ant.mkString(", ~ ") + " --> " + suc.mkString(",") + "})"
+  }
+}
