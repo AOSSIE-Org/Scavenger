@@ -5,7 +5,7 @@ import au.aossie.scavenger.expression.formula.Neg
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.model.Assignment
 import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
-import au.aossie.scavenger.structure.immutable.{CNF, Clause, Literal}
+import au.aossie.scavenger.structure.immutable.{CNF, Clause, ClauseType, Literal}
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -123,9 +123,9 @@ class EPCR(maxCountCandidates: Int = 1000,
         newSym
       }
 
-      def literalsToClause(literals: Literal*): Clause = {
+      def literalsToClause(literals: Literal*)(tp: ClauseType): Clause = {
         val (positiveLiterals, negativeLiterals) = literals.partition(_.polarity)
-        Clause(negativeLiterals.map(_.unit): _*)(positiveLiterals.map(_.unit): _*)
+        Clause(tp)(negativeLiterals.map(_.unit): _*)(positiveLiterals.map(_.unit): _*)
       }
 
       val usedSyms = clauses.flatMap(clause =>
@@ -140,15 +140,15 @@ class EPCR(maxCountCandidates: Int = 1000,
             val tmpSym = genNewSym(usedSyms)
             val args = (lits(idx * 2).unit.variables ++ lits(idx * 2 + 1).unit.variables).distinct
             val fun = Literal(AppRec(tmpSym, args), true)
-            nClauses += literalsToClause(!fun, lits(idx * 2), lits(idx * 2 + 1))
-            nClauses += literalsToClause(!lits(idx * 2), fun)
-            nClauses += literalsToClause(!lits(idx * 2 + 1), fun)
+            nClauses += literalsToClause(!fun, lits(idx * 2), lits(idx * 2 + 1))(clause.tp)
+            nClauses += literalsToClause(!lits(idx * 2), fun)(clause.tp)
+            nClauses += literalsToClause(!lits(idx * 2 + 1), fun)(clause.tp)
             nlits += fun
           }
           if (lits.length % 2 == 1) nlits += lits.last
           lits = nlits
         }
-        nClauses += literalsToClause(lits: _*)
+        nClauses += literalsToClause(lits: _*)(clause.tp)
       }
       clauses.clear
       clauses ++= nClauses
@@ -262,21 +262,23 @@ class EPCR(maxCountCandidates: Int = 1000,
                                subs: mutable.Seq[Substitution],
                                globalSubst: Substitution,
                                usedVars: mutable.Set[Var]): Unit = {
-              val unifierNodes = chosenUnifiers.map(l => bufferNodes(reverseImplication(l.toClause)).head)
-              val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
-              val unitPropagationNode =
-                UnitPropagationResolution(
-                  unifierNodes,
-                  clauseNode,
-                  shuffledLiterals(conclusionId),
-                  literals,
-                  subs,
-                  globalSubst
-                )
-              val newLiteral = unitPropagationNode.conclusion.literal
-              if (!result.contains(newLiteral) && !provedLiterals.contains(newLiteral)) {
-                addNode(newLiteral.toClause, unitPropagationNode)
-                result += newLiteral
+              val unifierNodes = chosenUnifiers.map(l => rnd.shuffle(bufferNodes(reverseImplication(l.toClause))).head)
+              if (unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
+                val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
+                val unitPropagationNode =
+                  UnitPropagationResolution(
+                    unifierNodes,
+                    clauseNode,
+                    shuffledLiterals(conclusionId),
+                    literals,
+                    subs,
+                    globalSubst
+                  )
+                val newLiteral = unitPropagationNode.conclusion.literal
+                if (!result.contains(newLiteral) && !provedLiterals.contains(newLiteral)) {
+                  addNode(newLiteral.toClause, unitPropagationNode)
+                  result += newLiteral
+                }
               }
             }
 
@@ -462,8 +464,8 @@ class EPCR(maxCountCandidates: Int = 1000,
       nonUnitClauses ++= newClauses.map(_.conclusion).filter(!_.isUnit)
 
       literals = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
-//      newClauses.toSeq.flatMap(_.conclusion.literals)(collection.breakOut).foreach(bumpActivity)
-      newClauses.foreach(bumpActivityMiniSAT)
+      newClauses.toSeq.flatMap(_.conclusion.literals)(collection.breakOut).foreach(bumpActivity)
+//      newClauses.foreach(bumpActivityMiniSAT)
       updateInc()
 
       newClauses.foreach(node =>
@@ -493,7 +495,8 @@ class EPCR(maxCountCandidates: Int = 1000,
           val availableActivities = available.map(getActivity)
           val availableActivitiesSum = availableActivities.sum
 //          val alpha = (math.log(incSym) - math.log(available.size)) * availableActivitiesSum / availableActivities.max
-          val probs = availableActivities.map(act => math.exp(act * 20 / availableActivitiesSum))
+          // TODO: constant 10
+          val probs = availableActivities.map(act => math.exp(10 * (act / availableActivitiesSum)))
           val p = rnd.nextDouble * probs.sum
           var curP = 0.0
           for ((literal, prob) <- available.zip(probs)) {
@@ -586,11 +589,17 @@ class EPCR(maxCountCandidates: Int = 1000,
         (cntWithoutDecisions >= maxCountWithoutDecisions) ||
         (provedLiterals.size > maxProvedLiteralsSize)) {
         cntWithoutDecisions = 0
-        val available = (literals -- provedLiterals -- provedLiterals.map(!_)).toSeq
+//        val available = (literals -- provedLiterals -- provedLiterals.map(!_)).toSeq
+        val available =
+          nonUnitClauses.filterNot(
+            clause =>
+              clause.literals
+                .exists(provedLiterals.contains))
+            .flatMap(_.literals)(collection.breakOut).toSet -- provedLiterals.map(!_)
         if (available.isEmpty) {
           reset(Set.empty)
         } else {
-          val decisionLiteral = makeDecision(available)
+          val decisionLiteral = makeDecision(available.toSeq)
           addNode(decisionLiteral.toClause, Decision(decisionLiteral))
           addProvedLiterals(Seq(decisionLiteral))
 //          val decisionActivity = getActivity(decisionLiteral)
