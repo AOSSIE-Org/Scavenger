@@ -5,7 +5,7 @@ import java.io.Writer
 import au.aossie.scavenger.exporter.BasicFileExporter
 import au.aossie.scavenger.expression.E
 import au.aossie.scavenger.proof.Proof
-import au.aossie.scavenger.proof.cr.{Axiom, CRProofNode, Conflict, ConflictDrivenClauseLearning, Decision, UnitPropagationResolution}
+import au.aossie.scavenger.proof.cr.{InitialStatement, CRProofNode, Conflict, ConflictDrivenClauseLearning, Decision, UnitPropagationResolution}
 import au.aossie.scavenger.structure.immutable.Clause
 import au.aossie.scavenger.util.io.Output
 
@@ -25,7 +25,7 @@ class TPTPExporter(out: Output) extends BasicFileExporter(out) {
       sequenceNumber += 1
       // TODO: can be not only axiom, but for example conjecture
       val formula_role = node match {
-        case p: Axiom => "axiom"
+        case p: InitialStatement => "axiom"
         case _ => "plain"
       }
       val ruleName = node match {
@@ -35,13 +35,13 @@ class TPTPExporter(out: Output) extends BasicFileExporter(out) {
           "conflict"
         case UnitPropagationResolution(_, _, _, _, _) =>
           "unit-propagation-resolution"
-        case Axiom(_) =>
+        case InitialStatement(_) =>
           "axiom"
         case Decision(_) =>
           "decision"
       }
       val status = node match {
-        case p: Axiom => "status(thm)"
+        case p: InitialStatement => "status(thm)"
         case _ => ""
       }
       out.write(s"cnf($sequenceNumber,$formula_role,\n" +

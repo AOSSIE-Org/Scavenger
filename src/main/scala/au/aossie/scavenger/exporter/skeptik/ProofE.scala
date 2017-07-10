@@ -4,7 +4,7 @@ package skeptik
 import au.aossie.scavenger.proof.Proof
 import au.aossie.scavenger.proof.cr.{CRProofNode => N}
 //import au.aossie.scavenger.proof.cr.lk.{R, Axiom, UncheckedInference}
-import au.aossie.scavenger.proof.cr.Axiom
+import au.aossie.scavenger.proof.cr.InitialStatement
 import collection.mutable.{HashMap => MMap}
 
 trait ProofE extends Exporter {
@@ -35,7 +35,7 @@ trait ProofE extends Exporter {
     proof foldDown {
       (n, premiseResults: Seq[String]) => {
         n match {
-          case Axiom(clause) => {
+          case InitialStatement(clause) => {
               val name = counter.toString
               counter += 1
               val line = name + " = " + "axiom(){ " + clause + " }\n"

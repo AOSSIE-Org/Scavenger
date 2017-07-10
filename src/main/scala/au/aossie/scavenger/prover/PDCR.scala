@@ -20,7 +20,7 @@ object PDCR extends Prover {
   // scalastyle:off
   def prove(cnf: CNF): ProblemStatus = {
     if (cnf.clauses.contains(Clause.empty)) {
-      return Unsatisfiable(Some(Proof(Axiom(Clause.empty))))
+      return Unsatisfiable(Some(Proof(InitialStatement(Clause.empty))))
     }
 
     // TODO: this is a temporal determined random for easier debugging
@@ -30,7 +30,7 @@ object PDCR extends Prover {
     val ancestor = mutable.Map.empty[Literal, mutable.Set[Clause]]
     // For each clause what proof nodes can be used to derive it
     val reverseImplicationGraph = mutable.Map.empty[Clause, ArrayBuffer[CRProofNode]]
-    cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(Axiom(clause)))
+    cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(InitialStatement(clause)))
     // Shows unifiable literals for each literal
     val unifiableUnits = mutable.Map.empty[Literal, mutable.Set[Literal]]
     // All literals contained in propagated literals and initial clauses
@@ -218,7 +218,7 @@ object PDCR extends Prover {
       decisions.clear()
       reverseImplicationGraph.clear()
       cnf.clauses.foreach(clause =>
-        reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += Axiom(clause))
+        reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += InitialStatement(clause))
       conflictClauses.foreach(node =>
         reverseImplicationGraph.getOrElseUpdate(node.conclusion, ArrayBuffer.empty) += node)
 
@@ -324,7 +324,7 @@ object PDCR extends Prover {
               false
             case Decision(_) =>
               true
-            case Axiom(_) =>
+            case InitialStatement(_) =>
               true
             case ConflictDrivenClauseLearning(_) =>
               true

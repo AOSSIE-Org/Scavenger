@@ -5,7 +5,7 @@ import au.aossie.scavenger.structure.immutable.{ Literal, Clause }
 /**
   * @author Daniyar Itegulov
   */
-class Decision(val literal: Literal) extends CRProofNode {
+class Decision(val literal: Literal) extends CRProofNode(false) {
 
   override def conclusion: Clause = literal.toClause
   override def premises: Seq[CRProofNode] = Seq.empty

@@ -5,7 +5,7 @@ import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.structure.immutable.{ Clause, Literal }
 
-abstract class CRProofNode extends ProofNode[Clause, CRProofNode] {
+abstract class CRProofNode(val isAxiom: Boolean) extends ProofNode[Clause, CRProofNode] {
 
   def findDecisions(sub: Substitution): Clause = {
     this match {

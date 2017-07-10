@@ -6,7 +6,7 @@ import au.aossie.scavenger.structure.immutable.Clause
 /**
   * @author Daniyar Itegulov
   */
-class ConflictDrivenClauseLearning(val conflict: Conflict) extends CRProofNode {
+class ConflictDrivenClauseLearning(val conflict: Conflict) extends CRProofNode(conflict.isAxiom) {
   val conflictDrivenClause = conflict.findDecisions(Substitution.empty)
   override def conclusion: Clause = conflictDrivenClause
   override def premises: Seq[CRProofNode] = Seq(conflict)

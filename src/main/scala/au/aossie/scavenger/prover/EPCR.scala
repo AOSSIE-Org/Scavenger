@@ -43,7 +43,7 @@ class EPCR(maxCountCandidates: Int = 1000,
     val logger = Logger(LoggerFactory.getLogger("prover"))
 
     if (cnf.clauses.contains(Clause.empty)) {
-      return Unsatisfiable(Some(Proof(Axiom(Clause.empty))))
+      return Unsatisfiable(Some(Proof(InitialStatement(Clause.empty))))
     }
 
     val initialClauses = cnf.clauses.to[ListBuffer]
@@ -355,7 +355,7 @@ class EPCR(maxCountCandidates: Int = 1000,
       reverseImplication.clear()
       bufferNodes.clear()
 
-      initialClauses.foreach(clause => addNode(clause, Axiom(clause)))
+      initialClauses.foreach(clause => addNode(clause, InitialStatement(clause)))
       cdclClauses.foreach(clauseNode => addNode(clauseNode._1, clauseNode._2))
 
       unifiableUnitsIds.clear()
@@ -378,7 +378,7 @@ class EPCR(maxCountCandidates: Int = 1000,
             val isValid: Boolean = node match {
               case Decision(literal) =>
                 decisions.contains(literal)
-              case Axiom(_) =>
+              case InitialStatement(_) =>
                 true
               case ConflictDrivenClauseLearning(_) =>
                 true
@@ -420,7 +420,7 @@ class EPCR(maxCountCandidates: Int = 1000,
             left.foreach(getAllConflictDecisions(_, acc))
             getAllConflictDecisions(right, acc)
           case ConflictDrivenClauseLearning(_) =>
-          case Axiom(_) =>
+          case InitialStatement(_) =>
         }
       }
 
@@ -442,7 +442,7 @@ class EPCR(maxCountCandidates: Int = 1000,
     def bumpActivityMiniSAT(node: CRProofNode): Unit = node match {
       case Decision(literal) =>
         bumpActivity(literal)
-      case Axiom(clause) =>
+      case InitialStatement(clause) =>
         clause.literals.foreach(bumpActivity)
       case ConflictDrivenClauseLearning(conflict) =>
         bumpActivityMiniSAT(conflict)
@@ -519,7 +519,7 @@ class EPCR(maxCountCandidates: Int = 1000,
     }
 
     addProvedLiterals(initialClauses.filter(_.isUnit).map(_.literal))
-    initialClauses.foreach(clause => addNode(clause, Axiom(clause)))
+    initialClauses.foreach(clause => addNode(clause, InitialStatement(clause)))
 
     var cntWithoutDecisions = 0
 

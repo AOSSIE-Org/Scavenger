@@ -19,7 +19,7 @@ object TDCR extends Prover {
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
     if (cnf.clauses.contains(Clause.empty)) {
-      return Unsatisfiable(Some(Proof(Axiom(Clause.empty))))
+      return Unsatisfiable(Some(Proof(InitialStatement(Clause.empty))))
     }
 
     val propagatedLiterals = mutable.Set(cnf.clauses.filter(_.isUnit).map(_.literal): _*)
@@ -90,7 +90,7 @@ object TDCR extends Prover {
       decisions.clear()
       reverseImplicationGraph.clear()
       cnf.clauses.foreach(clause =>
-        reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += Axiom(clause))
+        reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += InitialStatement(clause))
       conflictClauses.foreach(node =>
         reverseImplicationGraph.getOrElseUpdate(node.conclusion, ArrayBuffer.empty) += node)
       propagatedLiterals ++= cnf.clauses.filter(_.isUnit).map(_.literal)
@@ -106,7 +106,7 @@ object TDCR extends Prover {
             false
           case Decision(_) =>
             true
-          case Axiom(_) =>
+          case InitialStatement(_) =>
             true
           case ConflictDrivenClauseLearning(_) =>
             true
@@ -124,7 +124,7 @@ object TDCR extends Prover {
 
     updateUnifiableUnits(propagatedLiterals.toSeq)
 
-    cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(Axiom(clause)))
+    cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(InitialStatement(clause)))
 
     while (true) {
       val result = mutable.Set.empty[Literal]

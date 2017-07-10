@@ -18,7 +18,7 @@ class UnitPropagationResolution (
     val desired: Literal,
     val leftMgus: Seq[Substitution],
     val rightMgu: Substitution)
-    extends CRProofNode {
+    extends CRProofNode(left.forall(_.isAxiom) & right.isAxiom) {
   assert(left.forall(_.conclusion.width == 1), "All left conclusions should be unit")
   assert(left.size + 1 == right.conclusion.width,
           "There should be enough left premises to derive desired")
