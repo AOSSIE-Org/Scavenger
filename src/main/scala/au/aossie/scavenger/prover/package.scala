@@ -1,7 +1,7 @@
 package au.aossie.scavenger
 
-import au.aossie.scavenger.structure.immutable.{ Literal, Clause }
-import au.aossie.scavenger.unification.{ MartelliMontanari => unify }
+import au.aossie.scavenger.structure.immutable.{Literal, Clause}
+import au.aossie.scavenger.unification.{MartelliMontanari => unify, tools}
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.expression._
 
@@ -13,25 +13,25 @@ import scala.language.implicitConversions
   */
 package object prover {
 
-  implicit def varToLit(variable: E): Literal = Literal(variable, negated = false)
+  implicit def varToLit(variable: E): Literal = Literal(variable, polarity = true)
 
   implicit def literalToClause(literal: Literal): Clause = literal.toClause
 
-//  implicit class ClauseOperations(val clause: Clause) extends AnyVal {
-//
-//  }
+  //  implicit class ClauseOperations(val clause: Clause) extends AnyVal {
+  //
+  //  }
 
   implicit class UnitSequent(val sequent: Clause) extends AnyVal {
     def literal: Literal =
-      if (sequent.ant.size == 1 && sequent.suc.isEmpty) Literal(sequent.ant.head, negated = true)
-      else if (sequent.ant.isEmpty && sequent.suc.size == 1) Literal(sequent.suc.head, negated = false)
+      if (sequent.ant.size == 1 && sequent.suc.isEmpty) Literal(sequent.ant.head, polarity = false)
+      else if (sequent.ant.isEmpty && sequent.suc.size == 1) Literal(sequent.suc.head, polarity = true)
       else throw new IllegalStateException("Given SeqSequent is not a unit")
   }
 
   implicit class LiteralsAreSequent(val literals: Iterable[Literal]) extends AnyVal {
     def toClause: Clause = {
-      val ant = literals.flatMap(l => if (l.negated) Some(l.unit) else None)
-      val suc = literals.flatMap(l => if (l.negated) None else Some(l.unit))
+      val ant = literals.flatMap(l => if (!l.polarity) Some(l.unit) else None)
+      val suc = literals.flatMap(l => if (!l.polarity) None else Some(l.unit))
       Clause(ant.toSeq: _*)(suc.toSeq: _*)
     }
   }
@@ -43,11 +43,11 @@ package object prover {
     * with quantified variables in right. It's necessary for unification
     * to work correctly.
     *
-    * @param left where quantified variables should be renamed
+    * @param left     where quantified variables should be renamed
     * @param usedVars already used variables
     * @return proper substitution to rename without variable collisions
     */
-  def renameVars(left: E, usedVars: Set[Var]): Substitution = {
+  def renameVars(left: E, usedVars: mutable.Set[Var]): Substitution = {
     // TODO: check that modifications done in this function due to Sym to Var refactoring did not intriduce bugs
 
     //val sharedVars = unifiableVars(left) intersect usedVars // Variables which should be renamed
@@ -77,31 +77,24 @@ package object prover {
     *
     * While right expressions have common variables.
     *
-    * @param left expressions to be unified, where variables are considered different
+    * @param left  expressions to be unified, where variables are considered different
     * @param right expressions to be unified, where variables are common
     * @return Some(leftSubs, rightSub) where leftSubs contains substitution for all left expressions and rightSub
-    *           is the signle substitution for all right expressions
+    *         is the signle substitution for all right expressions
     *         None if there is no substitution.
     */
-
   // TODO: This method should be moved to the unification package
   def unifyWithRename(left: Seq[E], right: Seq[E]): Option[(Seq[Substitution], Substitution)] = {
     if (left.zip(right).forall { case (x, y) => x == y }) {
       Some(Seq.fill(left.size)(Substitution.empty), Substitution.empty)
-    } else if (left.zip(right).exists {
-      case (App(f1: Sym, _), App(f2: Sym, _)) => f1 != f2
-      case (Sym(c1), Sym(c2)) => c1 != c2
-      case (App(_, _), Sym(_)) => true
-      case (Sym(_), App(_, _)) => true
-      case _ => false
-    }) {
+    } else if (left.zip(right).exists{ case (l, r) => tools.disunifiableQuickCheck(l, r)}) {
       None
     } else {
-      var usedVars = right map {
-        _.variables.toSet
+      var usedVars: mutable.Set[Var] = mutable.Set(right map {
+        _.variables
       } reduce {
-        _ union _
-      }
+        _ ++ _
+      }: _*)
       val newLeftWithSub = for (oneLeft <- left) yield {
         val substitution = renameVars(oneLeft, usedVars)
         val newLeft = substitution(oneLeft)

@@ -48,7 +48,7 @@ trait TFF
     }
 
 
-  def problem(fileName : Path) : TFFProblem = extract(fileName,problemParser)
+  def problem(fileName : Path) : TFFProblem = extract(fileName, None, problemParser)
 
 }
 

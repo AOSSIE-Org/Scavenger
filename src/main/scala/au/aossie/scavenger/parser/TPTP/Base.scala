@@ -67,16 +67,22 @@ trait Base extends TokenParsers with PackratParsers {
   type Tokens = TPTPTokens
 
   // Parsing methods
-  def parse[Target](input: Path, parser: Parser[Target]) = {
+  def parse[Target](input: Path, argDependenciesDir: Option[Path], parser: Parser[Target]) = {
     val fileContent = scala.io.Source.fromFile(input.toIO).mkString
     val tokens      = new lexical.Scanner(fileContent)
-    if (dependenciesDir.isEmpty) {
-      // FIXME: this is a hack for StarExec axioms location support
-      if ((input / up / "Axioms").toIO.exists()) {
-        dependenciesDir = Some(input / up)
-      } else {
-        dependenciesDir = Some(input / up / up / up / up)
-      }
+    argDependenciesDir match {
+      case Some(dir) =>
+        this.dependenciesDir = Some(dir)
+      case None =>
+        dependenciesDir match {
+          case Some(_) =>
+          case None =>
+            if ((input / up / "Axioms").toIO.exists()) {
+              this.dependenciesDir = Some(input / up)
+            } else {
+              this.dependenciesDir = Some(input / up / up / up / up)
+            }
+        }
     }
     phrase(parser)(tokens)
   }
@@ -94,12 +100,13 @@ trait Base extends TokenParsers with PackratParsers {
     new lexical.Scanner(input)
   }
 
-  def extract[Target](fileName: Path, parser: Parser[Target]): Target =
-    parse(fileName, parser) match {
+  def extract[Target](fileName: Path, dependenciesDir: Option[Path], parser: Parser[Target]): Target = {
+    parse(fileName, dependenciesDir, parser) match {
       case Success(p2, _)      => p2
       case Error(message, _)   => throw new Exception("Error: " + message)
       case Failure(message, _) => throw new Exception("Failure: " + message)
     }
+  }
 
   /**
     * A simple implementation for the expansion of include directives
@@ -117,7 +124,7 @@ trait Base extends TokenParsers with PackratParsers {
                      parser: Parser[List[TPTPDirective]]): List[TPTPDirective] = directives match {
     case List() => List.empty
     case IncludeDirective(fileName, _) :: ds =>
-      expandIncludes(extract(dependenciesDir.get / RelPath(fileName), parser), parser) ++ ds // FIXME: Path "../../" has to be added to fileName. I wonder if this is the correct place to fix this issue.
+      expandIncludes(extract(dependenciesDir.get / RelPath(fileName), None, parser), parser) ++ ds
     case d :: ds => d :: expandIncludes(ds, parser)
   }
 

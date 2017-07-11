@@ -19,7 +19,7 @@ object TDCR extends Prover {
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
     if (cnf.clauses.contains(Clause.empty)) {
-      return Unsatisfiable(Some(Proof(Axiom(Clause.empty))))
+      return Unsatisfiable(Some(Proof(InitialStatement(Clause.empty))))
     }
 
     val propagatedLiterals = mutable.Set(cnf.clauses.filter(_.isUnit).map(_.literal): _*)
@@ -38,7 +38,7 @@ object TDCR extends Prover {
       propagatedLiterals ++= newLiterals
       for (literal <- literals) {
         val set = unifiableUnits.getOrElseUpdate(literal, mutable.Set.empty)
-        for (newLiteral <- newLiterals) if (newLiteral.depth <= termDepthThreshold && newLiteral.negated != literal.negated) {
+        for (newLiteral <- newLiterals) if (newLiteral.depth <= termDepthThreshold && newLiteral.polarity != literal.polarity) {
           unifyWithRename(Seq(literal.unit), Seq(newLiteral.unit)) match {
             case Some(_) => set += newLiteral
             case None    =>
@@ -90,7 +90,7 @@ object TDCR extends Prover {
       decisions.clear()
       reverseImplicationGraph.clear()
       cnf.clauses.foreach(clause =>
-        reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += Axiom(clause))
+        reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += InitialStatement(clause))
       conflictClauses.foreach(node =>
         reverseImplicationGraph.getOrElseUpdate(node.conclusion, ArrayBuffer.empty) += node)
       propagatedLiterals ++= cnf.clauses.filter(_.isUnit).map(_.literal)
@@ -106,7 +106,7 @@ object TDCR extends Prover {
             false
           case Decision(_) =>
             true
-          case Axiom(_) =>
+          case InitialStatement(_) =>
             true
           case ConflictDrivenClauseLearning(_) =>
             true
@@ -124,7 +124,7 @@ object TDCR extends Prover {
 
     updateUnifiableUnits(propagatedLiterals.toSeq)
 
-    cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(Axiom(clause)))
+    cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(InitialStatement(clause)))
 
     while (true) {
       val result = mutable.Set.empty[Literal]
@@ -179,9 +179,8 @@ object TDCR extends Prover {
       } else if (termDepthThreshold >= maxInitialTermDepth &&
                  cnf.clauses.forall(clause => clause.literals.exists(propagatedLiterals.contains))) {
         val literals      = propagatedLiterals ++ decisions
-        val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
-        val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
-        return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
+        val (positiveLiterals, negativeLiterals) = literals.partition(_.polarity)
+        return Satisfiable(Some(new Assignment(positiveLiterals.map(_.unit).toSet ++ negativeLiterals.map(_.unit).toSet)))
       }
     }
     Error // this line is unreachable.

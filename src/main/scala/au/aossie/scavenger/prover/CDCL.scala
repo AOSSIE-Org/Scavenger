@@ -75,7 +75,7 @@ object CDCL {
           levels += new DecisionLevel(literal)
           assignLiteral(literal)
           if (!propagate()) { // Conflict is derived
-            while (levels.last.literal.negated) { // Find first level which hasn't been processed twice
+            while (!levels.last.literal.polarity) { // Find first level which hasn't been processed twice
               undo()
               if (levels.isEmpty) {
                 return false // All previous levels where processed twice -> CNF is unsatisfiable

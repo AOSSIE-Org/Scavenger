@@ -6,6 +6,8 @@ import au.aossie.scavenger.prover.{PDCR, EPCR, Satisfiable, TDCR, Unsatisfiable}
 import au.aossie.scavenger.parser.TPTPCNFParser
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
+import au.aossie.scavenger.exporter.tptp.TPTPExporter
+import au.aossie.scavenger.proof.Proof
 
 import scala.collection.mutable
 
@@ -17,7 +19,8 @@ object CLI {
   case class Config(inputs: Seq[String] = Seq(),
                     configuration: String = "CR",
                     format: Option[String] = None,
-                    output: Output = StandardOutput)
+                    output: Output = StandardOutput,
+                    dependenciesDir: Option[Path] = None)
 
   val configurations = Map(
     "PD" -> PDCR,
@@ -36,6 +39,10 @@ object CLI {
     opt[String]('a', "algorithm") action { (v, c) =>
       c.copy(configuration = v)
     } text "use <alg> to solve the problem" valueName "<alg>"
+
+    opt[String]('d', "dependencies") action { (v, c) =>
+      c.copy(dependenciesDir = Some(pwd / RelPath(v)))
+    }
 
     note(
       s"""
@@ -100,12 +107,14 @@ object CLI {
       for (input <- c.inputs) {
         val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), TPTPCNFParser)
         val path   = Path.apply(input, pwd)
-        val cnf    = parser.parse(path)
+        val cnf    = parser.parse(path, c.dependenciesDir)
         solver.prove(cnf) match {
-          case Unsatisfiable(p) =>
-            c.output.write(s"% SZS status Unsatisfiable for $input")
-            c.output.write("\n")
-            c.output.write(p)
+          case Unsatisfiable(Some(p)) =>
+            val problemName = input.drop(input.lastIndexOf("/") + 1)
+            c.output.write(s"% SZS status Unsatisfiable for $problemName\n")
+            c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
+            new TPTPExporter(c.output).write(p)
+            c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
           case Satisfiable(m) =>
             c.output.write(s"% SZS status Satisfiable for $input")
             c.output.write("\n")

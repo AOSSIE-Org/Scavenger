@@ -41,7 +41,7 @@ extends Base {
     }
 
 
-  def problem(fileName : Path) : FOFProblem = extract(fileName,problemParser)
+  def problem(fileName : Path, _dependenciesDir: Option[Path] = None) : FOFProblem = extract(fileName, _dependenciesDir, problemParser)
 
 }
 

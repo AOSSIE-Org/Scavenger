@@ -11,13 +11,14 @@ import scala.collection.mutable
   *
   * @author Daniyar Itegulov
   */
-case class Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)
-  extends CRProofNode {
-  require(leftPremise.conclusion.width == 1, "Left premise should be a unit clause")
-  require(rightPremise.conclusion.width == 1, "Right premise should be a unit clause")
+class Conflict(val leftPremise: CRProofNode, val rightPremise: CRProofNode)
+  extends CRProofNode(leftPremise.isAxiom & rightPremise.isAxiom) {
+  assert(leftPremise.conclusion.isUnit, "Left premise should be a unit clause")
+  assert(rightPremise.conclusion.isUnit, "Right premise should be a unit clause")
+  assert(leftPremise.conclusion.literal.polarity != rightPremise.conclusion.literal.polarity, "Left and right premises should have different polarity")
 
-  private val leftAux = leftPremise.conclusion.literals.head.unit
-  private val rightAux = rightPremise.conclusion.literals.head.unit
+  val leftAux = leftPremise.conclusion.literals.head.unit
+  val rightAux = rightPremise.conclusion.literals.head.unit
 
   val (Seq(leftMgu), rightMgu) = unifyWithRename(Seq(leftAux), Seq(rightAux)) match {
     case None => throw new Exception("Conflict: given premise clauses are not resolvable")
@@ -26,5 +27,15 @@ case class Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)
 
   override def premises = Seq(leftPremise, rightPremise)
   override def conclusion: Clause = Clause.empty
+}
+
+object Conflict {
+  def apply(leftPremise: CRProofNode, rightPremise: CRProofNode) =
+    new Conflict(leftPremise: CRProofNode, rightPremise: CRProofNode)
+
+  def unapply(p: Conflict): Option[(CRProofNode, CRProofNode)] = p match {
+    case p: Conflict => Some((p.leftPremise, p.rightPremise))
+    case _ => None
+  }
 }
 

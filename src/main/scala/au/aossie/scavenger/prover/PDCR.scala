@@ -20,7 +20,7 @@ object PDCR extends Prover {
   // scalastyle:off
   def prove(cnf: CNF): ProblemStatus = {
     if (cnf.clauses.contains(Clause.empty)) {
-      return Unsatisfiable(Some(Proof(Axiom(Clause.empty))))
+      return Unsatisfiable(Some(Proof(InitialStatement(Clause.empty))))
     }
 
     // TODO: this is a temporal determined random for easier debugging
@@ -30,7 +30,7 @@ object PDCR extends Prover {
     val ancestor = mutable.Map.empty[Literal, mutable.Set[Clause]]
     // For each clause what proof nodes can be used to derive it
     val reverseImplicationGraph = mutable.Map.empty[Clause, ArrayBuffer[CRProofNode]]
-    cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(Axiom(clause)))
+    cnf.clauses.foreach(clause => reverseImplicationGraph(clause) = ArrayBuffer(InitialStatement(clause)))
     // Shows unifiable literals for each literal
     val unifiableUnits = mutable.Map.empty[Literal, mutable.Set[Literal]]
     // All literals contained in propagated literals and initial clauses
@@ -60,7 +60,7 @@ object PDCR extends Prover {
      */
     literals.foreach(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty))
     for (literal <- literals) {
-      for (other <- allClauses) if (other.isUnit && other.literal.negated != literal.negated) {
+      for (other <- allClauses) if (other.isUnit && other.literal.polarity != literal.polarity) {
         unifyWithRename(Seq(literal.unit), Seq(other.literal.unit)) match {
           case Some(_) => unifiableUnits(literal) += other.literal
           case None    =>
@@ -192,7 +192,7 @@ object PDCR extends Prover {
       propagatedLiterals ++= result
       result.foreach(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty))
       for (literal <- literals) {
-        for (other <- result) if (other.negated != literal.negated) {
+        for (other <- result) if (other.polarity != literal.polarity) {
           unifyWithRename(Seq(literal.unit), Seq(other.unit)) match {
             case Some(_) => unifiableUnits(literal) += other
             case None    =>
@@ -218,13 +218,13 @@ object PDCR extends Prover {
       decisions.clear()
       reverseImplicationGraph.clear()
       cnf.clauses.foreach(clause =>
-        reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += Axiom(clause))
+        reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += InitialStatement(clause))
       conflictClauses.foreach(node =>
         reverseImplicationGraph.getOrElseUpdate(node.conclusion, ArrayBuffer.empty) += node)
 
       literals.foreach(unifiableUnits.getOrElseUpdate(_, mutable.Set.empty))
       for (literal <- literals) {
-        for (other <- allClauses) if (other.isUnit && other.literal.negated != literal.negated) {
+        for (other <- allClauses) if (other.isUnit && other.literal.polarity != literal.polarity) {
           unifyWithRename(Seq(literal.unit), Seq(other.literal.unit)) match {
             case Some(_) => unifiableUnits(literal) += other.literal
             case None    =>
@@ -267,7 +267,7 @@ object PDCR extends Prover {
         val decisionLiteral = rnd.shuffle(clause.literals).head
         decisions += decisionLiteral
         ancestor(decisionLiteral) = mutable.Set.empty
-        require(
+        assert(
           !reverseImplicationGraph.contains(decisionLiteral) || reverseImplicationGraph(
             decisionLiteral).isEmpty)
         reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
@@ -324,7 +324,7 @@ object PDCR extends Prover {
               false
             case Decision(_) =>
               true
-            case Axiom(_) =>
+            case InitialStatement(_) =>
               true
             case ConflictDrivenClauseLearning(_) =>
               true
@@ -352,9 +352,8 @@ object PDCR extends Prover {
                    clause.literals.exists(propagatedLiterals.contains) ||
                      clause.literals.forall(uselessDecisions.contains))) {
         val literals      = propagatedLiterals ++ decisions
-        val trueLiterals  = literals.filterNot(_.negated).map(_.unit).toSet
-        val falseLiterals = literals.filter(_.negated).map(_.unit).map(x => Neg(x)).toSet
-        return Satisfiable(Some(new Assignment(trueLiterals ++ falseLiterals)))
+        val (positiveLiterals, negativeLiterals) = literals.partition(_.polarity)
+        return Satisfiable(Some(new Assignment(positiveLiterals.map(_.unit).toSet ++ negativeLiterals.map(_.unit).toSet)))
       } else if (result.nonEmpty) {
         uselessDecisions.clear()
       }

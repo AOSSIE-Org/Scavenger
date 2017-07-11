@@ -48,7 +48,7 @@ extends Base {
     }
 
 
-  def problem(fileName : Path) : CNFProblem = extract(fileName,problemParser)
+  def problem(fileName : Path, dependenciesDir: Option[Path]) : CNFProblem = extract(fileName, dependenciesDir, problemParser)
 
 }
 
@@ -76,5 +76,12 @@ case class CNFNegatedConjectureStatement(name : String, ant : List[E], suc : Lis
   override def toString : String = {
     val initialNegation = if (ant.isEmpty) "" else "~ "
     "cnf(" + name + ",negated_conjecture,{ " + initialNegation + ant.mkString(", ~ ") + " --> " + suc.mkString(",") + "})"
+  }
+}
+
+case class CNFHypothesisStatement(name : String, ant : List[E], suc : List[E]) extends CNFProblemStatement {
+  override def toString : String = {
+    val initialNegation = if (ant.isEmpty) "" else "~ "
+    "cnf(" + name + ",hypothesis,{ " + initialNegation + ant.mkString(", ~ ") + " --> " + suc.mkString(",") + "})"
   }
 }

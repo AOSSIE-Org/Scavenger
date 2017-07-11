@@ -26,7 +26,8 @@ class PerformanceEPCR extends Specification {
   }
 
   def test(testName: String): ProblemStatus = {
-    val p = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'SYN / s"$testName.p")
+    val cat = testName.take(3)
+    val p = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / s"$cat" / s"$testName.p")
     implicit val vars = getUppercaseVariables(p)
     EPCR.prove(p)
   }
@@ -34,9 +35,14 @@ class PerformanceEPCR extends Specification {
   // TODO: Implement a timeout as described here: https://etorreborre.github.io/specs2/guide/SPECS2-3.5/org.specs2.guide.TimeoutExamples.html
 
 //  "Scavenger" should {
-////    "find a counter-model for SYN056-1" in { test("SYN056-1").isInstanceOf[Satisfiable] shouldEqual true }
-//    "prove SYN143-1" in { test("SYN143-1").isInstanceOf[Unsatisfiable] shouldEqual true }
-//    "prove SYN708-1" in { test("SYN708-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
-////    "prove SYN645-1" in { test("SYN645-1").isInstanceOf[Unsatisfiable] shouldEqual true }
+//    "prove MSC004-1" in { test("MSC004-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
+//    "prove SYN352-1" in { test("SYN352-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
+//    "prove SET011-1" in { test("SET011-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
+//    "prove COM011-2" in { test("COM011-2").isInstanceOf[Unsatisfiable] shouldEqual true } //
+//    "prove NLP001-1" in { test("NLP001-1").isInstanceOf[Unsatisfiable] shouldEqual true } //
+////    "prove SET007-1" in { test("SET007-1").isInstanceOf[Unsatisfiable] shouldEqual true } // works in scavenger-20, TL now
+////    "prove SWV321-2" in { test("SWV321-2").isInstanceOf[Unsatisfiable] shouldEqual true } //
+//
+//
 //  }
 }
