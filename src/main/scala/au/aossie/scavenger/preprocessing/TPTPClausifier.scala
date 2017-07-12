@@ -1,8 +1,8 @@
-package au.aossie.scavenger.parser
+package au.aossie.scavenger.preprocessing
 
-import au.aossie.scavenger.expression.formula._
 import au.aossie.scavenger.expression._
-import au.aossie.scavenger.expression.term.{FunctionTerm}
+import au.aossie.scavenger.expression.formula._
+import au.aossie.scavenger.expression.term.FunctionTerm
 import au.aossie.scavenger.structure.immutable.{CNF, Clause}
 
 import scala.collection.immutable.ListSet
