@@ -4,6 +4,7 @@ import au.aossie.scavenger.expression._
 import au.aossie.scavenger.expression.formula.Neg
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.model.Assignment
+import au.aossie.scavenger.preprocessing.{AddEqualityReasoningAxioms, ClausesTo3CNF}
 import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 import au.aossie.scavenger.structure.immutable.{CNF, Clause, ClauseType, Literal}
 
@@ -28,7 +29,7 @@ class EPCR(maxCountCandidates: Int = 1000,
   //   TODO: Do research about these constants
 
   //   TODO: Think about every usage of randomness
-  val rnd = new Random(107)
+  implicit val rnd = new Random(107)
 
   // FIXME: Bad practice to use predefined name(could be collision)
   val VARIABLE_NAME: String = "___VARIABLE___"
@@ -40,7 +41,7 @@ class EPCR(maxCountCandidates: Int = 1000,
 
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
-    val logger = Logger(LoggerFactory.getLogger("prover"))
+    implicit val logger = Logger(LoggerFactory.getLogger("prover"))
 
     if (cnf.clauses.contains(Clause.empty)) {
       return Unsatisfiable(Some(Proof(InitialStatement(Clause.empty))))
@@ -52,109 +53,10 @@ class EPCR(maxCountCandidates: Int = 1000,
     val isEqualityReasoning = predicates.contains((new Sym("=") with Infix, 2))
     if (isEqualityReasoning) {
       logger.info("Equality reasoning problem")
-      /**
-        * symmetry axiom
-        */
-      initialClauses.append(
-        Clause(AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("B"))))
-        (AppRec(new Sym("=") with Infix, Seq(Var("B"), Var("A")))))
-      /**
-        * reflexivity axiom
-        */
-      initialClauses.append(Clause()(AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("A")))))
-      /**
-        * transitivity axiom
-        */
-      initialClauses.append(
-        Clause(AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("B"))), AppRec(new Sym("=") with Infix, Seq(Var("B"), Var("C"))))
-        (AppRec(new Sym("=") with Infix, Seq(Var("A"), Var("C")))))
-      /** congruence axioms for predicates
-        */
-      predicates.foreach { case (predicate, arity) =>
-        // TODO: add support for airty > 13
-        if (2 * arity <= 26) {
-          val leftVariables =
-            List.range('A'.toInt, 'A'.toInt + arity).map(ind => Var(ind.toChar.toString))
-          val rightVariables =
-            List.range('A'.toInt + arity, 'A'.toInt + 2 * arity).map(ind => Var(ind.toChar.toString))
-          val equalities = leftVariables.zip(rightVariables).map {
-            case (left, right) => AppRec(new Sym("=") with Infix, Seq(left, right))
-          }
-          val predicateOnLeft = AppRec(predicate, leftVariables)
-          val predicateOnRight = AppRec(predicate, rightVariables)
-          val congAxiom = Clause(equalities :+ predicateOnLeft: _*)(predicateOnRight)
-          initialClauses.append(congAxiom)
-        } else {
-          logger.warn(s"predicates with arity(=$arity) > 13 not supported")
-        }
-      }
-      /** congruence axioms for functions
-        */
-      val funs = cnf.functionSymbols.filter(_._2 > 0)
-      funs.foreach { case (fun, arity) =>
-        // TODO: for arity > 13
-        if (2 * arity <= 26) {
-          val leftVariables =
-            List.range('A'.toInt, 'A'.toInt + arity).map(ind => Var(ind.toChar.toString))
-          val rightVariables =
-            List.range('A'.toInt + arity, 'A'.toInt + 2 * arity).map(ind => Var(ind.toChar.toString))
-          val equalities = leftVariables.zip(rightVariables).map {
-            case (left, right) => AppRec(new Sym("=") with Infix, Seq(left, right))
-          }
-          val leftFun = AppRec(fun, leftVariables)
-          val rightFun = AppRec(fun, rightVariables)
-          val predicateOnRight = AppRec(Sym("="), Seq(leftFun, rightFun))
-          val congAxiom = Clause(equalities: _*)(predicateOnRight)
-          initialClauses.append(congAxiom)
-        } else {
-          logger.warn(s"functions with arity(=$arity) > 13 not supported")
-        }
-      }
+      AddEqualityReasoningAxioms.add(initialClauses)
     }
 
-    def to3CNF(clauses: ListBuffer[Clause]): Unit = {
-
-      def genNewSym(usedSyms: mutable.HashSet[Sym]): Sym = {
-        val c = (rnd.nextInt(26) + 'a'.toInt).toChar
-        var i = 0
-        while (usedSyms.contains(Sym(s"$c$i"))) i += 1
-        val newSym = Sym(s"$c$i")
-        usedSyms.add(newSym)
-        newSym
-      }
-
-      def literalsToClause(literals: Literal*)(tp: ClauseType): Clause = {
-        val (positiveLiterals, negativeLiterals) = literals.partition(_.polarity)
-        Clause(tp)(negativeLiterals.map(_.unit): _*)(positiveLiterals.map(_.unit): _*)
-      }
-
-      val usedSyms = clauses.flatMap(clause =>
-        clause.literals.flatMap(_.unit.functionSymbols.map(_._1))
-      )(collection.breakOut).to[mutable.HashSet]
-      val nClauses = ListBuffer.empty[Clause]
-      for (clause <- clauses) {
-        var lits = clause.literals.to[ArrayBuffer]
-        while (lits.size > 3) {
-          val nlits = ArrayBuffer.empty[Literal]
-          for (idx <- 0 until lits.length / 2) {
-            val tmpSym = genNewSym(usedSyms)
-            val args = (lits(idx * 2).unit.variables ++ lits(idx * 2 + 1).unit.variables).distinct
-            val fun = Literal(AppRec(tmpSym, args), true)
-            nClauses += literalsToClause(!fun, lits(idx * 2), lits(idx * 2 + 1))(clause.tp)
-            nClauses += literalsToClause(!lits(idx * 2), fun)(clause.tp)
-            nClauses += literalsToClause(!lits(idx * 2 + 1), fun)(clause.tp)
-            nlits += fun
-          }
-          if (lits.length % 2 == 1) nlits += lits.last
-          lits = nlits
-        }
-        nClauses += literalsToClause(lits: _*)(clause.tp)
-      }
-      clauses.clear
-      clauses ++= nClauses
-    }
-
-//    to3CNF(initialClauses)
+    ClausesTo3CNF.to3CNF(initialClauses)
 
     /**
       * Mutable set of proved literals initialized with the input CNF's unit clauses.
