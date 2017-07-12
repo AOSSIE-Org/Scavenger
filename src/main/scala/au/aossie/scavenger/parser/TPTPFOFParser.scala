@@ -7,7 +7,7 @@ import au.aossie.scavenger.parser.TPTP.{FOFAxiomStatement, FOFConjectureStatemen
 /**
   * @author Vlad Podtelkin
   */
-object TPTPFOFParser {
+object TPTPFOFParser extends Parser {
   def parse(filename: Path, _dependenciesDir: Option[Path] = None): CNF = {
     val problem = TPTPFOF.problem(filename, _dependenciesDir)
     val formula = problem.statements.map {

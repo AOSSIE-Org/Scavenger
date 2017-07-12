@@ -2,8 +2,8 @@ package au.aossie.scavenger
 
 import ammonite.ops._
 import au.aossie.scavenger.structure.immutable.CNF
-import au.aossie.scavenger.prover.{PDCR, EPCR, Satisfiable, TDCR, Unsatisfiable}
-import au.aossie.scavenger.parser.TPTPCNFParser
+import au.aossie.scavenger.prover.{EPCR, PDCR, Satisfiable, TDCR, Unsatisfiable}
+import au.aossie.scavenger.parser.{TPTPCNFParser, TPTPFOFParser}
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
 import au.aossie.scavenger.exporter.tptp.TPTPExporter
@@ -17,7 +17,7 @@ import scala.collection.mutable
 object CLI {
 
   case class Config(inputs: Seq[String] = Seq(),
-                    configuration: String = "CR",
+                    configuration: String = "EP",
                     format: Option[String] = None,
                     output: Output = StandardOutput,
                     dependenciesDir: Option[Path] = None)
@@ -29,9 +29,10 @@ object CLI {
   )
   val parsers = Map(
     "cnf"  -> TPTPCNFParser,
-    "cnfp" -> TPTPCNFParser
+    "cnfp" -> TPTPCNFParser,
+    "fof"  -> TPTPFOFParser
   )
-  val knownFormats = Seq("cnf", "cnfp")
+  val knownFormats = Seq("cnf", "cnfp", "fof")
 
   val parser = new scopt.OptionParser[Config]("scavenger") {
     head("\nScavenger's Command Line Interface\n\n")
