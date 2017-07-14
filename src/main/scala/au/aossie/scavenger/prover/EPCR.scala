@@ -157,7 +157,7 @@ class EPCR(maxCountCandidates: Int = 1000,
                                globalSubst: Substitution,
                                usedVars: mutable.Set[Var]): Unit = {
               val unifierNodes = chosenUnifiers.map(l => rnd.shuffle(bufferNodes(reverseImplication(l.toClause))).head)
-//              if (unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
+              if (unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
                 val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
                 val unitPropagationNode =
                   UnitPropagationResolution(
@@ -173,7 +173,7 @@ class EPCR(maxCountCandidates: Int = 1000,
                   addNode(newLiteral.toClause, unitPropagationNode)
                   result += newLiteral
                 }
-//              }
+              }
             }
 
             /**
