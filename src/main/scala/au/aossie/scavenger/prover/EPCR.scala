@@ -1,12 +1,12 @@
 package au.aossie.scavenger.prover
 
 import au.aossie.scavenger.expression._
-import au.aossie.scavenger.expression.formula.Neg
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.model.Assignment
 import au.aossie.scavenger.preprocessing.{AddEqualityReasoningAxioms, ClausesTo3CNF}
 import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
-import au.aossie.scavenger.structure.immutable.{CNF, Clause, ClauseType, Literal}
+import au.aossie.scavenger.prover.util.DecisionMaker
+import au.aossie.scavenger.structure.immutable.{CNF, Clause, Literal}
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -34,10 +34,7 @@ class EPCR(maxCountCandidates: Int = 1000,
   // FIXME: Bad practice to use predefined name(could be collision)
   val VARIABLE_NAME: String = "___VARIABLE___"
 
-  /**
-    * Minisat implementation
-    */
-  var incSym: Double = initialBump
+  val decisionMaker: DecisionMaker = new DecisionMaker(initialBump, decayFactor, maxActivity, randomDecisionsPercent)
 
   // scalastyle:off
   override def prove(cnf: CNF): ProblemStatus = {
@@ -56,7 +53,7 @@ class EPCR(maxCountCandidates: Int = 1000,
       AddEqualityReasoningAxioms.add(initialClauses)
     }
 
-    ClausesTo3CNF.to3CNF(initialClauses)
+//    ClausesTo3CNF.to3CNF(initialClauses)
 
     /**
       * Mutable set of proved literals initialized with the input CNF's unit clauses.
@@ -98,19 +95,14 @@ class EPCR(maxCountCandidates: Int = 1000,
     val cdclClauses: mutable.Map[Clause, CRProofNode] = mutable.Map.empty
 
     /**
-      * VSIDS haracteristic helps to choose decision.
-      */
-    val activity: mutable.Map[Sym, Double] = mutable.HashMap.empty
-
-    /**
       * Memorization for isValidCheck method.
       */
-    val memIsValid: mutable.HashMap[CRProofNode, Boolean] = mutable.HashMap.empty
+    val memIsValid: mutable.HashMap[Clause, Boolean] = mutable.HashMap.empty
 
     /**
       * Memorization for getAllConflictDecisions method.
       */
-    val memGetConflictDecisions: mutable.HashSet[CRProofNode] = mutable.HashSet.empty
+    val memGetConflictDecisions: mutable.HashSet[Clause] = mutable.HashSet.empty
 
     // TODO: Do research about to store only part of all unifications.
     def updateUnifiableUnits(newLiterals: Seq[Literal]): Unit = {
@@ -165,7 +157,7 @@ class EPCR(maxCountCandidates: Int = 1000,
                                globalSubst: Substitution,
                                usedVars: mutable.Set[Var]): Unit = {
               val unifierNodes = chosenUnifiers.map(l => rnd.shuffle(bufferNodes(reverseImplication(l.toClause))).head)
-              if (unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
+//              if (unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
                 val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
                 val unitPropagationNode =
                   UnitPropagationResolution(
@@ -181,7 +173,7 @@ class EPCR(maxCountCandidates: Int = 1000,
                   addNode(newLiteral.toClause, unitPropagationNode)
                   result += newLiteral
                 }
-              }
+//              }
             }
 
             /**
@@ -248,10 +240,8 @@ class EPCR(maxCountCandidates: Int = 1000,
       }
     }
 
-    def reset(newClauses: Set[CRProofNode]): Unit = {
+    def reset(): Unit = {
       logger.debug("RESET")
-      cdclClauses ++= newClauses.map(node => (node.conclusion, node))
-      nonUnitClauses ++= newClauses.map(_.conclusion).filter(!_.isUnit)
       literals = nonUnitClauses
         .flatMap(_.literals)(collection.breakOut)
       decisions.clear()
@@ -275,7 +265,7 @@ class EPCR(maxCountCandidates: Int = 1000,
       decisions --= decisionLiterals
 
       def isValidCheck(node: CRProofNode): Boolean = {
-        memIsValid.get(node) match {
+        memIsValid.get(node.conclusion) match {
           case Some(isValid) =>
             isValid
           case None =>
@@ -291,7 +281,7 @@ class EPCR(maxCountCandidates: Int = 1000,
               case Conflict(left, right) =>
                 isValidCheck(left) && isValidCheck(right)
             }
-            memIsValid.put(node, isValid)
+            memIsValid.put(node.conclusion, isValid)
             isValid
         }
       }
@@ -312,8 +302,8 @@ class EPCR(maxCountCandidates: Int = 1000,
     }
 
     def getAllConflictDecisions(node: CRProofNode, acc: mutable.Set[Literal]): Unit =
-      if (!memGetConflictDecisions.contains(node)) {
-        memGetConflictDecisions.add(node)
+      if (!memGetConflictDecisions.contains(node.conclusion)) {
+        memGetConflictDecisions.add(node.conclusion)
         node match {
           case Decision(literal) =>
             acc += literal
@@ -328,89 +318,20 @@ class EPCR(maxCountCandidates: Int = 1000,
         }
       }
 
-    def bumpActivity(literal: Literal): Unit = {
-      val syms = literal.predicates.map(_._1)
-      var overhead: Boolean = false
-      syms.foreach { sym =>
-        activity.update(sym, activity.getOrElseUpdate(sym, 0) + incSym)
-        overhead |= (activity(sym) >= maxActivity)
-      }
-      if (overhead) {
-        activity.transform {
-          case (key, value) => value / maxActivity
-        }
-        incSym /= maxActivity
-      }
-    }
-
-    def bumpActivityMiniSAT(node: CRProofNode): Unit = node match {
-      case Decision(literal) =>
-        bumpActivity(literal)
-      case InitialStatement(clause) =>
-        clause.literals.foreach(bumpActivity)
-      case ConflictDrivenClauseLearning(conflict) =>
-        bumpActivityMiniSAT(conflict)
-      case Conflict(left, right) =>
-        bumpActivityMiniSAT(left)
-        bumpActivityMiniSAT(right)
-      case UnitPropagationResolution(left, right, _, _, _) =>
-        left.foreach(bumpActivityMiniSAT)
-        bumpActivityMiniSAT(right)
-    }
-
-    def updateInc(): Unit = incSym /= decayFactor
-
-    def addCDCLClauses(nodes: Set[CRProofNode]): Unit = {
+    def addCDCLClauses(nodes: Seq[CRProofNode]): Unit = {
       val newClauses = nodes.filterNot(node => cdclClauses.contains(node.conclusion))
       cdclClauses ++= newClauses.map(node => (node.conclusion, node))
       nonUnitClauses ++= newClauses.map(_.conclusion).filter(!_.isUnit)
 
       literals = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
-      newClauses.toSeq.flatMap(_.conclusion.literals)(collection.breakOut).foreach(bumpActivity)
-//      newClauses.foreach(bumpActivityMiniSAT)
-      updateInc()
+      decisionMaker.update(newClauses.map(_.conclusion))
 
       newClauses.foreach(node =>
         addNode(node.conclusion, node))
 
-      addProvedLiterals(newClauses.toSeq.map(_.conclusion).filter(_.isUnit).map(_.literal))
+      addProvedLiterals(newClauses.map(_.conclusion).filter(_.isUnit).map(_.literal))
 
       logger.debug(s"added ${newClauses.size} new conflicts")
-    }
-
-    def getActivity(literal: Literal): Double = {
-      val funs = literal.predicates
-      funs.map {
-        case (sym, arity) => activity.getOrElse(sym, 0.0)
-      }.sum * 1.0 / funs.size
-    }
-
-    /**
-      * Implementation of miniSAT version of VSIDS heuristic
-      *
-      * @param available set of candidates for choosing as a new decision
-      * @return new decision
-      */
-    def makeDecision(available: Seq[Literal]): Literal = {
-      val res = {
-        if (rnd.nextInt(101) >= randomDecisionsPercent) {
-          val availableActivities = available.map(getActivity)
-          val availableActivitiesSum = availableActivities.sum
-//          val alpha = (math.log(incSym) - math.log(available.size)) * availableActivitiesSum / availableActivities.max
-          // TODO: constant 10
-          val probs = availableActivities.map(act => math.exp(10 * (act / availableActivitiesSum)))
-          val p = rnd.nextDouble * probs.sum
-          var curP = 0.0
-          for ((literal, prob) <- available.zip(probs)) {
-            curP += prob
-            if (p <= curP) {
-              return literal
-            }
-          }
-        }
-        available(rnd.nextInt(available.size))
-      }
-      res
     }
 
     def getBucketByExpr(expr: E): String = expr match {
@@ -439,7 +360,7 @@ class EPCR(maxCountCandidates: Int = 1000,
       addProvedLiterals(propagatedLiterals.toSeq)
 
       // find clauses of kind `A & !B` where there is some unification for {A = B}
-      val CDCLClauses = mutable.Set.empty[CRProofNode]
+      val CDCLClauses = mutable.ListBuffer.empty[CRProofNode]
 
       val provedLiteralBuckets: mutable.Map[String, ListBuffer[Literal]] = mutable.Map.empty
       for (literal <- provedLiterals.toSeq) {
@@ -453,12 +374,6 @@ class EPCR(maxCountCandidates: Int = 1000,
               provedLiteralBuckets.getOrElse(VARIABLE_NAME, ListBuffer.empty[Literal])
           }
         }
-
-        // NOTE: debug only
-        //        for (otherLiteral <- candidateLiterals if (literal.negated != otherLiteral.negated) && unifyWithRename(Seq(literal.unit), Seq(otherLiteral.unit)).isDefined) {
-        //          println(s"conflict(${bufferNodes(reverseImplication(literal)).size}, ${bufferNodes(reverseImplication(otherLiteral)).size})")
-        //          println(s"conflict($literal, $otherLiteral)")
-        //        }
 
         for {
           otherLiteral <- candidateLiterals if (literal.polarity != otherLiteral.polarity) && unifyWithRename(Seq(literal.unit), Seq(otherLiteral.unit)).isDefined
@@ -486,7 +401,7 @@ class EPCR(maxCountCandidates: Int = 1000,
 
         memIsValid.clear()
         removeDecisionLiterals(acc)
-        addCDCLClauses(CDCLClauses.toSet)
+        addCDCLClauses(CDCLClauses)
       } else if (propagatedLiterals.isEmpty ||
         (cntWithoutDecisions >= maxCountWithoutDecisions) ||
         (provedLiterals.size > maxProvedLiteralsSize)) {
@@ -499,9 +414,9 @@ class EPCR(maxCountCandidates: Int = 1000,
                 .exists(provedLiterals.contains))
             .flatMap(_.literals)(collection.breakOut).toSet -- provedLiterals.map(!_)
         if (available.isEmpty) {
-          reset(Set.empty)
+          reset()
         } else {
-          val decisionLiteral = makeDecision(available.toSeq)
+          val decisionLiteral = decisionMaker.makeDecision(available.toSeq)
           addNode(decisionLiteral.toClause, Decision(decisionLiteral))
           addProvedLiterals(Seq(decisionLiteral))
 //          val decisionActivity = getActivity(decisionLiteral)
