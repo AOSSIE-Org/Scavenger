@@ -443,7 +443,7 @@ class EPCR(maxCountCandidates: Int = 1000,
 }
 
 object EPCR extends EPCR(
-  maxCountCandidates = 1000,
+  maxCountCandidates = 10,
   maxCountWithoutDecisions = 5,
   maxProvedLiteralsSize = 10000,
   initialBump = 1.0,
