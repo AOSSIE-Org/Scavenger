@@ -6,6 +6,7 @@ import au.aossie.scavenger.expression.term.FunctionTerm
 import au.aossie.scavenger.structure.immutable.{CNF, Clause}
 
 import scala.collection.immutable.ListSet
+import scala.collection.mutable.ListBuffer
 
 /**
   * Created by vlad107 on 3/3/17.
@@ -62,25 +63,25 @@ object TPTPClausifier {
   }
 
   def skolem(f: E): E = {
-    def skolemRec(h: E, curVars: Set[Var], toFun: Map[Var, E], index: Int): (E, Int) = h match {
+    def skolemRec(h: E, boundVars: Set[Var], toFun: Map[Var, E], index: Int): (E, Int) = h match {
       case Or(a, b) =>
-        val (na, index1) = skolemRec(a, curVars, toFun, index)
-        val (nb, index2) = skolemRec(b, curVars, toFun, index1)
+        val (na, index1) = skolemRec(a, boundVars, toFun, index)
+        val (nb, index2) = skolemRec(b, boundVars, toFun, index1)
         (Or(na, nb), index2)
       case And(a, b) =>
-        val (na, index1) = skolemRec(a, curVars, toFun, index)
-        val (nb, index2) = skolemRec(b, curVars, toFun, index1)
+        val (na, index1) = skolemRec(a, boundVars, toFun, index)
+        val (nb, index2) = skolemRec(b, boundVars, toFun, index1)
         (And(na, nb), index2)
       case Neg(a) =>
-        val (na, index1) = skolemRec(a, curVars, toFun, index)
+        val (na, index1) = skolemRec(a, boundVars, toFun, index)
         (Neg(na), index1)
       case All(v, t, a) =>
-        val (na, index1) = skolemRec(a, curVars + v, toFun, index)
+        val (na, index1) = skolemRec(a, boundVars + v, toFun, index)
         (All(v, t, na), index1)
       case Ex(v, t, a) =>
         // TODO: can be collision with original names from input
-        val fun = FunctionTerm("skolemize" + index, curVars.toList)
-        skolemRec(a, curVars, toFun + (v -> fun), index + 1)
+        val fun = FunctionTerm("skolemize" + index, boundVars.toList)
+        skolemRec(a, boundVars, toFun + (v -> fun), index + 1)
       case Atom(g, args) =>
         (Atom(g, args.toList.map(substitute(_, toFun))), index)
     }
@@ -108,26 +109,24 @@ object TPTPClausifier {
     forallOutRec(f, Map[Var, Var](), 0)._1
   }
   def toCNF(f: E): CNF = {
-    def toCNFRec(h: E, index: Int): (ListSet[Clause], Int) = h match {
+    def toCNFRec(h: E, index: Int): (ListBuffer[Clause], Int) = h match {
       case And(a, b) =>
         val (l1, index1) = toCNFRec(a, index)
         val (l2, index2) = toCNFRec(b, index1)
         (l1 ++ l2, index2)
       case Or(a, b) =>
         // TODO: can be collision with original names from input
-        val z = AppRec(Sym("predicate" + index), List[E]())
+        val z = AppRec(Sym("predicate" + index), a.freeVariables ++ b.freeVariables)
         val (l1, index1) = toCNFRec(a, index + 1)
         val (l2, index2) = toCNFRec(b, index1)
-        (l1.map(_ + z) ++ l2.map(z +: _), index2)
+        (l1.map(_.+(z)) ++ l2.map(_.+:(z)), index2)
       case Neg(a) =>
         val (l, index1) = toCNFRec(a, index)
-        (l.map((c: Clause) => Clause(c.suc.toList: _*)(c.ant.toList: _*)), index1)
-      case All(v, t, a) =>
-        toCNFRec(a, index)
+        (l.map((c: Clause) => new Clause(c.suc, c.ant)), index1)
       case AppRec(g, args) =>
-        (ListSet[Clause](Clause()(AppRec(g, args))), index)
+        (ListBuffer[Clause](Clause()(AppRec(g, args))), index)
     }
-    CNF(toCNFRec(f, 0)._1.toList)
+    CNF(toCNFRec(f, 0)._1)
   }
 
   def substitute(term: E, toFun: Map[Var, E]): E = term match {
@@ -135,7 +134,7 @@ object TPTPClausifier {
       case Some(fun) => fun
       case None      => term
     }
-    case Sym(name)       => term
+    case Sym(_)       => term
     case AppRec(f, args) => AppRec(f, args.map(substitute(_, toFun)))
   }
 }

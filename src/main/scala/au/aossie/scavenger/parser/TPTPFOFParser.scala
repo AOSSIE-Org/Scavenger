@@ -1,6 +1,6 @@
 package au.aossie.scavenger.parser
 import ammonite.ops.Path
-import au.aossie.scavenger.expression.formula.And
+import au.aossie.scavenger.expression.formula.{And, Neg}
 import au.aossie.scavenger.structure.immutable.{CNF, Clause}
 import au.aossie.scavenger.parser.TPTP.{FOFAxiomStatement, FOFConjectureStatement, FOFNegatedConjectureStatement, FOF => TPTPFOF}
 import au.aossie.scavenger.preprocessing.TPTPClausifier
@@ -19,7 +19,7 @@ object TPTPFOFParser extends Parser {
         neg_conj.formula
       }
       case conj: FOFConjectureStatement => {
-        conj.formula
+        Neg(conj.formula)
       }
     }.reduce(And(_, _))
     TPTPClausifier(formula)
