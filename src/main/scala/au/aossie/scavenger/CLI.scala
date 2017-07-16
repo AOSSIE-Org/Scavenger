@@ -103,9 +103,12 @@ object CLI {
         val cnf    = parser.parse(path)
         solver.prove(cnf) match {
           case Unsatisfiable(p) =>
-            c.output.write(s"% SZS status Unsatisfiable for $input")
+            val problemName = input.drop(input.lastIndexOf("/") + 1)
             c.output.write("\n")
+            c.output.write(s"% SZS status Unsatisfiable for $problemName\n")
+            c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
             c.output.write(p)
+            c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
           case Satisfiable(m) =>
             c.output.write(s"% SZS status Satisfiable for $input")
             c.output.write("\n")
