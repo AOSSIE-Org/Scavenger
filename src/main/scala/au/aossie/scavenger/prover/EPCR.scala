@@ -25,7 +25,8 @@ class EPCR(maxCountCandidates: Int = 1000,
            initialBump: Double = 1.0,
            decayFactor: Double = 0.99,
            maxActivity: Double = 1e10,
-           randomDecisionsPercent: Double = 5) extends Prover {
+           randomDecisionsPercent: Double = 5,
+           withSetOfSupport: Boolean = true) extends Prover {
   //   TODO: Do research about these constants
 
   //   TODO: Think about every usage of randomness
@@ -157,7 +158,7 @@ class EPCR(maxCountCandidates: Int = 1000,
                                globalSubst: Substitution,
                                usedVars: mutable.Set[Var]): Unit = {
               val unifierNodes = chosenUnifiers.map(l => rnd.shuffle(bufferNodes(reverseImplication(l.toClause))).head)
-              if (unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
+              if (!withSetOfSupport || unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
                 val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
                 val unitPropagationNode =
                   UnitPropagationResolution(
@@ -214,10 +215,10 @@ class EPCR(maxCountCandidates: Int = 1000,
                 unificationSubst match {
                   case Some(uniSubst) =>
                     go(chosenUnifiers :+ curUni,
-                      newUnifierWithSubst.map(unificationSubst.get(_)),
-                      newSubs.map(_ (unificationSubst.get)),
-                      literalsWithSubst.map(unificationSubst.get(_)),
-                      globalSubst(unificationSubst.get),
+                      newUnifierWithSubst.map(uniSubst(_)),
+                      newSubs.map(_ (uniSubst)),
+                      literalsWithSubst.map(uniSubst(_)),
+                      globalSubst(uniSubst),
                       usedVars ++ leftWithSubst.variables,
                       cur + 1
                     )
@@ -443,10 +444,11 @@ class EPCR(maxCountCandidates: Int = 1000,
 }
 
 object EPCR extends EPCR(
-  maxCountCandidates = 10,
+  maxCountCandidates = 100,
   maxCountWithoutDecisions = 5,
   maxProvedLiteralsSize = 10000,
   initialBump = 1.0,
   decayFactor = 0.99,
   maxActivity = 1e10,
-  randomDecisionsPercent = 5)
+  randomDecisionsPercent = 5,
+  withSetOfSupport = true)

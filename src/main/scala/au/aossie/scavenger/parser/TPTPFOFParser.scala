@@ -23,7 +23,7 @@ object TPTPFOFParser extends Parser {
       }
     }
     val res = new TPTPClausifier().apply(formulas)
-    res.clauses.foreach(clause => println(s"$clause :: ${clause.tp}"))
+//    res.clauses.foreach(clause => println(s"$clause :: ${clause.tp}"))
     res
   }
 }

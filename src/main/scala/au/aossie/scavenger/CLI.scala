@@ -2,7 +2,7 @@ package au.aossie.scavenger
 
 import ammonite.ops._
 import au.aossie.scavenger.structure.immutable.CNF
-import au.aossie.scavenger.prover.{EPCR, PDCR, Satisfiable, TDCR, Unsatisfiable}
+import au.aossie.scavenger.prover.{EPCR, PDCR, ProblemStatus, Satisfiable, TDCR, Unsatisfiable}
 import au.aossie.scavenger.parser.{TPTPCNFParser, TPTPFOFParser}
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
@@ -10,6 +10,8 @@ import au.aossie.scavenger.exporter.tptp.TPTPExporter
 import au.aossie.scavenger.proof.Proof
 
 import scala.collection.mutable
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
   * @author Daniyar Itegulov
@@ -23,9 +25,10 @@ object CLI {
                     dependenciesDir: Option[Path] = None)
 
   val configurations = Map(
-    "PD" -> PDCR,
-    "EP" -> EPCR,
-    "TD" -> TDCR
+    "PD" -> Seq(PDCR),
+    "EP" -> Seq(new EPCR(100, 10, 10000, 1.0, 0.99, 1e10, 10, false),
+             new EPCR(100, 10, 10000, 1.0, 0.99, 1e10, 5, true)),
+    "TD" -> Seq(TDCR)
   )
   val parsers = Map(
     "cnf"  -> TPTPCNFParser,
@@ -104,24 +107,34 @@ object CLI {
 
   def main(args: Array[String]): Unit = {
     parser.parse(args, Config()) foreach { c =>
-      val solver = configurations(c.configuration)
+      val solvers = configurations(c.configuration)
       for (input <- c.inputs) {
         val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), TPTPCNFParser)
         val path   = Path.apply(input, pwd)
         val cnf    = parser.parse(path, c.dependenciesDir)
-        solver.prove(cnf) match {
-          case Unsatisfiable(Some(p)) =>
-            val problemName = input.drop(input.lastIndexOf("/") + 1)
-            c.output.write(s"% SZS status Unsatisfiable for $problemName\n")
-            c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
-            new TPTPExporter(c.output).write(p)
-            c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
-          case Satisfiable(m) =>
-            c.output.write(s"% SZS status Satisfiable for $input")
-            c.output.write("\n")
-            c.output.write(m)
-          case _ =>
-            c.output.write(s"% SZS status GaveUp for $input")
+        implicit val ec: ExecutionContext = ExecutionContext.global
+        val futures = solvers.map { solver =>
+          Future[ProblemStatus] {
+            solver.prove(cnf)
+          }
+        }
+        val firstCompleted = Future.firstCompletedOf(futures)
+        Await.ready(firstCompleted, Duration.Inf)
+        firstCompleted.value match {
+          case Some(proof) => proof.get match {
+            case Unsatisfiable(Some(p)) =>
+              val problemName = input.drop(input.lastIndexOf("/") + 1)
+              c.output.write(s"% SZS status Unsatisfiable for $problemName\n")
+              c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
+              new TPTPExporter(c.output).write(p)
+              c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
+            case Satisfiable(m) =>
+              c.output.write(s"% SZS status Satisfiable for $input")
+              c.output.write("\n")
+              c.output.write(m)
+            case _ =>
+              c.output.write(s"% SZS status GaveUp for $input")
+          }
         }
       }
     }

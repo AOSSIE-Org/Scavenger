@@ -17,6 +17,7 @@ class DecisionMaker(initialBump: Double,
 
   val activity: mutable.Map[Sym, Double] = mutable.HashMap.empty
   var incSym: Double = initialBump
+  var temp: Double = 20
 
   def bumpActivity(literal: Literal): Unit = {
     val syms = literal.toClause.predicates.map(_._1)
@@ -66,9 +67,7 @@ class DecisionMaker(initialBump: Double,
       if (rnd.nextInt(101) >= randomDecisionsPercent) {
         val availableActivities = available.map(getActivity)
         val availableActivitiesSum = availableActivities.sum
-        //          val alpha = (math.log(incSym) - math.log(available.size)) * availableActivitiesSum / availableActivities.max
-        // TODO: constant 10
-        val probs = availableActivities.map(act => math.exp(10 * (act / availableActivitiesSum)))
+        val probs = availableActivities.map(act => math.exp(temp * (act / availableActivitiesSum)))
         val p = rnd.nextDouble * probs.sum
         var curP = 0.0
         for ((literal, prob) <- available.zip(probs)) {
@@ -86,5 +85,6 @@ class DecisionMaker(initialBump: Double,
   def update(newLiterals: Seq[Clause]): Unit = {
     newLiterals.flatMap(_.literals)(collection.breakOut).foreach(bumpActivity)
     incSym /= decayFactor
+    temp = 1.0 max (temp * 0.99)
   }
 }
