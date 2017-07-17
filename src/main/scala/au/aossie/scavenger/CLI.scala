@@ -9,6 +9,7 @@ import au.aossie.scavenger.util.io.{Output, StandardOutput}
 import au.aossie.scavenger.exporter.tptp.TPTPExporter
 import au.aossie.scavenger.proof.Proof
 
+import scala.util.{Try,Success,Failure}
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -27,7 +28,7 @@ object CLI {
   val configurations = Map(
     "PD" -> Seq(PDCR),
     "EP" -> Seq(new EPCR(100, 10, 10000, 1.0, 0.99, 1e10, 10, false),
-             new EPCR(100, 10, 10000, 1.0, 0.99, 1e10, 5, true)),
+                new EPCR(100, 10, 10000, 1.0, 0.99, 1e10, 5, true)),
     "TD" -> Seq(TDCR)
   )
   val parsers = Map(
@@ -90,21 +91,22 @@ object CLI {
       """)
   }
 
-  // TODO: This is not the right place for this function
-  def getUppercaseVariables(cnf: CNF): mutable.Set[Sym] = {
-    def uppercaseVariableInFormula(e: E): Set[Sym] = e match {
-      case v: Sym if v.name.head.isUpper => Set(v)
-      case App(l, r)                     => uppercaseVariableInFormula(l) ++ uppercaseVariableInFormula(r)
-      case Abs(_, _, body)               => uppercaseVariableInFormula(body)
-      case _                             => Set.empty
-    }
-    val variables = mutable.Set.empty[Sym]
-    cnf.clauses
-      .flatMap(clause => clause.ant ++ clause.suc)
-      .foreach(variables ++= uppercaseVariableInFormula(_))
-    variables
-  }
+  // FIXME: This is not the right place for this function
+//  def getUppercaseVariables(cnf: CNF): mutable.Set[Sym] = {
+//    def uppercaseVariableInFormula(e: E): Set[Sym] = e match {
+//      case v: Sym if v.name.head.isUpper => Set(v)
+//      case App(l, r)                     => uppercaseVariableInFormula(l) ++ uppercaseVariableInFormula(r)
+//      case Abs(_, _, body)               => uppercaseVariableInFormula(body)
+//      case _                             => Set.empty
+//    }
+//    val variables = mutable.Set.empty[Sym]
+//    cnf.clauses
+//      .flatMap(clause => clause.ant ++ clause.suc)
+//      .foreach(variables ++= uppercaseVariableInFormula(_))
+//    variables
+//  }
 
+  
   def main(args: Array[String]): Unit = {
     parser.parse(args, Config()) foreach { c =>
       val solvers = configurations(c.configuration)
@@ -122,9 +124,18 @@ object CLI {
         val firstCompleted = Future.firstCompletedOf(futures)
         Await.ready(firstCompleted, Duration.Inf)
         firstCompleted.value match {
-          case Some(proof) => proof.get match {
+          case Some(Success(problemStatus)) => problemStatus match {
             case Unsatisfiable(Some(p)) =>
-              c.output.write(s"% SZS status Unsatisfiable for $problemName\n")
+              
+              for (c <- cnf.clauses) println(c.tp)
+              
+              //FIXME: This is a hack to obtain "Theorem" instead of "Satisfiable"
+              def hasConjecture(cnf: CNF): Boolean = {
+                scala.io.Source.fromFile(input).getLines().exists { _ contains ",conjecture," }
+              } 
+              val status = if (hasConjecture(cnf)) "Theorem" else "Unsatisfiable"
+              
+              c.output.write(s"% SZS status $status for $problemName\n")
               c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
               new TPTPExporter(c.output).write(p)
               c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
@@ -136,6 +147,7 @@ object CLI {
             case _ =>
               c.output.write(s"% SZS status GaveUp for $input")
           }
+          case _ => 
         }
       }
     }
