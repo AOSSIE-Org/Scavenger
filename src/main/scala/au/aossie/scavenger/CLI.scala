@@ -112,6 +112,7 @@ object CLI {
         val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), TPTPCNFParser)
         val path   = Path.apply(input, pwd)
         val cnf    = parser.parse(path, c.dependenciesDir)
+        val problemName = input.drop(input.lastIndexOf("/") + 1)
         implicit val ec: ExecutionContext = ExecutionContext.global
         val futures = solvers.map { solver =>
           Future[ProblemStatus] {
@@ -123,15 +124,15 @@ object CLI {
         firstCompleted.value match {
           case Some(proof) => proof.get match {
             case Unsatisfiable(Some(p)) =>
-              val problemName = input.drop(input.lastIndexOf("/") + 1)
               c.output.write(s"% SZS status Unsatisfiable for $problemName\n")
               c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
               new TPTPExporter(c.output).write(p)
               c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
             case Satisfiable(m) =>
               c.output.write(s"% SZS status Satisfiable for $input")
-              c.output.write("\n")
+              c.output.write(s"% SZS output start Model for $problemName\n")
               c.output.write(m)
+              c.output.write(s"% SZS output end Model for $problemName\n")
             case _ =>
               c.output.write(s"% SZS status GaveUp for $input")
           }
