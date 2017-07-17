@@ -86,6 +86,11 @@ class EPCR(maxCountCandidates: Int = 1000,
     val bufferNodes: ArrayBuffer[ArrayBuffer[CRProofNode]] = mutable.ArrayBuffer.empty
 
     /**
+      * All clauses which use a literal.
+      */
+    val clausesByLiteral: mutable.HashMap[Literal, ListBuffer[Clause]] = mutable.HashMap.empty
+
+    /**
       * All decisions made at this point.
       */
     val decisions: mutable.Set[Literal] = mutable.Set.empty
@@ -105,6 +110,8 @@ class EPCR(maxCountCandidates: Int = 1000,
       */
     val memGetConflictDecisions: mutable.HashSet[Clause] = mutable.HashSet.empty
 
+    val updated: mutable.Set[Literal] = mutable.HashSet.empty
+
     // TODO: Do research about to store only part of all unifications.
     def updateUnifiableUnits(newLiterals: Seq[Literal]): Unit = {
       for (literal <- literals) {
@@ -113,19 +120,26 @@ class EPCR(maxCountCandidates: Int = 1000,
           unifiableUnitsBuff += mutable.Set.empty
         }
         val set = unifiableUnitsBuff(indexByLiteral)
+        var isUpdated = false
         for (newLiteral <- newLiterals) {
           if (newLiteral.polarity != literal.polarity) {
             unifyWithRename(Seq(literal.unit), Seq(newLiteral.unit)) match {
               case Some(_) =>
                 set += newLiteral
+                isUpdated = true
               case None =>
             }
           }
         }
+        if (isUpdated) {
+          updated.add(literal)
+        }
       }
     }
 
-    def addProvedLiterals(newProvedLiterals: Seq[Literal]) = {
+    def addProvedLiterals(literals: Seq[Literal]) = {
+      val newProvedLiterals = literals
+//      val newProvedLiterals = literals.filterNot(provedLiterals.contains)
       provedLiterals ++= newProvedLiterals
       updateUnifiableUnits(newProvedLiterals)
     }
@@ -139,7 +153,6 @@ class EPCR(maxCountCandidates: Int = 1000,
     }
 
     def resolveUnitPropagations(clause: Clause, result: mutable.Set[Literal]): Unit = {
-      // TODO: Isn't it important which node we will choose?
       for (clauseNode <- bufferNodes(reverseImplication(clause))) {
 
         // TODO: Think about to shuffle literals to avoid worst case in the bruteforce.
@@ -202,7 +215,8 @@ class EPCR(maxCountCandidates: Int = 1000,
               // NOTE: Looking at all possible unifications turns to large complexity of this part of resolving
               // TODO: Think about to check only random K unifiers
               val candidates = {
-                rnd.shuffle(unifiers(cur)).take(maxCountCandidates)
+//                rnd.shuffle(unifiers(cur)).take(maxCountCandidates)
+                unifiers(cur)
               }
               for (curUni <- candidates) {
                 val substitution = renameVars(curUni.unit, usedVars)
@@ -326,6 +340,12 @@ class EPCR(maxCountCandidates: Int = 1000,
 
       literals = nonUnitClauses.flatMap(_.literals)(collection.breakOut)
       decisionMaker.update(newClauses.map(_.conclusion))
+      for {
+        clause <- newClauses.map(_.conclusion)
+        literal <- clause.literals
+      } {
+        clausesByLiteral.getOrElseUpdate(literal, mutable.ListBuffer.empty) += clause
+      }
 
       newClauses.foreach(node =>
         addNode(node.conclusion, node))
@@ -345,6 +365,13 @@ class EPCR(maxCountCandidates: Int = 1000,
         name
     }
 
+
+    for {
+      clause <- nonUnitClauses
+      literal <- clause.literals
+    } {
+      clausesByLiteral.getOrElseUpdate(literal, mutable.ListBuffer.empty).append(clause)
+    }
     addProvedLiterals(initialClauses.filter(_.isUnit).map(_.literal))
     initialClauses.foreach(clause => addNode(clause, InitialStatement(clause)))
 
@@ -353,7 +380,9 @@ class EPCR(maxCountCandidates: Int = 1000,
     while (true) {
       logger.debug(s"new iteration:  provedLiterals(${provedLiterals.size})")
       val propagatedLiterals = mutable.Set.empty[Literal]
-      for (clause <- nonUnitClauses)
+      val updatedClauses = updated.flatMap(clausesByLiteral.getOrElse(_, mutable.ListBuffer.empty))
+      updated.clear()
+      for (clause <- updatedClauses.filterNot(_.isUnit))
         if (!clause.literals.exists(provedLiterals.contains)) {
           resolveUnitPropagations(clause, propagatedLiterals)
         }
