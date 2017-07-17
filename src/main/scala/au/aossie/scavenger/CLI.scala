@@ -101,9 +101,9 @@ object CLI {
         val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), TPTPCNFParser)
         val path   = Path.apply(input, pwd)
         val cnf    = parser.parse(path)
+        val problemName = input.drop(input.lastIndexOf("/") + 1)
         solver.prove(cnf) match {
           case Unsatisfiable(p) =>
-            val problemName = input.drop(input.lastIndexOf("/") + 1)
             c.output.write("\n")
             c.output.write(s"% SZS status Unsatisfiable for $problemName\n")
             c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
