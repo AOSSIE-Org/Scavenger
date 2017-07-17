@@ -111,7 +111,7 @@ object CLI {
     parser.parse(args, Config()) foreach { c =>
       val solvers = configurations(c.configuration)
       for (input <- c.inputs) {
-        val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), TPTPCNFParser)
+        val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), if (input contains "-1.p") TPTPCNFParser else TPTPFOFParser)
         val path   = Path.apply(input, pwd)
         val cnf    = parser.parse(path, c.dependenciesDir)
         val problemName = input.drop(input.lastIndexOf("/") + 1)
