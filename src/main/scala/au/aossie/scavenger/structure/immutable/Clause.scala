@@ -30,9 +30,9 @@ class Clause(val ant: ListSet[E], val suc: ListSet[E], val tp: ClauseType = Unde
   }
   def functionSymbols: Seq[(Sym, Int)] = {
     (ant.flatMap {
-      case AppRec(fun: Sym, args) => args.flatMap(_.functionSymbols)
+      case AppRec(_: Sym, args) => args.flatMap(_.functionSymbols)
     } ++ suc.flatMap {
-      case AppRec(fun: Sym, args) => args.flatMap(_.functionSymbols)
+      case AppRec(_: Sym, args) => args.flatMap(_.functionSymbols)
     }).toSeq
   }
 
@@ -51,14 +51,14 @@ class Clause(val ant: ListSet[E], val suc: ListSet[E], val tp: ClauseType = Unde
     }
   }
 
-  def +(f:E) = new Clause(ant, suc + f)
-  def +:(f:E) = new Clause(ant + f, suc)
-  def -(f:E) =  new Clause(ant, suc - f)
-  def -:(f:E) = new Clause(ant - f, suc)
+  def +(f:E) = new Clause(ant, suc + f, tp)
+  def +:(f:E) = new Clause(ant + f, suc, tp)
+  def -(f:E) =  new Clause(ant, suc - f, tp)
+  def -:(f:E) = new Clause(ant - f, suc, tp)
 
-  def union(that: Clause) = new Clause(ant union that.ant, suc union that.suc)
-  def diff(that: Clause) = new Clause(ant diff that.ant, suc diff that.suc)
-  def intersect(that: Clause) = new Clause(ant intersect that.ant, suc intersect that.suc)
+  def union(that: Clause) = new Clause(ant union that.ant, suc union that.suc, tp)
+  def diff(that: Clause) = new Clause(ant diff that.ant, suc diff that.suc, tp)
+  def intersect(that: Clause) = new Clause(ant intersect that.ant, suc intersect that.suc, tp)
 
   def first: Literal = literals.head
   def last: Literal = literals.last

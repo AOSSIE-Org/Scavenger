@@ -1,26 +1,29 @@
 package au.aossie.scavenger.parser
 import ammonite.ops.Path
-import au.aossie.scavenger.expression.formula.And
-import au.aossie.scavenger.structure.immutable.{CNF, Clause}
+import au.aossie.scavenger.expression.formula.{And, Neg}
+import au.aossie.scavenger.structure.immutable.{AxiomClause, CNF, Clause, NegConjectureClause}
 import au.aossie.scavenger.parser.TPTP.{FOFAxiomStatement, FOFConjectureStatement, FOFNegatedConjectureStatement, FOF => TPTPFOF}
+import au.aossie.scavenger.preprocessing.TPTPClausifier
 
 /**
   * @author Vlad Podtelkin
   */
-object TPTPFOFParser {
+object TPTPFOFParser extends Parser {
   def parse(filename: Path, _dependenciesDir: Option[Path] = None): CNF = {
     val problem = TPTPFOF.problem(filename, _dependenciesDir)
-    val formula = problem.statements.map {
+    val formulas = problem.statements.map {
       case axiom: FOFAxiomStatement => {
-        axiom.formula
+        (axiom.formula, AxiomClause)
       }
       case neg_conj: FOFNegatedConjectureStatement => {
-        neg_conj.formula
+        (neg_conj.formula, NegConjectureClause)
       }
       case conj: FOFConjectureStatement => {
-        conj.formula
+        (Neg(conj.formula), NegConjectureClause)
       }
-    }.reduce(And(_, _))
-    TPTPClausifier(formula)
+    }
+    val res = new TPTPClausifier().apply(formulas)
+//    res.clauses.foreach(clause => println(s"$clause :: ${clause.tp}"))
+    res
   }
 }

@@ -44,6 +44,7 @@ extends Base {
     role match {
       case "conjecture"         => CNFConjectureStatement(name,ant.toList,suc.toList)
       case "negated_conjecture" => CNFNegatedConjectureStatement(name,ant.toList,suc.toList)
+      case "hypothesis"         => CNFHypothesisStatement(name,ant.toList,suc.toList)
       case _                    => CNFAxiomStatement(name,ant.toList,suc.toList)
     }
 

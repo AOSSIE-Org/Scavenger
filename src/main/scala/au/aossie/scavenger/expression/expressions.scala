@@ -51,7 +51,7 @@ sealed abstract class E {
       case Abs(v,t,b) => rec(b, bVars + v)
       case _ => Seq()
     }
-    rec(this, Set[Var]())
+    rec(this, Set[Var]()).distinct
   }
 
   lazy val depth = {
