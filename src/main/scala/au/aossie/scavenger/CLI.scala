@@ -111,7 +111,7 @@ object CLI {
     parser.parse(args, Config()) foreach { c =>
       val solvers = configurations(c.configuration)
       for (input <- c.inputs) {
-        val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), if (input contains "-1.p") TPTPCNFParser else TPTPFOFParser)
+        val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), if (input contains "-1.p") TPTPCNFParser else TPTPFOFParser) // FIXME
         val path   = Path.apply(input, pwd)
         val cnf    = parser.parse(path, c.dependenciesDir)
         val problemName = input.drop(input.lastIndexOf("/") + 1)
@@ -129,7 +129,7 @@ object CLI {
               
               for (c <- cnf.clauses) println(c.tp)
               
-              //FIXME: This is a hack to obtain "Theorem" instead of "Satisfiable"
+              //FIXME: This is a hack to obtain "Theorem" instead of "Unsatisfiable"
               def hasConjecture(cnf: CNF): Boolean = {
                 scala.io.Source.fromFile(input).getLines().exists { _ contains ",conjecture," }
               } 
