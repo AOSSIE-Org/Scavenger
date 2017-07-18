@@ -32,7 +32,7 @@ object CRTest extends App {
 
   def test(testName: String)(implicit vars: mutable.Set[Sym]) {
     val clauses = problemToClauses(
-      TPTPCNF.problem(pwd / 'examples / 'problems / 'CNF / s"$testName.cnfp", None))
+      TPTPCNF.problem(pwd / 'examples / 'problems / 'CNF / s"$testName.cnfp"))
     val t = time(PDCR.prove(CNF(clauses)))
     println(s"Computed $testName in $t microseconds")
   }

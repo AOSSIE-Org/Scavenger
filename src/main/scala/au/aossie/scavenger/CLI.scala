@@ -21,8 +21,7 @@ object CLI {
 
   case class Config(inputs: Seq[String] = Seq(),
                     configuration: String = "EP",
-                    output: Output = StandardOutput,
-                    dependenciesDir: Option[Path] = None)
+                    output: Output = StandardOutput)
 
   val configurations = Map(
     "PD" -> Seq(PDCR),
@@ -41,15 +40,11 @@ object CLI {
 
     opt[String]('a', "algorithm") action { (v, c) =>
       c.copy(configuration = v)
-    } text "use <alg> to solve the problem" valueName "<alg>"
-
-    opt[String]('d', "dependencies") action { (v, c) =>
-      c.copy(dependenciesDir = Some(pwd / RelPath(v)))
-    }
+    } text "use <configuration> to solve the problem" valueName "<alg>"
 
     note(
       s"""
-        <alg> can be any of the following algorithms:
+        <configuration> can be any of the following algorithms:
         ${configurations.keys.mkString(", ")}
         """
     )
@@ -92,7 +87,7 @@ object CLI {
         
         val parser = detectParser(input)
         val path   = Path.apply(input, pwd)
-        val cnf    = parser.parse(path, c.dependenciesDir)
+        val cnf    = parser.parse(path)
         val problemName = input.drop(input.lastIndexOf("/") + 1)
         implicit val ec: ExecutionContext = ExecutionContext.global
         val futures = solvers.map { solver =>

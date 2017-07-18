@@ -9,8 +9,8 @@ import au.aossie.scavenger.preprocessing.TPTPClausifier
   * @author Vlad Podtelkin
   */
 object TPTPFOFParser extends Parser {
-  def parse(filename: Path, _dependenciesDir: Option[Path] = None): CNF = {
-    val problem = TPTPFOF.problem(filename, _dependenciesDir)
+  def parse(filename: Path): CNF = {
+    val problem = TPTPFOF.problem(filename)
     val formulas = problem.statements.map {
       case axiom: FOFAxiomStatement => {
         (axiom.formula, AxiomClause)
