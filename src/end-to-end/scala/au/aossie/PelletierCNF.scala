@@ -31,8 +31,10 @@ class PelletierCNF extends Specification {
     variables
   }
 
+  val parser = new TPTPCNFParser(pwd / 'examples / 'problems / 'Pelletier)
+  
   def test(testName: String, prover: Prover = EPCR): ProblemStatus = {
-    val p = TPTPCNFParser.parse(pwd / 'examples / 'problems / 'Pelletier / s"$testName.p")
+    val p = parser.parse(pwd / 'examples / 'problems / 'Pelletier / s"$testName.p")
     implicit val vars = getUppercaseVariables(p)
     prover.prove(p)
   }

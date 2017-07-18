@@ -9,7 +9,6 @@ import collection.mutable.Set
 /**
   * Created by eze on 2016.07.06..
   */
-object THF extends THF
 
 
 /**

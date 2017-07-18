@@ -25,9 +25,11 @@ class PerformanceEPCR extends Specification {
     variables
   }
 
+  val parser = new TPTPCNFParser(pwd / 'tptp640 )
+  
   def test(testName: String): ProblemStatus = {
     val cat = testName.take(3)
-    val p = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / s"$cat" / s"$testName.p")
+    val p = parser.parse(pwd / 'tptp640 / 'Problems / s"$cat" / s"$testName.p")
     implicit val vars = getUppercaseVariables(p)
     EPCR.prove(p)
   }

@@ -33,8 +33,10 @@ object EasyTPTPCNFUnsatNoEq extends Bench.OfflineRegressionReport {
     variables
   }
 
+  val parser = new TPTPCNFParser(pwd / 'examples / 'problems / "TPTP-v6.4.0")
+  
   def test(testName: String): ProblemStatus = {
-    val p = TPTPCNFParser.parse(pwd / 'examples / 'problems / "TPTP-v6.4.0" / 'Problems / testName.take(3) / (testName + ".p"))
+    val p = parser.parse(pwd / 'examples / 'problems / "TPTP-v6.4.0" / 'Problems / testName.take(3) / (testName + ".p"))
     implicit val vars = getUppercaseVariables(p)
     PDCR.prove(p)
   }

@@ -29,11 +29,6 @@ object CLI {
                 new EPCR(100, 10, 10000, 1.0, 0.99, 1e10, 5, true)),
     "TD" -> Seq(TDCR)
   )
-  val parsers = Map(
-    "cnf"  -> TPTPCNFParser,
-    "cnfp" -> TPTPCNFParser,
-    "fof"  -> TPTPFOFParser
-  )
 
   val parser = new scopt.OptionParser[Config]("scavenger") {
     head("\nScavenger's Command Line Interface\n\n")
@@ -76,18 +71,19 @@ object CLI {
       val solvers = configurations(c.configuration)
       for (input <- c.inputs) {
         
-        //FIXME: This is a hack to automatically detect which parser to use
-        def detectParser(input: String) = {
+        val filePath = Path(input, pwd)
+        val includesDir = filePath / up
+        
+        val parser = {
           scala.io.Source.fromFile(input).getLines() find { l => (l contains "cnf(") || (l contains "fof(") } match {
-            case Some(l) if (l contains "cnf(") => TPTPCNFParser
-            case Some(l) if (l contains "fof(") => TPTPFOFParser
+            case Some(l) if (l contains "cnf(") => new TPTPCNFParser(includesDir)
+            case Some(l) if (l contains "fof(") => new TPTPFOFParser(includesDir)
             case _ => throw new Exception("unknown file format") 
           }
         } 
+
         
-        val parser = detectParser(input)
-        val path   = Path.apply(input, pwd)
-        val cnf    = parser.parse(path)
+        val cnf    = parser.parse(filePath)
         val problemName = input.drop(input.lastIndexOf("/") + 1)
         implicit val ec: ExecutionContext = ExecutionContext.global
         val futures = solvers.map { solver =>

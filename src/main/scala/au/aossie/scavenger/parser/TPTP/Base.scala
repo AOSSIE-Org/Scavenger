@@ -56,7 +56,7 @@ trait Base extends TokenParsers with PackratParsers {
    * nodes in a future stage. This MUST be solved to delete the next three
    * members.
    */
-  private var includesDir: Path = null // FIXME
+  val includesDir: Path
   private val varSet: MSet[Sym] = MSet.empty[Sym]
   private def recordVar(v: String) { varSet += Sym(v) }
   private def recordVar(v: String, t: T) { varSet += Sym(v) } // Critical point where type information was lost during refactoring
@@ -68,7 +68,6 @@ trait Base extends TokenParsers with PackratParsers {
 
   // Parsing methods
   def parse[Target](input: Path, parser: Parser[Target]) = {
-    includesDir = input / up
     val fileContent = scala.io.Source.fromFile(input.toIO).mkString
     val tokens      = new lexical.Scanner(fileContent)
     phrase(parser)(tokens)
@@ -117,10 +116,7 @@ trait Base extends TokenParsers with PackratParsers {
       } catch {
         case _ : java.io.FileNotFoundException => {
           scala.util.Properties.envOrNone("TPTP") match {
-            case Some(ev) => {
-              includesDir = Path(ev)
-              extract((includesDir / RelPath(fileName)), parser)
-            }
+            case Some(ev) => extract((Path(ev) / RelPath(fileName)), parser)
             case None => throw new Exception("Included file not found.")
           }
         }

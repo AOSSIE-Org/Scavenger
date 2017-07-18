@@ -8,7 +8,6 @@ import collection.mutable.Set
 /**
   * Created by eze on 2016.05.25..
   */
-object FOF extends FOF
 
 /**
   * The ProblemParserFOFTPTP trait implements a parser for problems written

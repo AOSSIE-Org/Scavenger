@@ -13,7 +13,7 @@ import collection.mutable.Set
   *          except for a conjecture or negated conjecture. No derivation nodes
   *          or other TPTP annotated formulas are accepted.
   */
-object CNF extends CNF
+
 
 /**
   * The ProblemParserFOFTPTP trait implements a parser for problems written

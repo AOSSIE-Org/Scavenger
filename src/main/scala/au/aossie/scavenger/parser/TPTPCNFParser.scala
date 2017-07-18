@@ -8,10 +8,10 @@ import au.aossie.scavenger.parser.TPTP.{CNFAxiomStatement, CNFHypothesisStatemen
 /**
   * @author Daniyar Itegulov
   */
-object TPTPCNFParser extends Parser {
-  def parse(filename: Path): CNF = {
-    val problem = TPTPCNF.problem(filename)
-    val clauses = problem.statements.map {
+class TPTPCNFParser(val includesDir: Path) extends Parser with TPTPCNF {
+  def parse(filepath: Path): CNF = {
+    val p = problem(filepath)
+    val clauses = p.statements.map {
       case axiom: CNFAxiomStatement => Clause(AxiomClause)(axiom.ant: _*)(axiom.suc: _*)
       case negConj: CNFNegatedConjectureStatement => Clause(NegConjectureClause)(negConj.ant: _*)(negConj.suc: _*)
       case hyp: CNFHypothesisStatement => Clause(HypothesisClause)(hyp.ant: _*)(hyp.suc: _*)
