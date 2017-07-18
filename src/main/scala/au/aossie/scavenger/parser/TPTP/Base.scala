@@ -118,7 +118,6 @@ trait Base extends TokenParsers with PackratParsers {
           scala.util.Properties.envOrNone("TPTP") match {
             case Some(ev) => {
               includesDir = Path(ev)
-              println(includesDir)
               expandIncludes(extract((includesDir / RelPath(fileName)), parser), parser) ++ ds // FIXME: Shouldn't we call expandIncludes recursively on `ds` here?
             }
             case None => throw new Exception("Included file not found.")
