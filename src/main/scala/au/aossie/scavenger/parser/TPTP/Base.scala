@@ -111,7 +111,21 @@ trait Base extends TokenParsers with PackratParsers {
                      parser: Parser[List[TPTPDirective]]): List[TPTPDirective] = directives match {
     case List() => List.empty
     case IncludeDirective(fileName, _) :: ds => {
-      expandIncludes(extract((includesDir / RelPath(fileName)), parser), parser) ++ ds // FIXME: Shouldn't we call expandIncludes recursively on `ds` here?
+      try {
+        expandIncludes(extract((includesDir / RelPath(fileName)), parser), parser) ++ ds // FIXME: Shouldn't we call expandIncludes recursively on `ds` here?   
+      } catch {
+        case _ : java.io.FileNotFoundException => {
+          scala.util.Properties.envOrNone("TPTP") match {
+            case Some(ev) => {
+              includesDir = Path(ev)
+              println(includesDir)
+              expandIncludes(extract((includesDir / RelPath(fileName)), parser), parser) ++ ds // FIXME: Shouldn't we call expandIncludes recursively on `ds` here?
+            }
+            case None => throw new Exception("Included file not found.")
+          }
+        }
+        case e: Throwable => throw e
+      }
     }
     case d :: ds => d :: expandIncludes(ds, parser)
   }
