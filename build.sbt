@@ -4,7 +4,7 @@ organization := "au.aossie"
 
 version := "0.2"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.11.11"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-optimize", "-Yinline-warnings", "-Xdisable-assertions")
 
