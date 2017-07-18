@@ -110,9 +110,10 @@ object CLI {
             c.output.write(p)
             c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
           case Satisfiable(m) =>
-            c.output.write(s"% SZS status Satisfiable for $input")
+            c.output.write(s"% SZS status Satisfiable for $problemName\n")
             c.output.write(s"% SZS output start Model for $problemName\n")
             c.output.write(m)
+            c.output.write("\n")
             c.output.write(s"% SZS output end Model for $problemName\n")
           case _ =>
             c.output.write(s"% SZS status GaveUp for $input")
