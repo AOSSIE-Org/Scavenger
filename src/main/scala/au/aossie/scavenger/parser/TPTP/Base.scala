@@ -56,8 +56,8 @@ trait Base extends TokenParsers with PackratParsers {
    * nodes in a future stage. This MUST be solved to delete the next three
    * members.
    */
-  private val varSet: MSet[Sym]     = MSet.empty[Sym]
-  private var dependenciesDir: Option[Path] = None
+  private var inputDir: Path = null
+  private val varSet: MSet[Sym] = MSet.empty[Sym]
   private def recordVar(v: String) { varSet += Sym(v) }
   private def recordVar(v: String, t: T) { varSet += Sym(v) } // Critical point where type information was lost during refactoring
   def getSeenVars: MSet[Sym] = varSet.clone()
@@ -67,23 +67,11 @@ trait Base extends TokenParsers with PackratParsers {
   type Tokens = TPTPTokens
 
   // Parsing methods
-  def parse[Target](input: Path, argDependenciesDir: Option[Path], parser: Parser[Target]) = {
+  def parse[Target](input: Path, parser: Parser[Target]) = {
+    inputDir = input
+    println(input)
     val fileContent = scala.io.Source.fromFile(input.toIO).mkString
     val tokens      = new lexical.Scanner(fileContent)
-    argDependenciesDir match {
-      case Some(dir) =>
-        this.dependenciesDir = Some(dir)
-      case None =>
-        dependenciesDir match {
-          case Some(_) =>
-          case None =>
-            if ((input / up / "Axioms").toIO.exists()) {
-              this.dependenciesDir = Some(input / up)
-            } else {
-              this.dependenciesDir = Some(input / up / up / up / up)
-            }
-        }
-    }
     phrase(parser)(tokens)
   }
 
@@ -100,8 +88,8 @@ trait Base extends TokenParsers with PackratParsers {
     new lexical.Scanner(input)
   }
 
-  def extract[Target](fileName: Path, dependenciesDir: Option[Path], parser: Parser[Target]): Target = {
-    parse(fileName, dependenciesDir, parser) match {
+  def extract[Target](fileName: Path, parser: Parser[Target]): Target = {
+    parse(fileName, parser) match {
       case Success(p2, _)      => p2
       case Error(message, _)   => throw new Exception("Error: " + message)
       case Failure(message, _) => throw new Exception("Failure: " + message)
@@ -118,13 +106,15 @@ trait Base extends TokenParsers with PackratParsers {
     *       name of the annotated formula.
     *
     * @param directives A list of TPTP directives (includes and/or annotated formulas)
-    * @return           The expansion of all the includes (recursivelly) to the files
+    * @return           The expansion of all the includes (recursively) to the files
     */
   def expandIncludes(directives: List[TPTPDirective],
                      parser: Parser[List[TPTPDirective]]): List[TPTPDirective] = directives match {
     case List() => List.empty
-    case IncludeDirective(fileName, _) :: ds =>
-      expandIncludes(extract(dependenciesDir.get / RelPath(fileName), None, parser), parser) ++ ds
+    case IncludeDirective(fileName, _) :: ds => {
+      var includesDir: Path = inputDir
+      expandIncludes(extract((includesDir / RelPath(fileName)), parser), parser) ++ ds // FIXME: Shouldn't we call expandIncludes recursively on `ds` here?
+    }
     case d :: ds => d :: expandIncludes(ds, parser)
   }
 

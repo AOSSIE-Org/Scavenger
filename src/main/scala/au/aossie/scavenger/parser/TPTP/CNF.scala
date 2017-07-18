@@ -49,7 +49,7 @@ extends Base {
     }
 
 
-  def problem(fileName : Path, dependenciesDir: Option[Path]) : CNFProblem = extract(fileName, dependenciesDir, problemParser)
+  def problem(fileName : Path, dependenciesDir: Option[Path]) : CNFProblem = extract(fileName, problemParser)
 
 }
 

@@ -120,7 +120,7 @@ object TPTPExtensiveTest extends Base {
         results.print("Parsing " + problem + ": ")
         results.flush()
         problemStartTime = System.nanoTime
-        extract(Path(problem), None, TPTP_file_TESTS(axiomsFolderPath))
+        extract(Path(problem), TPTP_file_TESTS(axiomsFolderPath))
         problemEndTime = System.nanoTime
         problemRunTime = problemEndTime - problemStartTime
         results.println("SUCCEEDED in " + (problemRunTime/1000000000.0).toString + " seconds")

@@ -48,7 +48,7 @@ trait THF
     }
 
 
-  def problem(fileName : Path) : THFProblem = extract(fileName, None, problemParser)
+  def problem(fileName : Path) : THFProblem = extract(fileName, problemParser)
 
 }
 
