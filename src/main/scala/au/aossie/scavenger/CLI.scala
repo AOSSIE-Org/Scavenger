@@ -21,6 +21,7 @@ object CLI {
 
   case class Config(inputs: Seq[String] = Seq(),
                     configuration: String = "EP",
+                    includesDir: Option[Path] = None,
                     output: Output = StandardOutput)
 
   val configurations = Map(
@@ -43,6 +44,11 @@ object CLI {
         ${configurations.keys.mkString(", ")}
         """
     )
+    
+    opt[String]('d', "directory") action { (v, c) =>
+      c.copy(includesDir = Some(pwd / RelPath(v)))
+    } text "directory where included files are located"
+
 
     opt[String]('o', "out") action { (v, c) =>
       c.copy(output = Output(v))
@@ -72,7 +78,7 @@ object CLI {
       for (input <- c.inputs) {
         
         val filePath = Path(input, pwd)
-        val includesDir = filePath / up
+        val includesDir = c.includesDir.getOrElse(filePath / up)
         
         val parser = {
           scala.io.Source.fromFile(input).getLines() find { l => (l contains "cnf(") || (l contains "fof(") } match {
