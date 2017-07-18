@@ -6,7 +6,7 @@ version := "0.2"
 
 scalaVersion := "2.11.8"
 
-scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-optimize", "-Yinline-warnings")
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-optimize", "-Yinline-warnings", "-Xdisable-assertions")
 
 scalacOptions in (Compile, doc) ++= Seq("-diagrams","-implicits")
 
