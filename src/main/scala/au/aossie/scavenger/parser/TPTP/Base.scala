@@ -57,7 +57,7 @@ trait Base extends TokenParsers with PackratParsers {
    * members.
    */
   private var varSet: MSet[Sym]     = MSet.empty[Sym]
-  private var dependenciesDir: Option[Path] = None
+  private var dependenciesDir: Path = null
   private def recordVar(v: String) { varSet += Sym(v) }
   private def recordVar(v: String, t: T) { varSet += Sym(v) } // Critical point where type information was lost during refactoring
   def getSeenVars: MSet[Sym] = varSet.clone()
@@ -70,14 +70,7 @@ trait Base extends TokenParsers with PackratParsers {
   def parse[Target](input: Path, parser: Parser[Target]) = {
     val fileContent = scala.io.Source.fromFile(input.toIO).mkString
     val tokens      = new lexical.Scanner(fileContent)
-    if (dependenciesDir.isEmpty) {
-      // FIXME: this is a hack for StarExec axioms location support
-      if ((input / up / "Axioms").toIO.exists()) {
-        dependenciesDir = Some(input / up)
-      } else {
-        dependenciesDir = Some(input / up / up / up)
-      }
-    }
+    dependenciesDir = input / up
     phrase(parser)(tokens)
   }
 
@@ -116,8 +109,24 @@ trait Base extends TokenParsers with PackratParsers {
   def expandIncludes(directives: List[TPTPDirective],
                      parser: Parser[List[TPTPDirective]]): List[TPTPDirective] = directives match {
     case List() => List.empty
-    case IncludeDirective(fileName, _) :: ds =>
-      expandIncludes(extract(dependenciesDir.get / RelPath(fileName), parser), parser) ++ ds // FIXME: Path "../../" has to be added to fileName. I wonder if this is the correct place to fix this issue.
+    case IncludeDirective(fileName, _) :: ds => { 
+      val parsedIncludedFile = try {
+        extract((dependenciesDir / RelPath(fileName)), parser)   
+      } catch {
+        case _ : java.io.FileNotFoundException => {
+          
+          println("hello")
+          
+          scala.util.Properties.envOrNone("TPTP") match {
+            case Some(ev) => extract((Path(ev) / RelPath(fileName)), parser)
+            case None => throw new Exception("Included file not found.")
+          }
+        }
+        case e: Throwable => throw e
+      }
+      
+      expandIncludes(parsedIncludedFile, parser) ++ ds // FIXME: Shouldn't we call expandIncludes recursively on `ds` here?   
+    }
     case d :: ds => d :: expandIncludes(ds, parser)
   }
 
