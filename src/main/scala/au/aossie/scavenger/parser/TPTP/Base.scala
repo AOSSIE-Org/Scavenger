@@ -56,7 +56,7 @@ trait Base extends TokenParsers with PackratParsers {
    * nodes in a future stage. This MUST be solved to delete the next three
    * members.
    */
-  private var varSet: MSet[Sym]     = MSet.empty[Sym]
+  private val varSet: MSet[Sym]     = MSet.empty[Sym]
   private var dependenciesDir: Option[Path] = None
   private def recordVar(v: String) { varSet += Sym(v) }
   private def recordVar(v: String, t: T) { varSet += Sym(v) } // Critical point where type information was lost during refactoring
