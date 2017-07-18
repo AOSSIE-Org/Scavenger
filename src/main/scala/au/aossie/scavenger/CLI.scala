@@ -21,7 +21,6 @@ object CLI {
 
   case class Config(inputs: Seq[String] = Seq(),
                     configuration: String = "EP",
-                    format: Option[String] = None,
                     output: Output = StandardOutput,
                     dependenciesDir: Option[Path] = None)
 
@@ -36,7 +35,6 @@ object CLI {
     "cnfp" -> TPTPCNFParser,
     "fof"  -> TPTPFOFParser
   )
-  val knownFormats = Seq("cnf", "cnfp", "fof")
 
   val parser = new scopt.OptionParser[Config]("scavenger") {
     head("\nScavenger's Command Line Interface\n\n")
@@ -53,20 +51,6 @@ object CLI {
       s"""
         <alg> can be any of the following algorithms:
         ${configurations.keys.mkString(", ")}
-        """
-    )
-
-    opt[String]('f', "format") action { (v, c) =>
-      c.copy(format = Some(v))
-    } validate { v =>
-      if (knownFormats contains v) success
-      else failure("unknown problem format: " + v)
-    } text s"use <format> for input problem\n" valueName "<format>"
-
-    note(
-      s"""
-        <format> can be any of the following:
-        ${knownFormats.mkString(", ")}
         """
     )
 
@@ -96,7 +80,17 @@ object CLI {
     parser.parse(args, Config()) foreach { c =>
       val solvers = configurations(c.configuration)
       for (input <- c.inputs) {
-        val parser = parsers.getOrElse(c.format.getOrElse(input.split('.').last), if (input contains "-") TPTPCNFParser else TPTPFOFParser) // FIXME
+        
+        //FIXME: This is a hack to automatically detect which parser to use
+        def detectParser(input: String) = {
+          scala.io.Source.fromFile(input).getLines() find { l => (l contains "cnf(") || (l contains "fof(") } match {
+            case Some(l) if (l contains "cnf(") => TPTPCNFParser
+            case Some(l) if (l contains "fof(") => TPTPFOFParser
+            case _ => throw new Exception("unknown file format") 
+          }
+        } 
+        
+        val parser = detectParser(input)
         val path   = Path.apply(input, pwd)
         val cnf    = parser.parse(path, c.dependenciesDir)
         val problemName = input.drop(input.lastIndexOf("/") + 1)
