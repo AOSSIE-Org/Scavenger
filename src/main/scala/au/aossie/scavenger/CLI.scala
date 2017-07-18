@@ -91,21 +91,6 @@ object CLI {
       """)
   }
 
-  // FIXME: This is not the right place for this function
-//  def getUppercaseVariables(cnf: CNF): mutable.Set[Sym] = {
-//    def uppercaseVariableInFormula(e: E): Set[Sym] = e match {
-//      case v: Sym if v.name.head.isUpper => Set(v)
-//      case App(l, r)                     => uppercaseVariableInFormula(l) ++ uppercaseVariableInFormula(r)
-//      case Abs(_, _, body)               => uppercaseVariableInFormula(body)
-//      case _                             => Set.empty
-//    }
-//    val variables = mutable.Set.empty[Sym]
-//    cnf.clauses
-//      .flatMap(clause => clause.ant ++ clause.suc)
-//      .foreach(variables ++= uppercaseVariableInFormula(_))
-//    variables
-//  }
-
   
   def main(args: Array[String]): Unit = {
     parser.parse(args, Config()) foreach { c =>
