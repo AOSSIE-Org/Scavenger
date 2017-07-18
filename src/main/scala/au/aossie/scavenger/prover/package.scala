@@ -21,12 +21,6 @@ package object prover {
   //
   //  }
 
-  implicit class UnitSequent(val sequent: Clause) extends AnyVal {
-    def literal: Literal =
-      if (sequent.ant.size == 1 && sequent.suc.isEmpty) Literal(sequent.ant.head, polarity = false)
-      else if (sequent.ant.isEmpty && sequent.suc.size == 1) Literal(sequent.suc.head, polarity = true)
-      else throw new IllegalStateException("Given SeqSequent is not a unit")
-  }
 
   implicit class LiteralsAreSequent(val literals: Iterable[Literal]) extends AnyVal {
     def toClause: Clause = {

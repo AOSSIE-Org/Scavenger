@@ -21,6 +21,11 @@ case object UndefClause extends ClauseType
  */
 class Clause(val ant: ListSet[E], val suc: ListSet[E], val tp: ClauseType = UndefClause) extends ClauseLike[Clause] {
   def literals: Seq[Literal] = ant.toSeq.map(Literal(_, polarity = false)) ++ suc.toSeq.map(Literal(_, polarity = true))
+  def literal: Literal =
+    if (ant.size == 1 && suc.isEmpty) Literal(ant.head, polarity = false)
+    else if (ant.isEmpty && suc.size == 1) Literal(suc.head, polarity = true)
+    else throw new IllegalStateException("Given SeqSequent is not a unit")
+
   def predicates: Seq[(Sym, Int)] = {
     (ant.map {
       case AppRec(fun: Sym, args) => (fun, args.size)
