@@ -56,7 +56,7 @@ trait Base extends TokenParsers with PackratParsers {
    * nodes in a future stage. This MUST be solved to delete the next three
    * members.
    */
-  private var inputDir: Path = null
+  private var includesDir: Path = null // FIXME
   private val varSet: MSet[Sym] = MSet.empty[Sym]
   private def recordVar(v: String) { varSet += Sym(v) }
   private def recordVar(v: String, t: T) { varSet += Sym(v) } // Critical point where type information was lost during refactoring
@@ -68,8 +68,7 @@ trait Base extends TokenParsers with PackratParsers {
 
   // Parsing methods
   def parse[Target](input: Path, parser: Parser[Target]) = {
-    inputDir = input
-    println(input)
+    includesDir = input / up
     val fileContent = scala.io.Source.fromFile(input.toIO).mkString
     val tokens      = new lexical.Scanner(fileContent)
     phrase(parser)(tokens)
@@ -87,7 +86,7 @@ trait Base extends TokenParsers with PackratParsers {
   def tokens(input: Reader[Char]) = {
     new lexical.Scanner(input)
   }
-
+  
   def extract[Target](fileName: Path, parser: Parser[Target]): Target = {
     parse(fileName, parser) match {
       case Success(p2, _)      => p2
@@ -112,7 +111,6 @@ trait Base extends TokenParsers with PackratParsers {
                      parser: Parser[List[TPTPDirective]]): List[TPTPDirective] = directives match {
     case List() => List.empty
     case IncludeDirective(fileName, _) :: ds => {
-      var includesDir: Path = inputDir
       expandIncludes(extract((includesDir / RelPath(fileName)), parser), parser) ++ ds // FIXME: Shouldn't we call expandIncludes recursively on `ds` here?
     }
     case d :: ds => d :: expandIncludes(ds, parser)
