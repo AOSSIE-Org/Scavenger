@@ -17,20 +17,44 @@ import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
   * Created by podtelkin on 18.07.17.
   */
 class InferenceRules(initialClauses: ListBuffer[Clause],
-                      unificationSearcher: UnificationSearcher,
                      decisionMaker: DecisionMaker,
                      decisions: mutable.Set[Literal],
                      withSetOfSupport: Boolean)(implicit rnd: Random) {
   // FIXME: Bad practice to use predefined name(could be collision)
   val VARIABLE_NAME: String = "___VARIABLE___"
 
+  /**
+    * For every proved clause we need to know all possible proofNodes, because premises affect on result
+    */
   val proofNodesByClause: mutable.Map[Clause, ListBuffer[CRProofNode]] = mutable.Map.empty
+
+  /**
+    * provedLiterals generated from initial clauses, cdcl clauses, current state of decisions and UnitPropagations
+    */
   val provedLiterals: mutable.Set[Literal] = mutable.Set.empty
+
+  /**
+    * For every CDCL clause we need only one proofNode
+    */
+
   val cdclNodes: mutable.Map[Clause, CRProofNode] = mutable.Map.empty
+
+  /**
+    * Support unification data structure
+    */
+  val unificationSearcher = new UnificationSearcher(mutable.HashSet.empty)
+
+
+
+
+  reset()
+
 
   def available = unificationSearcher.nonUnitClauses.filterNot(_.literals.exists(provedLiterals.contains)).flatMap(_.literals)
 
   def reset(): Unit = {
+    unificationSearcher.clearUnifiableUnits()
+
     proofNodesByClause.clear()
 
     cdclNodes.foreach { case (clause, node) =>
@@ -42,6 +66,19 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
     provedLiterals.clear()
     provedLiterals ++= cdclNodes.keys.filter(_.isUnit).map(_.literal)
     provedLiterals ++= initialClauses.filter(_.isUnit).map(_.literal)
+
+    unificationSearcher.addNewClauses(cdclNodes.keys.filterNot(_.isUnit).toSeq)
+    unificationSearcher.addNewClauses(initialClauses.filterNot(_.isUnit))
+
+    unificationSearcher.updateUnifiableUnits(provedLiterals.toSeq)
+  }
+
+  def propagateAllClauses(): mutable.HashSet[Literal] = {
+    val propagatedLiterals = mutable.HashSet.empty[Literal]
+    unificationSearcher.clausesForPropagation(provedLiterals).foreach( clause =>
+      resolveUnitPropagations(clause, propagatedLiterals)
+    )
+    propagatedLiterals
   }
 
   def addProvedLiterals(literals: Seq[Literal]) = {

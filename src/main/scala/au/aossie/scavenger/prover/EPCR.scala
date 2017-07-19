@@ -51,11 +51,6 @@ class EPCR(maxCountCandidates: Int = 1000,
       */
     val decisionMaker: DecisionMaker = new DecisionMaker(initialBump, decayFactor, maxActivity, randomDecisionsPercent)
 
-    /**
-      * Support unification data structure
-      */
-    val unificationSearcher = new UnificationSearcher(mutable.HashSet.empty)
-
     val predicates = cnf.predicates
     val isEqualityReasoning = predicates.contains((new Sym("=") with Infix, 2))
     if (isEqualityReasoning) {
@@ -68,14 +63,13 @@ class EPCR(maxCountCandidates: Int = 1000,
     /**
       * CDCL and UnitPropagation inference rules here
       */
-    val inferenceRules = new InferenceRules(initialClauses, unificationSearcher, decisionMaker, decisions, withSetOfSupport)
+    val inferenceRules = new InferenceRules(initialClauses, decisionMaker, decisions, withSetOfSupport)
 
     def reset(): Unit = {
       logger.debug("RESET")
 
       decisions.clear()
       decisionMaker.reset()
-      unificationSearcher.clearUnifiableUnits()
       inferenceRules.reset()
     }
 
@@ -84,10 +78,7 @@ class EPCR(maxCountCandidates: Int = 1000,
 
     while (true) {
       logger.debug(s"new iteration:  provedLiterals(${inferenceRules.provedLiterals.size})")
-      val propagatedLiterals = mutable.Set.empty[Literal]
-      unificationSearcher.clausesForPropagation(inferenceRules.provedLiterals).foreach( clause =>
-        inferenceRules.resolveUnitPropagations(clause, propagatedLiterals)
-      )
+      val propagatedLiterals = inferenceRules.propagateAllClauses()
 
 
       logger.debug(s"propagated ${propagatedLiterals.size}")
