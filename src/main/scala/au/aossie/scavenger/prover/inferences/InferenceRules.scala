@@ -2,7 +2,6 @@ package au.aossie.scavenger.prover.inferences
 
 import au.aossie.scavenger.expression.{AppRec, E, Sym, Var}
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.proof.Proof
 import au.aossie.scavenger.proof.cr.{CRProofNode, Conflict, ConflictDrivenClauseLearning, Decision, InitialStatement, UnitPropagationResolution}
 import au.aossie.scavenger.prover.{ProblemStatus, Unsatisfiable, renameVars, unifyWithRename}
 import au.aossie.scavenger.prover.util.{DecisionMaker, UnificationSearcher}
@@ -12,6 +11,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 import au.aossie.scavenger.unification.{MartelliMontanari => unify}
+import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 
 /**
   * Created by podtelkin on 18.07.17.
@@ -97,6 +97,8 @@ class InferenceRules(unificationSearcher: UnificationSearcher,
   }
 
   def removeDecisionLiteralsFromInferences(decisionLiterals: mutable.HashSet[Literal]): Unit = {
+    decisions --= decisionLiterals
+
     val memIsValid: mutable.HashMap[Clause, Boolean] = mutable.HashMap.empty
 
     def isValidCheck(node: CRProofNode): Boolean = {

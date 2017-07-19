@@ -45,8 +45,20 @@ class EPCR(maxCountCandidates: Int = 1000,
       * All decisions made at this point.
       */
     val decisions: mutable.Set[Literal] = mutable.Set.empty
+
+    /**
+      * Generates new decision
+      */
     val decisionMaker: DecisionMaker = new DecisionMaker(initialBump, decayFactor, maxActivity, randomDecisionsPercent)
+
+    /**
+      * Support unification data structure
+      */
     val unificationSearcher = new UnificationSearcher(mutable.HashSet.empty)
+
+    /**
+      * CDCL and UnitPropagation inference rules here
+      */
     val inferenceRules = new InferenceRules(unificationSearcher, decisionMaker, decisions, withSetOfSupport)
 
     val predicates = cnf.predicates
