@@ -19,6 +19,12 @@ class DecisionMaker(initialBump: Double,
   var incSym: Double = initialBump
   var temp: Double = 20
 
+  def reset(): Unit = {
+    activity.clear()
+    incSym = initialBump
+    temp = 20
+  }
+
   def bumpActivity(literal: Literal): Unit = {
     val syms = literal.toClause.predicates.map(_._1)
     var overhead: Boolean = false

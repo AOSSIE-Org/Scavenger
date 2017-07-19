@@ -56,11 +56,6 @@ class EPCR(maxCountCandidates: Int = 1000,
       */
     val unificationSearcher = new UnificationSearcher(mutable.HashSet.empty)
 
-    /**
-      * CDCL and UnitPropagation inference rules here
-      */
-    val inferenceRules = new InferenceRules(unificationSearcher, decisionMaker, decisions, withSetOfSupport)
-
     val predicates = cnf.predicates
     val isEqualityReasoning = predicates.contains((new Sym("=") with Infix, 2))
     if (isEqualityReasoning) {
@@ -70,50 +65,21 @@ class EPCR(maxCountCandidates: Int = 1000,
 
 //    ClausesTo3CNF.to3CNF(initialClauses)
 
-    unificationSearcher.addNewClauses(initialClauses.filterNot(_.isUnit))
-
     /**
-      * Memorization for getAllConflictDecisions method.
+      * CDCL and UnitPropagation inference rules here
       */
-    val memGetConflictDecisions: mutable.HashSet[Clause] = mutable.HashSet.empty
+    val inferenceRules = new InferenceRules(initialClauses, unificationSearcher, decisionMaker, decisions, withSetOfSupport)
 
     def reset(): Unit = {
       logger.debug("RESET")
-      decisions.clear()
 
-//      nodesByClause.clear()
-//
-//      initialClauses.foreach(clause => addNode(clause, InitialStatement(clause)))
-//      cdclClauses.foreach(clauseNode => addNode(clauseNode._1, clauseNode._2))
-//
-//      unificationSearcher.clearUnifiableUnits()
-//
-//      provedLiterals.clear()
-//      addProvedLiterals(initialClauses.filter(_.isUnit).map(_.literal))
-//      addProvedLiterals(cdclClauses.toSeq.map(_._1).filter(_.isUnit).map(_.literal))
-//      logger.debug(s"provedLiterals.size = ${provedLiterals.size}")
+      decisions.clear()
+      decisionMaker.reset()
+      unificationSearcher.clearUnifiableUnits()
+      inferenceRules.reset()
     }
 
-    def getAllConflictDecisions(node: CRProofNode, acc: mutable.Set[Literal]): Unit =
-      if (!memGetConflictDecisions.contains(node.conclusion)) {
-        memGetConflictDecisions.add(node.conclusion)
-        node match {
-          case Decision(literal) =>
-            acc += literal
-          case Conflict(left, right) =>
-            getAllConflictDecisions(left, acc)
-            getAllConflictDecisions(right, acc)
-          case UnitPropagationResolution(left, right, _, _, _) =>
-            left.foreach(getAllConflictDecisions(_, acc))
-            getAllConflictDecisions(right, acc)
-          case ConflictDrivenClauseLearning(_) =>
-          case InitialStatement(_) =>
-        }
-      }
-
-    inferenceRules.addProvedLiterals(initialClauses.filter(_.isUnit).map(_.literal))
-    initialClauses.foreach(clause => inferenceRules.addNode(clause, InitialStatement(clause)))
-
+    inferenceRules.reset()
     var cntWithoutDecisions = 0
 
     while (true) {
@@ -136,15 +102,7 @@ class EPCR(maxCountCandidates: Int = 1000,
       }
 
       if (CDCLClauses.nonEmpty) {
-        val acc: mutable.HashSet[Literal] = mutable.HashSet.empty
-        memGetConflictDecisions.clear()
-        CDCLClauses.foreach {
-          case ConflictDrivenClauseLearning(cl) =>
-            getAllConflictDecisions(cl, acc)
-        }
-
-        inferenceRules.removeDecisionLiteralsFromInferences(acc)
-        inferenceRules.addCDCLClauses(CDCLClauses)
+        inferenceRules.addNewCDCLClauses(CDCLClauses)
       } else if (propagatedLiterals.isEmpty ||
         (cntWithoutDecisions >= maxCountWithoutDecisions)) {
         cntWithoutDecisions = 0
@@ -155,11 +113,9 @@ class EPCR(maxCountCandidates: Int = 1000,
           val decisionLiteral = decisionMaker.makeDecision(available.toSeq)
           inferenceRules.addNode(decisionLiteral.toClause, Decision(decisionLiteral))
           inferenceRules.addProvedLiterals(Seq(decisionLiteral))
-//          val decisionActivity = getActivity(decisionLiteral)
-//          println(s"NEW DECISION: $decisionLiteral, activity: $decisionActivity")
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
-            inferenceRules.removeDecisionLiteralsFromInferences(mutable.HashSet(!decisionLiteral))
+            inferenceRules.removeConflictPremises(mutable.HashSet(!decisionLiteral))
           }
         }
       } else if (initialClauses.forall(clause => clause.literals.exists(inferenceRules.provedLiterals.contains))) {

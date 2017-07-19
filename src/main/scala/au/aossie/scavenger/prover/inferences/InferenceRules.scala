@@ -16,7 +16,8 @@ import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 /**
   * Created by podtelkin on 18.07.17.
   */
-class InferenceRules(unificationSearcher: UnificationSearcher,
+class InferenceRules(initialClauses: ListBuffer[Clause],
+                      unificationSearcher: UnificationSearcher,
                      decisionMaker: DecisionMaker,
                      decisions: mutable.Set[Literal],
                      withSetOfSupport: Boolean)(implicit rnd: Random) {
@@ -28,6 +29,20 @@ class InferenceRules(unificationSearcher: UnificationSearcher,
   val cdclNodes: mutable.Map[Clause, CRProofNode] = mutable.Map.empty
 
   def available = unificationSearcher.nonUnitClauses.filterNot(_.literals.exists(provedLiterals.contains)).flatMap(_.literals)
+
+  def reset(): Unit = {
+    proofNodesByClause.clear()
+
+    cdclNodes.foreach { case (clause, node) =>
+      proofNodesByClause.update(clause, ListBuffer(node))}
+    initialClauses.foreach { clause =>
+      proofNodesByClause.update(clause, ListBuffer(InitialStatement(clause)))
+    }
+
+    provedLiterals.clear()
+    provedLiterals ++= cdclNodes.keys.filter(_.isUnit).map(_.literal)
+    provedLiterals ++= initialClauses.filter(_.isUnit).map(_.literal)
+  }
 
   def addProvedLiterals(literals: Seq[Literal]) = {
     val newLiterals = literals.filterNot(provedLiterals.contains)
@@ -50,6 +65,36 @@ class InferenceRules(unificationSearcher: UnificationSearcher,
       addNode(node.conclusion, node))
 
     addProvedLiterals(newClauses.map(_.conclusion).filter(_.isUnit).map(_.literal))
+  }
+
+  def addNewCDCLClauses(CDCLClauses: mutable.ListBuffer[CRProofNode]): Unit = {
+    val memGetConflictDecisions: mutable.HashSet[Clause] = mutable.HashSet.empty
+
+    def getAllConflictDecisions(node: CRProofNode, acc: mutable.Set[Literal]): Unit =
+      if (!memGetConflictDecisions.contains(node.conclusion)) {
+        memGetConflictDecisions.add(node.conclusion)
+        node match {
+          case Decision(literal) =>
+            acc += literal
+          case Conflict(left, right) =>
+            getAllConflictDecisions(left, acc)
+            getAllConflictDecisions(right, acc)
+          case UnitPropagationResolution(left, right, _, _, _) =>
+            left.foreach(getAllConflictDecisions(_, acc))
+            getAllConflictDecisions(right, acc)
+          case ConflictDrivenClauseLearning(_) =>
+          case InitialStatement(_) =>
+        }
+      }
+
+    val acc: mutable.HashSet[Literal] = mutable.HashSet.empty
+    CDCLClauses.foreach {
+      case ConflictDrivenClauseLearning(cl) =>
+        getAllConflictDecisions(cl, acc)
+    }
+
+    removeConflictPremises(acc)
+    addCDCLClauses(CDCLClauses)
   }
 
   def getBucketByExpr(expr: E): String = expr match {
@@ -96,7 +141,7 @@ class InferenceRules(unificationSearcher: UnificationSearcher,
     None
   }
 
-  def removeDecisionLiteralsFromInferences(decisionLiterals: mutable.HashSet[Literal]): Unit = {
+  def removeConflictPremises(decisionLiterals: mutable.HashSet[Literal]): Unit = {
     decisions --= decisionLiterals
 
     val memIsValid: mutable.HashMap[Clause, Boolean] = mutable.HashMap.empty
