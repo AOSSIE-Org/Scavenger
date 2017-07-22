@@ -8,11 +8,8 @@ import scala.collection.mutable
 /**
   * Created by vlad107 on 18.07.17.
   */
-trait UnificationSearcher {
+class UnificationSearcher {
 
-  /**
-    * Support unification data structure
-    */
   val nonUnitClauses: mutable.Set[Clause] = mutable.HashSet.empty
 
   val literals: mutable.HashSet[Literal] = nonUnitClauses.flatMap(_.literals)(collection.breakOut).to[mutable.HashSet]
