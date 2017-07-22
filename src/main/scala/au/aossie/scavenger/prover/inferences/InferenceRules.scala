@@ -4,7 +4,7 @@ import au.aossie.scavenger.expression.{AppRec, E, Sym, Var}
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.proof.cr.{CRProofNode, Conflict, ConflictDrivenClauseLearning, Decision, InitialStatement, UnitPropagationResolution}
 import au.aossie.scavenger.prover.{ProblemStatus, Unsatisfiable, renameVars, unifyWithRename}
-import au.aossie.scavenger.prover.util.{DecisionMaker, UnificationSearcher}
+import au.aossie.scavenger.prover.heuristic.{DecisionMaker, UnificationSearcher}
 import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 
 import scala.collection.mutable

@@ -1,7 +1,7 @@
 package au.aossie.scavenger.prover.conflict
 
 import au.aossie.scavenger.structure.immutable.Clause
-import au.aossie.scavenger.prover.util.DecisionLevel
+import au.aossie.scavenger.prover.heuristic.DecisionLevel
 
 /**
   * Represents general way to learn a conflict clause.

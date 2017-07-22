@@ -1,4 +1,4 @@
-package au.aossie.scavenger.prover.util
+package au.aossie.scavenger.prover.heuristic
 
 import au.aossie.scavenger.prover.unifyWithRename
 import au.aossie.scavenger.structure.immutable.{Clause, Literal}

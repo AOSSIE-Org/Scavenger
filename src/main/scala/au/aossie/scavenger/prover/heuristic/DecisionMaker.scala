@@ -1,4 +1,4 @@
-package au.aossie.scavenger.prover.util
+package au.aossie.scavenger.prover.heuristic
 
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.proof.cr._
