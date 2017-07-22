@@ -107,10 +107,9 @@ trait Base extends TokenParsers with PackratParsers {
     * @return           The expansion of all the includes (recursively) to the files
     */
   def expandIncludes(directives: List[TPTPDirective],
-                     parser: Parser[List[TPTPDirective]]): List[TPTPDirective] = directives match {
-    case List() => List.empty
-    case IncludeDirective(fileName, _) :: ds => {
-      
+                     parser: Parser[List[TPTPDirective]]): List[TPTPDirective] = directives flatMap { _  match {
+
+    case IncludeDirective(fileName, _) => {
       val parsedIncludedFile = try {
         extract((includesDir / RelPath(fileName)), parser)   
       } catch {
@@ -121,12 +120,11 @@ trait Base extends TokenParsers with PackratParsers {
           }
         }
         case e: Throwable => throw e
-      }
-      
-      expandIncludes(parsedIncludedFile, parser) ++ ds // FIXME: Shouldn't we call expandIncludes recursively on `ds` here?     
+      }     
+      expandIncludes(parsedIncludedFile, parser)     
     }
-    case d :: ds => d :: expandIncludes(ds, parser)
-  }
+    case d => List(d)
+  }}
 
   // Actual Parsers
   import lexical._
