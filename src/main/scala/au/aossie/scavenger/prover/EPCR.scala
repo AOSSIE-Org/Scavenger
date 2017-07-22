@@ -5,7 +5,7 @@ import au.aossie.scavenger.model.Assignment
 import au.aossie.scavenger.preprocessing.{AddEqualityReasoningAxioms, ClausesTo3CNF}
 import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 import au.aossie.scavenger.prover.inferences.InferenceRules
-import au.aossie.scavenger.prover.heuristic.{DecisionMaker, UnificationSearcher}
+import au.aossie.scavenger.prover.heuristic.DecisionMaker
 import au.aossie.scavenger.structure.immutable.{CNF, Clause, Literal}
 
 import scala.collection.mutable

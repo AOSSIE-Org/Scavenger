@@ -19,7 +19,7 @@ import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 class InferenceRules(initialClauses: ListBuffer[Clause],
                      decisionMaker: DecisionMaker,
                      decisions: mutable.Set[Literal],
-                     withSetOfSupport: Boolean)(implicit rnd: Random) {
+                     withSetOfSupport: Boolean)(implicit rnd: Random) extends UnificationSearcher {
   // FIXME: Bad practice to use predefined name(could be collision)
   val VARIABLE_NAME: String = "___VARIABLE___"
 
@@ -39,10 +39,7 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
 
   val cdclNodes: mutable.Map[Clause, CRProofNode] = mutable.Map.empty
 
-  /**
-    * Support unification data structure
-    */
-  val unificationSearcher = new UnificationSearcher(mutable.HashSet.empty)
+//  val unificationSearcher = new UnificationSearcher(mutable.HashSet.empty)
 
 
 
@@ -50,10 +47,10 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
   reset()
 
 
-  def available = unificationSearcher.nonUnitClauses.filterNot(_.literals.exists(provedLiterals.contains)).flatMap(_.literals)
+  def available = nonUnitClauses.filterNot(_.literals.exists(provedLiterals.contains)).flatMap(_.literals)
 
   def reset(): Unit = {
-    unificationSearcher.clearUnifiableUnits()
+    clearUnifiableUnits()
 
     proofNodesByClause.clear()
 
@@ -67,15 +64,15 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
     provedLiterals ++= cdclNodes.keys.filter(_.isUnit).map(_.literal)
     provedLiterals ++= initialClauses.filter(_.isUnit).map(_.literal)
 
-    unificationSearcher.addNewClauses(cdclNodes.keys.filterNot(_.isUnit).toSeq)
-    unificationSearcher.addNewClauses(initialClauses.filterNot(_.isUnit))
+    addNewClauses(cdclNodes.keys.filterNot(_.isUnit).toSeq)
+    addNewClauses(initialClauses.filterNot(_.isUnit))
 
-    unificationSearcher.updateUnifiableUnits(provedLiterals.toSeq)
+    updateUnifiableUnits(provedLiterals.toSeq)
   }
 
   def propagateAllClauses(): mutable.HashSet[Literal] = {
     val propagatedLiterals = mutable.HashSet.empty[Literal]
-    unificationSearcher.clausesForPropagation(provedLiterals).foreach( clause =>
+    clausesForPropagation(provedLiterals).foreach( clause =>
       resolveUnitPropagations(clause, propagatedLiterals)
     )
     propagatedLiterals
@@ -84,7 +81,7 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
   def addProvedLiterals(literals: Seq[Literal]) = {
     val newLiterals = literals.filterNot(provedLiterals.contains)
     provedLiterals ++= literals
-    unificationSearcher.updateUnifiableUnits(newLiterals)
+    updateUnifiableUnits(newLiterals)
   }
 
   def addNode(clause: Clause, node: CRProofNode): Unit = {
@@ -96,7 +93,7 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
     cdclNodes ++= newClauses.map(node => (node.conclusion, node))
 
     decisionMaker.update(newClauses.map(_.conclusion))
-    unificationSearcher.addNewClauses(newClauses.map(_.conclusion).filterNot(_.isUnit))
+    addNewClauses(newClauses.map(_.conclusion).filterNot(_.isUnit))
 
     newClauses.foreach(node =>
       addNode(node.conclusion, node))
@@ -217,7 +214,7 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
     val nonValidLiterals: Seq[Literal] = provedLiterals.toSeq.filter(literal => proofNodesByClause(literal.toClause).isEmpty)
     provedLiterals --= nonValidLiterals
 
-    unificationSearcher.removeNonValidLiterals(nonValidLiterals)
+    removeNonValidLiterals(nonValidLiterals)
   }
 
 
@@ -227,7 +224,7 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
       // TODO: Think about to shuffle literals to avoid worst case in the bruteforce.
       val shuffledLiterals = clause.literals
 
-      val unifyCandidates = shuffledLiterals.map(literal => unificationSearcher.getUnifiers(literal))
+      val unifyCandidates = shuffledLiterals.map(literal => getUnifiers(literal))
       for (conclusionId <- unifyCandidates.indices) {
         // TODO: Think about other cut offs.
         if (unifyCandidates.indices.forall(id => id == conclusionId || unifyCandidates(id).nonEmpty)) {

@@ -4,12 +4,16 @@ import au.aossie.scavenger.prover.unifyWithRename
 import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 /**
   * Created by vlad107 on 18.07.17.
   */
-class UnificationSearcher(val nonUnitClauses: mutable.Set[Clause]) {
+trait UnificationSearcher {
+
+  /**
+    * Support unification data structure
+    */
+  val nonUnitClauses: mutable.Set[Clause] = mutable.HashSet.empty
 
   val literals: mutable.HashSet[Literal] = nonUnitClauses.flatMap(_.literals)(collection.breakOut).to[mutable.HashSet]
 
