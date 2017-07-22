@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory
   */
 class EPCR(maxCountCandidates: Int = 1000,
            maxCountWithoutDecisions: Int = 10,
-           maxProvedLiteralsSize: Int = 10000,
            initialBump: Double = 1.0,
            decayFactor: Double = 0.99,
            maxActivity: Double = 1e10,
@@ -128,7 +127,6 @@ class EPCR(maxCountCandidates: Int = 1000,
 object EPCR extends EPCR(
   maxCountCandidates = 100,
   maxCountWithoutDecisions = 5,
-  maxProvedLiteralsSize = 10000,
   initialBump = 1.0,
   decayFactor = 0.99,
   maxActivity = 1e10,

@@ -26,8 +26,8 @@ object CLI {
 
   val configurations = Map(
     "PD" -> Seq(PDCR),
-    "EP" -> Seq(new EPCR(100, 10, 10000, 1.0, 0.99, 1e10, 10, false),
-                new EPCR(100, 10, 10000, 1.0, 0.99, 1e10, 5, true)),
+    "EP" -> Seq(new EPCR(100, 10, 1.0, 0.99, 1e10, 10, false),
+                new EPCR(100, 10, 1.0, 0.99, 1e10, 5, true)),
     "TD" -> Seq(TDCR)
   )
 
