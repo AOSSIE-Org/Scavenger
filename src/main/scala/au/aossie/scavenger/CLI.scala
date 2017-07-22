@@ -3,7 +3,7 @@ package au.aossie.scavenger
 import ammonite.ops._
 import au.aossie.scavenger.structure.immutable.CNF
 import au.aossie.scavenger.prover.{EPCR, PDCR, ProblemStatus, Satisfiable, TDCR, Unsatisfiable}
-import au.aossie.scavenger.parser.{TPTPCNFParser, TPTPFOFParser}
+import au.aossie.scavenger.parser.{Parser, TPTPCNFParser, TPTPFOFParser}
 import au.aossie.scavenger.expression.{Abs, App, E, Sym}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
 import au.aossie.scavenger.exporter.tptp.TPTPExporter
@@ -20,6 +20,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 object CLI {
 
   case class Config(inputs: Seq[String] = Seq(),
+                    format: Option[String] = None,
                     configuration: String = "EP",
                     includesDir: Option[Path] = None,
                     output: Output = StandardOutput)
@@ -50,6 +51,10 @@ object CLI {
     } text "directory where included files are located"
 
 
+    opt[String]('f', "format") action { (v, c) =>
+      c.copy(format = Some(v))
+    } text "format of the input file(s). Either 'cnf' or 'fof'"
+         
     opt[String]('o', "out") action { (v, c) =>
       c.copy(output = Output(v))
     } text "output proof to <file>\n" valueName "<file>"
@@ -81,10 +86,14 @@ object CLI {
         val includesDir = c.includesDir.getOrElse(filePath / up)
         
         val parser = {
-          scala.io.Source.fromFile(input).getLines() find { l => (l contains "cnf(") || (l contains "fof(") } match {
-            case Some(l) if (l contains "cnf(") => new TPTPCNFParser(includesDir)
-            case Some(l) if (l contains "fof(") => new TPTPFOFParser(includesDir)
-            case _ => throw new Exception("unknown file format") 
+          c.format match {
+            case Some("cnf") => new TPTPCNFParser(includesDir)
+            case Some("fof") => new TPTPFOFParser(includesDir)
+            case _ => scala.io.Source.fromFile(input).getLines() find { l => (l contains "cnf(") || (l contains "fof(") } match {
+              case Some(l) if (l contains "cnf(") => new TPTPCNFParser(includesDir)
+              case Some(l) if (l contains "fof(") => new TPTPFOFParser(includesDir)
+              case _ => throw new Exception("unknown file format") 
+            }
           }
         } 
 
