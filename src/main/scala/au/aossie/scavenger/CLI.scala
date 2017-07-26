@@ -111,7 +111,9 @@ object CLI {
         
         //FIXME: This is a hack to obtain "Theorem" instead of "Unsatisfiable" and "CounterSatisfiable" instead of "Satisfiable"
         def hasConjecture(input: String): Boolean = {
-          scala.io.Source.fromFile(input).getLines().exists { _ contains ",conjecture," }
+          val result = scala.io.Source.fromFile(input).getLines().exists { _ contains ",conjecture," }
+          println(s"hasConjecture: $result")
+          result
         } 
         
         val problemName = input.drop(input.lastIndexOf("/") + 1)
@@ -126,7 +128,7 @@ object CLI {
               c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
             case Satisfiable(m) =>
               val status = if (hasConjecture(input)) "CounterSatisfiable" else "Satisfiable"  
-              c.output.write(s"% SZS status Satisfiable for $problemName\n")
+              c.output.write(s"% SZS status $status for $problemName\n")
               c.output.write(s"% SZS output start Model for $problemName\n")
               c.output.write(m)
               c.output.write("\n")
