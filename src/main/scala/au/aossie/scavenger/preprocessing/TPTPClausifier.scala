@@ -114,8 +114,8 @@ class TPTPClausifier {
         Neg(na)
       case All(v, t, a) =>
         // TODO: can be collision with original names from input
-        val res = forallOutRec(a, toOrig + (v -> Var("MYOWNX" + indexVariable)))
         indexVariable += 1
+        val res = forallOutRec(a, toOrig + (v -> Var("MYOWNX" + (indexVariable - 1))))
         res
       case AppRec(g, args) =>
         substitute(AppRec(g, args), toOrig)
