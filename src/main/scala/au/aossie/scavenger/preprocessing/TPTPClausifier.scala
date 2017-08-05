@@ -18,18 +18,39 @@ class TPTPClausifier {
     indexPredicate = 0
 
     exprs.map { case (expr, clauseType) =>
+      val uniqueVarsExpr = makeVarsUnique(expr)
       toCNF(
-        forallOut(
+        removeForAll(
           skolem(
             negIn(
               miniscope(
-                remImpl(expr))))), clauseType)
+                remImpl(uniqueVarsExpr))))), clauseType)
     } reduce (_ + _)
   }
 
   var indexSkolem: Int = 0
   var indexVariable: Int = 0
   var indexPredicate: Int = 0
+
+  def makeVarsUnique(e: E): E = {
+    def rec(e: E, sub: Map[Var, Var]): E = e match {
+      case Neg(g) => Neg(rec(g, sub))
+      case And(a, b) => And(rec(a, sub), rec(b, sub))
+      case Or(a, b) => Or(rec(a, sub), rec(b, sub))
+      case All(v, t, g) =>
+        val newVar = Var(s"X_$indexVariable")
+        indexVariable += 1
+        All(newVar, t, rec(g, sub + (v -> newVar)))
+      case Ex(v, t, g) =>
+        val newVar = Var(s"X_$indexVariable")
+        indexVariable += 1
+        Ex(newVar, t, rec(g, sub + (v -> newVar)))
+      case Imp(a, b) => Or(Neg(rec(a, sub)), rec(b, sub))
+      case Equivalence(a, b) => Equivalence(rec(a, sub), rec(b, sub))
+      case term@AppRec(g, args) => substitute(term, sub)
+    }
+    rec(e, Map.empty)
+  }
 
   def remImpl(f: E): E = f match {
     case Neg(g) => Neg(remImpl(g))
@@ -99,29 +120,21 @@ class TPTPClausifier {
     skolemRec(f, Set[Var](), Map[Var, E]())
   }
 
-  def forallOut(f: E): E = {
-    def forallOutRec(h: E, toOrig: Map[Var, Var]): E = h match {
+  def removeForAll(f: E): E = {
+    def rec(h: E): E = h match {
       case Or(a, b) =>
-        val na = forallOutRec(a, toOrig)
-        val nb = forallOutRec(b, toOrig)
-        Or(na, nb)
+        Or(rec(a), rec(b))
       case And(a, b) =>
-        val na = forallOutRec(a, toOrig)
-        val nb = forallOutRec(b, toOrig)
-        And(na, nb)
+        And(rec(a), rec(b))
       case Neg(a) =>
-        val na = forallOutRec(a, toOrig)
-        Neg(na)
+        Neg(rec(a))
       case All(v, t, a) =>
-        // TODO: can be collision with original names from input
-        val res = forallOutRec(a, toOrig + (v -> Var("MYOWNX" + indexVariable)))
-        indexVariable += 1
-        res
-      case AppRec(g, args) =>
-        substitute(AppRec(g, args), toOrig)
+        rec(a)
+      case term@AppRec(g, _) =>
+        term
     }
 
-    forallOutRec(f, Map[Var, Var]())
+    rec(f)
   }
 
   def toCNF(f: E, clauseType: ClauseType): CNF = {

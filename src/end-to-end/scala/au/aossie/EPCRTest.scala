@@ -1,6 +1,6 @@
 package au.aossie
 
-import au.aossie.scavenger.parser.TPTPCNFParser
+import au.aossie.scavenger.parser.{TPTPCNFParser, TPTPFOFParser}
 import au.aossie.scavenger.prover.EPCR
 import ammonite.ops._
 
@@ -15,7 +15,7 @@ object EPCRTest {
 //    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'MSC / s"MSC007-1.008.p") //
 //    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'LCL / s"LCL003-1.p") //
 //    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'SWV / s"SWV002-1.p", Some(pwd / 'tptp640)) //
-    val tp = new TPTPCNFParser(pwd / 'tptp640).parse(pwd / 'tptp640 / 'Problems / 'NLP / s"NLP001-1.p") //
+    val tp = new TPTPFOFParser(pwd / 'tptp640).parse(pwd / 'tptp640 / 'Problems / 'LCL / s"LCL640+1.005.p") //
     println(tp)
     println(EPCR.prove(tp))
   }

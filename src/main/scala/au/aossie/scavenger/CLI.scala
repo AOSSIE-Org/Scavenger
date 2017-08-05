@@ -99,7 +99,7 @@ object CLI {
 
         
         val cnf    = parser.parse(filePath)
-        val problemName = input.drop(input.lastIndexOf("/") + 1)
+        
         implicit val ec: ExecutionContext = ExecutionContext.global
         val futures = solvers.map { solver =>
           Future[ProblemStatus] {
@@ -108,22 +108,27 @@ object CLI {
         }
         val firstCompleted = Future.firstCompletedOf(futures)
         Await.ready(firstCompleted, Duration.Inf)
+        
+        //FIXME: This is a hack to obtain "Theorem" instead of "Unsatisfiable" and "CounterSatisfiable" instead of "Satisfiable"
+        def hasConjecture(input: String): Boolean = {
+          val result = scala.io.Source.fromFile(input).getLines().exists { _ contains ",conjecture," }
+          println(s"hasConjecture: $result")
+          result
+        } 
+        
+        val problemName = input.drop(input.lastIndexOf("/") + 1)
+        
         firstCompleted.value match {
           case Some(Success(problemStatus)) => problemStatus match {
             case Unsatisfiable(Some(p)) =>
-              
-              //FIXME: This is a hack to obtain "Theorem" instead of "Unsatisfiable"
-              def hasConjecture(cnf: CNF): Boolean = {
-                scala.io.Source.fromFile(input).getLines().exists { _ contains ",conjecture," }
-              } 
-              val status = if (hasConjecture(cnf)) "Theorem" else "Unsatisfiable"
-              
+              val status = if (hasConjecture(input)) "Theorem" else "Unsatisfiable"   
               c.output.write(s"% SZS status $status for $problemName\n")
               c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
               new TPTPExporter(c.output).write(p)
               c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
             case Satisfiable(m) =>
-              c.output.write(s"% SZS status Satisfiable for $input\n")
+              val status = if (hasConjecture(input)) "CounterSatisfiable" else "Satisfiable"  
+              c.output.write(s"% SZS status $status for $problemName\n")
               c.output.write(s"% SZS output start Model for $problemName\n")
               c.output.write(m)
               c.output.write("\n")
