@@ -1,4 +1,4 @@
-package au.aossie.scavenger.prover.util
+package au.aossie.scavenger.prover.heuristic
 
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.proof.cr._
@@ -18,6 +18,12 @@ class DecisionMaker(initialBump: Double,
   val activity: mutable.Map[Sym, Double] = mutable.HashMap.empty
   var incSym: Double = initialBump
   var temp: Double = 20
+
+  def reset(): Unit = {
+    activity.clear()
+    incSym = initialBump
+    temp = 20
+  }
 
   def bumpActivity(literal: Literal): Unit = {
     val syms = literal.toClause.predicates.map(_._1)
