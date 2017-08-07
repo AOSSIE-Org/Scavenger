@@ -2,8 +2,6 @@ package au.aossie.scavenger.proof.cr
 
 import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 
-import scala.collection.mutable
-
 /**
   * @author Daniyar Itegulov
   */

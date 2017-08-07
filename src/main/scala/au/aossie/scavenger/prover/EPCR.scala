@@ -92,7 +92,6 @@ class EPCR(maxCountCandidates: Int = 1000,
       }
 
       if (CDCLClauses.nonEmpty) {
-        CDCLClauses.foreach(node => println(node.conclusion))
         inferenceRules.addNewCDCLClauses(CDCLClauses)
       } else if (propagatedLiterals.isEmpty ||
         (cntWithoutDecisions >= maxCountWithoutDecisions)) {
