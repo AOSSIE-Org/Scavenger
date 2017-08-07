@@ -92,6 +92,7 @@ class EPCR(maxCountCandidates: Int = 1000,
       }
 
       if (CDCLClauses.nonEmpty) {
+        CDCLClauses.foreach(node => println(node.conclusion))
         inferenceRules.addNewCDCLClauses(CDCLClauses)
       } else if (propagatedLiterals.isEmpty ||
         (cntWithoutDecisions >= maxCountWithoutDecisions)) {
@@ -105,7 +106,7 @@ class EPCR(maxCountCandidates: Int = 1000,
           inferenceRules.addProvedLiterals(Seq(decisionLiteral))
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
-            inferenceRules.removeConflictPremises(mutable.HashSet(!decisionLiteral))
+            inferenceRules.removeConflictPremises(Set(!decisionLiteral))
           }
         }
       } else if (initialClauses.forall(clause => clause.literals.exists(inferenceRules.provedLiterals.contains))) {

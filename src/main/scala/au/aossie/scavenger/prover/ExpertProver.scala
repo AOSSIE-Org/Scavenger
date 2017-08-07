@@ -10,7 +10,7 @@ import scala.util.Random
 /**
   * Created by vlad107 on 7/27/17.
   */
-class ExpertProver(numActors: Int) {
+class ExpertProver(numActors: Int, withSetOfSupport: Boolean) {
 
   implicit val rnd = new Random(107)
 
@@ -28,10 +28,10 @@ class ExpertProver(numActors: Int) {
       predicatesPerActor.update(index, (acc += sym, curCnt + cnt))
     }
 
-    val system = ActorSystem("expertSystem")
+    implicit val system = ActorSystem("expertSystem")
     val experts = Seq.tabulate(numActors) {
       id =>
-        system.actorOf(Props(new ExpertActor(predicatesPerActor(id)._1)), name = s"expert$id")
+        system.actorOf(Props(new ExpertActor(predicatesPerActor(id)._1, withSetOfSupport)), name = s"expert$id")
     }
     experts.foreach(_ ! Start(cnf.clauses))
 
@@ -39,4 +39,4 @@ class ExpertProver(numActors: Int) {
   }
 }
 
-object ExpertProver extends ExpertProver(numActors = 4)
+object ExpertProver extends ExpertProver(numActors = 4, withSetOfSupport = true)

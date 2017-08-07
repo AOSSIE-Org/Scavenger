@@ -3,28 +3,32 @@ package cr
 
 import au.aossie.scavenger.prover._
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
-import au.aossie.scavenger.structure.immutable.{ Clause, Literal }
+import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 
-abstract class CRProofNode(val isAxiom: Boolean) extends ProofNode[Clause, CRProofNode] {
+import scala.collection.mutable
 
-  def findDecisions(sub: Substitution): Clause = {
-    this match {
-      case Decision(literal) =>
-        !sub(literal)
-      case conflict @ Conflict(left, right) =>
-        left.findDecisions(conflict.leftMgu) union right.findDecisions(conflict.rightMgu)
-      case UnitPropagationResolution(left, right, _, leftMgus, _) =>
-        // We don't need to traverse right premise, because it's either initial clause or conflict driven clause
-        left
-          .zip(leftMgus)
-          .map {
-            case (node, mgu) => node.findDecisions(mgu(sub))
-          }
-          .fold(Clause.empty)(_ union _)
-      case _ =>
-        Clause.empty
-    }
-  }
+abstract class CRProofNode(val isAxiom: Boolean,
+                           val decisions: mutable.Set[Literal],
+                           val nonExpertDecisions: mutable.Set[Literal]) extends ProofNode[Clause, CRProofNode] {
+
+//  def findDecisions(sub: Substitution): Clause = {
+//    this match {
+//      case Decision(literal) =>
+//        !sub(literal)
+//      case conflict @ Conflict(left, right) =>
+//        left.findDecisions(conflict.leftMgu) union right.findDecisions(conflict.rightMgu)
+//      case UnitPropagationResolution(left, right, _, leftMgus, _) =>
+//        // We don't need to traverse right premise, because it's either initial clause or conflict driven clause
+//        left
+//          .zip(leftMgus)
+//          .map {
+//            case (node, mgu) => node.findDecisions(mgu(sub))
+//          }
+//          .fold(Clause.empty)(_ union _)
+//      case _ =>
+//        Clause.empty
+//    }
+//  }
 
   def listDecisions(): Seq[Literal] = {
     this match {

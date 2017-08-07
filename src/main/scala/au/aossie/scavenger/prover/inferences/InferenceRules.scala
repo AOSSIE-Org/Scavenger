@@ -13,6 +13,8 @@ import scala.util.Random
 import au.aossie.scavenger.unification.{MartelliMontanari => unify}
 import au.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 
+import scala.collection.immutable.HashSet
+
 /**
   * Created by podtelkin on 18.07.17.
   */
@@ -102,29 +104,9 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
   }
 
   def addNewCDCLClauses(CDCLClauses: mutable.ListBuffer[CRProofNode]): Unit = {
-    val memGetConflictDecisions: mutable.HashSet[Clause] = mutable.HashSet.empty
-
-    def getAllConflictDecisions(node: CRProofNode, acc: mutable.Set[Literal]): Unit =
-      if (!memGetConflictDecisions.contains(node.conclusion)) {
-        memGetConflictDecisions.add(node.conclusion)
-        node match {
-          case Decision(literal) =>
-            acc += literal
-          case Conflict(left, right) =>
-            getAllConflictDecisions(left, acc)
-            getAllConflictDecisions(right, acc)
-          case UnitPropagationResolution(left, right, _, _, _) =>
-            left.foreach(getAllConflictDecisions(_, acc))
-            getAllConflictDecisions(right, acc)
-          case ConflictDrivenClauseLearning(_) =>
-          case InitialStatement(_) =>
-        }
-      }
-
-    val acc: mutable.HashSet[Literal] = mutable.HashSet.empty
-    CDCLClauses.foreach {
-      case ConflictDrivenClauseLearning(cl) =>
-        getAllConflictDecisions(cl, acc)
+    val acc: Set[Literal] = CDCLClauses.foldLeft(HashSet.empty[Literal]) {
+      case (acc: HashSet[Literal], ConflictDrivenClauseLearning(conflict)) =>
+        acc ++ conflict.decisions
     }
 
     removeConflictPremises(acc)
@@ -175,7 +157,7 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
     None
   }
 
-  def removeConflictPremises(decisionLiterals: mutable.HashSet[Literal]): Unit = {
+  def removeConflictPremises(decisionLiterals: Set[Literal]): Unit = {
     decisions --= decisionLiterals
 
     val memIsValid: mutable.HashMap[Clause, Boolean] = mutable.HashMap.empty

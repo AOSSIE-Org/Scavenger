@@ -15,8 +15,8 @@ object EPCRTest {
 //    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'MSC / s"MSC007-1.008.p") //
 //    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'LCL / s"LCL003-1.p") //
 //    val tp = TPTPCNFParser.parse(pwd / 'tptp640 / 'Problems / 'SWV / s"SWV002-1.p", Some(pwd / 'tptp640)) //
-    val tp = new TPTPFOFParser(pwd / 'tptp640).parse(pwd / 'tptp640 / 'Problems / 'LCL / s"LCL640+1.005.p") //
-    println(tp)
+    val tp = new TPTPCNFParser(pwd / 'tptp640).parse(pwd / 'tptp640 / 'Problems / 'SYN / s"SYN044-1.p") //
+    tp.clauses.foreach(println)
     println(EPCR.prove(tp))
   }
 }

@@ -59,9 +59,9 @@ class Unificator {
     }
   }
 
-  def getUnifications(literal: Literal): mutable.ListBuffer[Int] = indexInListA.get(literal) match {
+  def getUnifications(literal: Literal): mutable.ListBuffer[Literal] = indexInListA.get(literal) match {
     case Some(index) =>
-      unifications(index)
+      unifications(index).map(listB(_))
     case None =>
       mutable.ListBuffer.empty
   }

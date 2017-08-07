@@ -12,7 +12,11 @@ import scala.collection.mutable
   * @author Daniyar Itegulov
   */
 class Conflict(val leftPremise: CRProofNode, val rightPremise: CRProofNode)
-  extends CRProofNode(leftPremise.isAxiom & rightPremise.isAxiom) {
+  extends CRProofNode(
+    leftPremise.isAxiom & rightPremise.isAxiom,
+    leftPremise.decisions ++ rightPremise.decisions,
+    leftPremise.nonExpertDecisions ++ rightPremise.nonExpertDecisions
+  ) {
   assert(leftPremise.conclusion.isUnit, "Left premise should be a unit clause")
   assert(rightPremise.conclusion.isUnit, "Right premise should be a unit clause")
   assert(leftPremise.conclusion.literal.polarity != rightPremise.conclusion.literal.polarity, "Left and right premises should have different polarity")
