@@ -7,7 +7,7 @@ import scala.collection.mutable
 /**
   * @author Daniyar Itegulov
   */
-class Decision(val literal: Literal) extends CRProofNode(false, mutable.Set(literal), mutable.Set.empty) {
+class Decision(val literal: Literal) extends CRProofNode(false, Set(literal), Set.empty) {
 
   override def conclusion: Clause = literal.toClause
   override def premises: Seq[CRProofNode] = Seq.empty

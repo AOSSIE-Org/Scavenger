@@ -4,10 +4,10 @@ import au.aossie.scavenger.structure.immutable.{AxiomClause, Clause, Literal}
 
 import scala.collection.mutable
 
-class InitialStatement(override val conclusion: Clause, override val nonExpertDecisions: mutable.Set[Literal] = mutable.Set.empty)
+class InitialStatement(override val conclusion: Clause, override val nonExpertDecisions: Set[Literal] = Set.empty)
   extends CRProofNode(
     conclusion.tp == AxiomClause,
-    mutable.Set.empty,
+    Set.empty,
     nonExpertDecisions
   ) {
   def auxFormulasMap = Map()

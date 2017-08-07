@@ -8,8 +8,8 @@ import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 import scala.collection.mutable
 
 abstract class CRProofNode(val isAxiom: Boolean,
-                           val decisions: mutable.Set[Literal],
-                           val nonExpertDecisions: mutable.Set[Literal]) extends ProofNode[Clause, CRProofNode] {
+                           val decisions: Set[Literal],
+                           val nonExpertDecisions: Set[Literal]) extends ProofNode[Clause, CRProofNode] {
 
 //  def findDecisions(sub: Substitution): Clause = {
 //    this match {

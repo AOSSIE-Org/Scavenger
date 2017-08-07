@@ -21,11 +21,10 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
   val unificator: Unificator = new Unificator()
 
   def addNewClause(crProofNode: CRProofNode,
-                   expertClause: Clause,
-                   nonExpertClause: Clause): Unit = {
+                   expertClause: Clause): Unit = {
     val index = indexByClause.getOrElseUpdate(expertClause, clauses.size)
     if (index == clauses.size) {
-      clauses += ClauseInfo(expertClause, ListBuffer((crProofNode, nonExpertClause)))
+      clauses += ClauseInfo(expertClause, ListBuffer(crProofNode))
 
       if (expertClause.isUnit) {
         unificator.addB(expertClause.literal)
@@ -34,7 +33,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
         expertClause.literals.foreach(unificator.addA)
       }
     } else {
-      clauses(index).proofs.append((crProofNode, nonExpertClause))
+      clauses(index).proofs.append(crProofNode)
     }
   }
 
@@ -45,14 +44,14 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
           predicates.contains(p)
       }
       if (expertLiterals.nonEmpty) {
-        addNewClause(InitialStatement(expertLiterals.toClause), expertLiterals.toClause, nonExpertLiterals.toClause)
+        addNewClause(new InitialStatement(expertLiterals.toClause, nonExpertLiterals.toSet), expertLiterals.toClause)
       }
     }
   }
 
   def resolveUnitPropagation: Unit = {
     clauses.foreach { case ClauseInfo(clause, proofs) => // TODO: if !clause.isUnit
-      for ((clauseNode, _) <- proofs) {
+      for (clauseNode <- proofs) {
         // TODO: Think about to shuffle literals to avoid worst case in the bruteforce.
         val shuffledLiterals = clause.literals
 
@@ -76,12 +75,12 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
                   proofNodes(randomIndex)
               }
 
-              if (!withSetOfSupport || unifierNodes.exists(!_._1.isAxiom) || !clauseNode.isAxiom) {
+              if (!withSetOfSupport || unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
                 // TODO: Why this is never used?
                 val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
                 val unitPropagationNode =
                   UnitPropagationResolution(
-                    unifierNodes.map(_._1),
+                    unifierNodes,
                     clauseNode,
                     shuffledLiterals(conclusionId), // TODO: maybe we should apply curSubst???
                     literals,
@@ -178,7 +177,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
 
       for {
         otherLiteral <- candidateLiterals if (literal.polarity != otherLiteral.polarity) && unifyWithRename(Seq(literal.unit), Seq(otherLiteral.unit)).isDefined
-        (otherNode, nonExpertClause) <- clauses(indexByClause(otherLiteral.toClause)).proofs
+        otherNode <- clauses(indexByClause(otherLiteral.toClause)).proofs
         conflict = Conflict(conflictNode, otherNode)
       } {
         val cdclNode = ConflictDrivenClauseLearning(conflict)
@@ -198,4 +197,4 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
 }
 
 case class ClauseInfo(expertClause: Clause,
-                      proofs: ListBuffer[(CRProofNode, Clause)]) /// proofNodes and the list of decisions for non-expert part of the clause
+                      proofs: ListBuffer[CRProofNode]) /// proofNodes and the list of decisions for non-expert part of the clause
