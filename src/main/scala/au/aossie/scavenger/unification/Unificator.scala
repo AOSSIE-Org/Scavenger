@@ -26,7 +26,7 @@ class Unificator {
       listA += literal
       indexInListA.put(literal, listA.size - 1)
       unifications += mutable.ListBuffer.empty
-      literal match {
+      literal.unit match {
         case AppRec(predicate: Sym, _) =>
           byPredicateA.getOrElseUpdate(predicate, mutable.ListBuffer.empty).append(listA.size - 1)
 
@@ -34,6 +34,7 @@ class Unificator {
             unify(literal.unit, listB(index).unit) match {
               case Some(_) =>
                 unifications.last.append(index)
+              case None =>
             }
           }
       }
@@ -45,7 +46,7 @@ class Unificator {
     if (!indexInListB.contains(literal)) {
       listB += literal
       indexInListB.put(literal, listB.size - 1)
-      literal match {
+      literal.unit match {
         case AppRec(predicate: Sym, _) =>
           byPredicateB.getOrElseUpdate(predicate, mutable.ListBuffer.empty).append(listB.size - 1)
 
@@ -53,6 +54,7 @@ class Unificator {
             unify(literal.unit, listA(index).unit) match {
               case Some(_) =>
                 unifications(index).append(listB.size - 1)
+              case None =>
             }
           }
       }

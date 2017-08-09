@@ -1,9 +1,8 @@
 package au.aossie.scavenger.prover.actors
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.ActorSystem
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.expression.{AppRec, E, Sym, Var}
-import au.aossie.scavenger.proof.Proof
 import au.aossie.scavenger.proof.cr._
 import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 import au.aossie.scavenger.prover._
@@ -39,10 +38,10 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
 
   def addInitialClauses(newClauses: Seq[Clause]): Unit = {
     newClauses.foreach { clause =>
-      val (expertLiterals, nonExpertLiterals) = clause.literals.partition {
+      val (expertLiterals, nonExpertLiterals) = clause.literals.partition(literal => literal.unit match {
         case AppRec(p: Sym, _) =>
           predicates.contains(p)
-      }
+      } )
       if (expertLiterals.nonEmpty) {
         addNewClause(new InitialStatement(expertLiterals.toClause, nonExpertLiterals.toSet), expertLiterals.toClause)
       }
@@ -50,13 +49,13 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
   }
 
   def resolveUnitPropagation: Unit = {
-    clauses.foreach { case ClauseInfo(clause, proofs) => // TODO: if !clause.isUnit
+    clauses.foreach { case ClauseInfo(clause, proofs) => if (!clause.isUnit)
       for (clauseNode <- proofs) {
         // TODO: Think about to shuffle literals to avoid worst case in the bruteforce.
         val shuffledLiterals = clause.literals
 
         val unifyCandidates = shuffledLiterals.map(literal => unificator.getUnifications(literal))
-        val emptyCandidates = unifyCandidates.indices.filterNot(unifyCandidates(_).isEmpty)
+        val emptyCandidates = unifyCandidates.indices.filter(unifyCandidates(_).isEmpty)
         if (emptyCandidates.size < 2) {
           val candidateIndices = if (emptyCandidates.isEmpty) unifyCandidates.indices else emptyCandidates
           for (conclusionId <- candidateIndices) {
@@ -89,7 +88,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
                   )
                 val newLiteral = unitPropagationNode.conclusion.literal
                 if (!provedLiterals.contains(newLiteral)) {
-                  unificator.addB(newLiteral)
+                  addNewClause(unitPropagationNode, newLiteral)
                 }
 //                provedLiterals.getOrElseUpdate(newLiteral, mutable.ListBuffer.empty).append(unitPropagationNode)
                 lastPropagatedLiterals.append((newLiteral, unitPropagationNode))
@@ -169,7 +168,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
 
   def resolveCDCL: Seq[CRProofNode] = {
     val provedLiteralBuckets: mutable.Map[String, ListBuffer[Literal]] = mutable.Map.empty
-    val cdclClauses: mutable.ListBuffer[CRProofNode] = mutable.ListBuffer.empty
+    val cdclNodes: mutable.ListBuffer[CRProofNode] = mutable.ListBuffer.empty
     for ((literal, conflictNode) <- lastPropagatedLiterals) {
       val bucketName = getBucketByExpr(literal.unit)
 
@@ -181,9 +180,9 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
         conflict = Conflict(conflictNode, otherNode)
       } {
         val cdclNode = ConflictDrivenClauseLearning(conflict)
-        cdclClauses += cdclNode
+        cdclNodes += cdclNode
         if (cdclNode.conclusion == Clause.empty) {
-          return cdclClauses
+          return cdclNodes
         }
       }
       provedLiteralBuckets.getOrElseUpdate(bucketName, ListBuffer.empty).append(literal)
@@ -192,7 +191,23 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
 
     lastPropagatedLiterals.clear()
 
-    cdclClauses
+    cdclNodes
+  }
+
+  def removeCDCLPremises(premises: Set[Literal]): Unit = {
+    provedLiterals.foreach {
+      case (_, index) =>
+        val nonValidProofs = clauses(index).proofs.filter {
+          case ConflictDrivenClauseLearning(conflict) =>
+            conflict.decisions.exists(premises.contains)
+          case node =>
+            node.decisions.exists(premises.contains)
+        }
+        clauses(index).proofs --= nonValidProofs
+    }
+
+    val nonValidLiterals = provedLiterals.filter { case (_, index) => clauses(index).proofs.isEmpty }.keys
+    provedLiterals --= nonValidLiterals
   }
 }
 

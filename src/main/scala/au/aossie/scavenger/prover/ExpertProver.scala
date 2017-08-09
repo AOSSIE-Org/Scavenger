@@ -5,16 +5,18 @@ import au.aossie.scavenger.prover.actors.{ExpertActor, Start}
 import au.aossie.scavenger.structure.immutable.CNF
 
 import scala.collection.mutable
-import scala.util.Random
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Promise}
+import scala.util.{Random, Success}
 
 /**
   * Created by vlad107 on 7/27/17.
   */
-class ExpertProver(numActors: Int, withSetOfSupport: Boolean) {
+class ExpertProver(numActors: Int, withSetOfSupport: Boolean) extends Prover {
 
   implicit val rnd = new Random(107)
 
-  def prove(cnf: CNF): Unit = {
+  def prove(cnf: CNF): ProblemStatus = {
     val occurenciesCount = cnf.clauses
       .flatMap(_.predicates.map(_._1))
       .groupBy(identity)
@@ -29,13 +31,20 @@ class ExpertProver(numActors: Int, withSetOfSupport: Boolean) {
     }
 
     implicit val system = ActorSystem("expertSystem")
+    val promise = Promise[ProblemStatus]()
     val experts = Seq.tabulate(numActors) {
       id =>
-        system.actorOf(Props(new ExpertActor(predicatesPerActor(id)._1, withSetOfSupport)), name = s"expert$id")
+        system.actorOf(Props(new ExpertActor(predicatesPerActor(id)._1, withSetOfSupport, promise)), name = s"expertActor_$id")
     }
-    experts.foreach(_ ! Start(cnf.clauses))
-
-    system.terminate()
+    experts.foreach { expertActor =>
+      expertActor ! Start(cnf.clauses)
+    }
+    Await.result(promise.future, Duration.Inf)
+    promise.future.value match {
+      case Some(Success(problemStatus)) =>
+        system.terminate()
+        problemStatus
+    }
   }
 }
 
