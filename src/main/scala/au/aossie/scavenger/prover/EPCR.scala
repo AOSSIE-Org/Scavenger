@@ -103,6 +103,7 @@ class EPCR(maxCountCandidates: Int = 1000,
           val decisionLiteral = decisionMaker.makeDecision(available.toSeq)
           inferenceRules.addNode(decisionLiteral.toClause, Decision(decisionLiteral))
           inferenceRules.addProvedLiterals(Seq(decisionLiteral))
+          println(decisionLiteral)
           decisions += decisionLiteral
           if (decisions.contains(!decisionLiteral)) {
             inferenceRules.removeConflictPremises(Set(!decisionLiteral))

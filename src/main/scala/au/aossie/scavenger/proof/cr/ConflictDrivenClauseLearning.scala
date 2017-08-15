@@ -10,7 +10,8 @@ class ConflictDrivenClauseLearning(val conflict: Conflict)
   extends CRProofNode(
     conflict.isAxiom,
     Set.empty,
-    conflict.nonExpertDecisions
+    conflict.nonExpertDecisions,
+    Set.empty
   ) {
   val conflictDrivenClause: Clause = (conflict.decisions ++ conflict.nonExpertDecisions).map(!_).toClause
   override def conclusion: Clause = conflictDrivenClause

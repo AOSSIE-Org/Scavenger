@@ -6,7 +6,8 @@ class InitialStatement(override val conclusion: Clause, override val nonExpertDe
   extends CRProofNode(
     conclusion.tp == AxiomClause,
     Set.empty,
-    nonExpertDecisions
+    nonExpertDecisions,
+    Set.empty
   ) {
   def auxFormulasMap = Map()
   def premises       = Seq()

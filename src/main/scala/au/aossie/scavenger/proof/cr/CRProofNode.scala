@@ -6,7 +6,9 @@ import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 
 abstract class CRProofNode(val isAxiom: Boolean,
                            val decisions: Set[Literal],
-                           val nonExpertDecisions: Set[Literal]) extends ProofNode[Clause, CRProofNode] {
+                           val nonExpertDecisions: Set[Literal],
+                           val decisionsWithoutSubst: Set[Literal])
+  extends ProofNode[Clause, CRProofNode] {
 
   def listDecisions(): Seq[Literal] = {
     this match {

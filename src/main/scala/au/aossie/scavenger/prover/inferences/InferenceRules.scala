@@ -106,7 +106,7 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
   def addNewCDCLClauses(CDCLClauses: mutable.ListBuffer[CRProofNode]): Unit = {
     val acc: Set[Literal] = CDCLClauses.foldLeft(HashSet.empty[Literal]) {
       case (acc: HashSet[Literal], ConflictDrivenClauseLearning(conflict)) =>
-        acc ++ conflict.decisions
+        acc ++ conflict.decisionsWithoutSubst
     }
 
     removeConflictPremises(acc)

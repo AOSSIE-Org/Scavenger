@@ -20,8 +20,16 @@ class UnitPropagationResolution (
     val rightMgu: Substitution)
     extends CRProofNode(
       left.forall(_.isAxiom) & right.isAxiom,
-      left.foldLeft(right.decisions)((acc, node) => acc ++ node.decisions),
-      left.foldLeft(right.nonExpertDecisions)((acc, node) => acc ++ node.nonExpertDecisions)
+      left.zip(leftMgus).flatMap {
+        case  (node, sub) =>
+          node.decisions.map(literal => sub(literal))
+      }(collection.breakOut),
+      left.zip(leftMgus).flatMap {
+        case (node, sub) =>
+          node.nonExpertDecisions.map(literal => sub(literal))
+      }(collection.breakOut).toSet ++ right.nonExpertDecisions.map(literal => rightMgu(literal)),
+      left.flatMap(_.decisionsWithoutSubst)(collection.breakOut).toSet ++
+        right.decisionsWithoutSubst
     ) {
   assert(left.forall(_.conclusion.width == 1), "All left conclusions should be unit")
   assert(left.size + 1 == right.conclusion.width,
