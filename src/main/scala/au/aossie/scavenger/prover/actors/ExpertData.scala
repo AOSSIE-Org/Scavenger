@@ -6,18 +6,20 @@ import au.aossie.scavenger.expression.{AppRec, E, Sym, Var}
 import au.aossie.scavenger.proof.cr._
 import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 import au.aossie.scavenger.prover._
+import au.aossie.scavenger.prover.choosing.DecisionsMaker
 import au.aossie.scavenger.unification.{Unificator, MartelliMontanari => unify}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: Random, implicit val system: ActorSystem) {
+class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsWithoutDecision: Int)(implicit rnd: Random, implicit val system: ActorSystem) {
   val clauses: ListBuffer[ClauseInfo] = ListBuffer.empty
   val indexByClause: mutable.Map[Clause, Int] = mutable.Map.empty
   val provedLiterals: mutable.Map[Literal, Int] = mutable.Map.empty
   val lastPropagatedLiterals: mutable.ListBuffer[(Literal, CRProofNode)] = mutable.ListBuffer.empty
   val unificator: Unificator = new Unificator()
+  val decisionsMaker = new DecisionsMaker(maxIterationsWithoutDecision)
 
   def addNewClause(crProofNode: CRProofNode,
                    expertClause: Clause): Unit = {
@@ -49,7 +51,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
   }
 
   def resolveUnitPropagation: Unit = {
-    clauses.foreach { case ClauseInfo(clause, proofs) => if (!clause.isUnit)
+    clauses.collect { case ClauseInfo(clause, proofs) if proofs.nonEmpty => if (!clause.isUnit)
       for (clauseNode <- proofs) {
         // TODO: Think about to shuffle literals to avoid worst case in the bruteforce.
         val shuffledLiterals = clause.literals
@@ -123,7 +125,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
                 //                rnd.shuffle(unifiers(cur)).take(maxCountCandidates)
                 unifiers(cur)
               }
-              for (curUni <- candidates) {
+              for (curUni <- candidates) if (clauses(indexByClause(curUni.toClause)).proofs.nonEmpty) {
                 val substitution = renameVars(curUni.unit, usedVars)
                 val newSubs = subs :+ substitution(globalSubst)
                 val leftWithSubst = globalSubst(substitution(curUni.unit))
@@ -208,6 +210,19 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean)(implicit rnd: 
 
     val nonValidLiterals = provedLiterals.filter { case (_, index) => clauses(index).proofs.isEmpty }.keys
     provedLiterals --= nonValidLiterals
+  }
+
+  def makeDecision(wasNewCDCLs: Boolean): Unit = {
+    decisionsMaker.incCounter
+    if (!wasNewCDCLs || decisionsMaker.counterExpired) {
+      val available = clauses
+        .filterNot(_.expertClause.literals.exists(provedLiterals.contains))
+        .flatMap(_.expertClause.literals)
+      val newDecision = decisionsMaker.makeDecision(available)
+      println(newDecision)
+      addNewClause(Decision(newDecision), newDecision)
+    }
+
   }
 }
 

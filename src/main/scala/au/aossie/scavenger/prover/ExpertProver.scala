@@ -12,7 +12,7 @@ import scala.util.{Random, Success}
 /**
   * Created by vlad107 on 7/27/17.
   */
-class ExpertProver(numActors: Int, withSetOfSupport: Boolean) extends Prover {
+class ExpertProver(numActors: Int, withSetOfSupport: Boolean, maxIterationsWithoutDecision: Int) extends Prover {
 
   implicit val rnd = new Random(107)
 
@@ -34,7 +34,7 @@ class ExpertProver(numActors: Int, withSetOfSupport: Boolean) extends Prover {
     val promise = Promise[ProblemStatus]()
     val experts = Seq.tabulate(numActors) {
       id =>
-        system.actorOf(Props(new ExpertActor(predicatesPerActor(id)._1, withSetOfSupport, promise)), name = s"expertActor_$id")
+        system.actorOf(Props(new ExpertActor(predicatesPerActor(id)._1, withSetOfSupport, promise, maxIterationsWithoutDecision)), name = s"expertActor_$id")
     }
     experts.foreach { expertActor =>
       expertActor ! Start(cnf.clauses)
@@ -48,4 +48,4 @@ class ExpertProver(numActors: Int, withSetOfSupport: Boolean) extends Prover {
   }
 }
 
-object ExpertProver extends ExpertProver(numActors = 4, withSetOfSupport = true)
+object ExpertProver extends ExpertProver(numActors = 4, withSetOfSupport = true, maxIterationsWithoutDecision = 10)

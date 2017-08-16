@@ -16,15 +16,19 @@ case object ResolveUnitPropagation
 case object ResolveCDCL
 case class NewCDCLClauses(cdclNodes: Seq[CRProofNode])
 case class RemoveCDCLPremises(premises: Set[Literal])
+case class MakeDecisions(wasNewCDCLs: Boolean)
 
 
 /**
   * Created by vlad107 on 7/27/17.
   */
-class ExpertActor(predicates: Seq[Sym], withSetOfSupport: Boolean, promise: Promise[ProblemStatus])(implicit rnd: Random, implicit val system: ActorSystem) extends Actor {
+class ExpertActor(predicates: Seq[Sym],
+                  withSetOfSupport: Boolean,
+                  promise: Promise[ProblemStatus],
+                  maxIterationsWithoutDecision: Int)(implicit rnd: Random, implicit val system: ActorSystem) extends Actor {
   implicit val logger = Logger(LoggerFactory.getLogger("prover"))
 
-  val expertData = new ExpertData(predicates.toSet, withSetOfSupport)
+  val expertData = new ExpertData(predicates.toSet, withSetOfSupport, maxIterationsWithoutDecision)
 
   override def receive: Receive = {
     case Start(initialClauses) =>
@@ -42,6 +46,7 @@ class ExpertActor(predicates: Seq[Sym], withSetOfSupport: Boolean, promise: Prom
       cdclNodes.foreach {
         case cdclNode@ConflictDrivenClauseLearning(conflict) if cdclNode.conclusion == Clause.empty =>
           promise.success(Unsatisfiable(Some(CRProof(conflict))))
+        case ConflictDrivenClauseLearning(_) =>
       }
 
       system.actorSelection("akka://*") ! NewCDCLClauses(cdclNodes)
@@ -51,9 +56,18 @@ class ExpertActor(predicates: Seq[Sym], withSetOfSupport: Boolean, promise: Prom
       }(collection.breakOut))
     case NewCDCLClauses(cdclNodes) =>
       logger.debug("NewCDCLClauses")
+
       expertData.addInitialClauses(cdclNodes.map(_.conclusion)) // FIXME: it's not initial clauses, it's CDCL clauses.
     case RemoveCDCLPremises(premises) =>
       logger.debug("RemoveCDCLPremises")
+
       expertData.removeCDCLPremises(premises)
+      self ! MakeDecisions(premises.isEmpty)
+    case MakeDecisions(wasNewCDCLs) =>
+      logger.debug("MakeDecisions")
+
+      expertData.makeDecision(wasNewCDCLs)
+      self ! ResolveUnitPropagation
+
   }
 }
