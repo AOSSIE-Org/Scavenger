@@ -1,6 +1,6 @@
 package au.aossie.scavenger.prover.actors
 
-import akka.actor.{Actor, ActorSystem}
+import akka.actor.{Actor, ActorRef, ActorSystem}
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.proof.cr.{CRProof, CRProofNode, ConflictDrivenClauseLearning}
 import au.aossie.scavenger.prover.{ProblemStatus, Unsatisfiable}
@@ -8,10 +8,11 @@ import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.Promise
 import scala.util.Random
 
-case class Start(initialClauses: Seq[Clause])
+case class Start(initialClauses: Seq[Clause], friendActors: Seq[ActorRef])
 case object ResolveUnitPropagation
 case object ResolveCDCL
 case class NewCDCLClauses(cdclNodes: Seq[CRProofNode])
@@ -29,10 +30,13 @@ class ExpertActor(predicates: Seq[Sym],
   implicit val logger = Logger(LoggerFactory.getLogger("prover"))
 
   val expertData = new ExpertData(predicates.toSet, withSetOfSupport, maxIterationsWithoutDecision)
+  val friendActors = new ListBuffer[ActorRef]
 
   override def receive: Receive = {
-    case Start(initialClauses) =>
+    case Start(initialClauses, actors) =>
       logger.debug("Start:")
+
+      friendActors ++= actors
       predicates.foreach { case Sym(name) => logger.debug(name) }
       expertData.addInitialClauses(initialClauses)
       self ! ResolveUnitPropagation
@@ -43,21 +47,23 @@ class ExpertActor(predicates: Seq[Sym],
     case ResolveCDCL =>
       logger.debug("ResolveCDCL")
       val cdclNodes = expertData.resolveCDCL
-      cdclNodes.foreach {
-        case cdclNode@ConflictDrivenClauseLearning(conflict) if cdclNode.conclusion == Clause.empty =>
-          promise.success(Unsatisfiable(Some(CRProof(conflict))))
-        case ConflictDrivenClauseLearning(_) =>
-      }
+      if (!promise.isCompleted) {
+        cdclNodes.collect {
+          case cdclNode@ConflictDrivenClauseLearning(conflict) if cdclNode.conclusion == Clause.empty =>
+            promise.success(Unsatisfiable(Some(CRProof(conflict))))
+        }
+//        cdclNodes.foreach(node => println(node.conclusion))
 
-      system.actorSelection("akka://*") ! NewCDCLClauses(cdclNodes)
-      self ! RemoveCDCLPremises(cdclNodes.flatMap {
-        case ConflictDrivenClauseLearning(conflict) =>
-          conflict.decisions
-      }(collection.breakOut))
+        friendActors.foreach(_ ! NewCDCLClauses(cdclNodes))
+        self ! RemoveCDCLPremises(cdclNodes.flatMap {
+          case ConflictDrivenClauseLearning(conflict) =>
+            conflict.decisions
+        }(collection.breakOut))
+      }
     case NewCDCLClauses(cdclNodes) =>
       logger.debug("NewCDCLClauses")
 
-      expertData.addInitialClauses(cdclNodes.map(_.conclusion)) // FIXME: it's not initial clauses, it's CDCL clauses.
+      expertData.addClauses(cdclNodes)
     case RemoveCDCLPremises(premises) =>
       logger.debug("RemoveCDCLPremises")
 

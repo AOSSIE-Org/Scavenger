@@ -17,6 +17,7 @@ class ExpertProver(numActors: Int, withSetOfSupport: Boolean, maxIterationsWitho
   implicit val rnd = new Random(107)
 
   def prove(cnf: CNF): ProblemStatus = {
+    implicit val system = ActorSystem()
     val occurenciesCount = cnf.clauses
       .flatMap(_.predicates.map(_._1))
       .groupBy(identity)
@@ -30,18 +31,18 @@ class ExpertProver(numActors: Int, withSetOfSupport: Boolean, maxIterationsWitho
       predicatesPerActor.update(index, (acc += sym, curCnt + cnt))
     }
 
-    implicit val system = ActorSystem("expertSystem")
     val promise = Promise[ProblemStatus]()
     val experts = Seq.tabulate(numActors) {
       id =>
-        system.actorOf(Props(new ExpertActor(predicatesPerActor(id)._1, withSetOfSupport, promise, maxIterationsWithoutDecision)), name = s"expertActor_$id")
+        system.actorOf(Props(new ExpertActor(predicatesPerActor(id)._1, withSetOfSupport, promise, maxIterationsWithoutDecision)))
     }
     experts.foreach { expertActor =>
-      expertActor ! Start(cnf.clauses)
+      expertActor ! Start(cnf.clauses, experts)
     }
     Await.result(promise.future, Duration.Inf)
     promise.future.value match {
       case Some(Success(problemStatus)) =>
+        experts.foreach(expertActor => system.stop(expertActor))
         system.terminate()
         problemStatus
     }

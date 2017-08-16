@@ -16,6 +16,7 @@ import scala.util.Random
 class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsWithoutDecision: Int)(implicit rnd: Random, implicit val system: ActorSystem) {
   val clauses: ListBuffer[ClauseInfo] = ListBuffer.empty
   val indexByClause: mutable.Map[Clause, Int] = mutable.Map.empty
+  val propagatedClauses: mutable.Set[(Clause, Clause)] = mutable.Set.empty
   val provedLiterals: mutable.Map[Literal, Int] = mutable.Map.empty
   val lastPropagatedLiterals: mutable.ListBuffer[(Literal, CRProofNode)] = mutable.ListBuffer.empty
   val unificator: Unificator = new Unificator()
@@ -23,34 +24,45 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
 
   def addNewClause(crProofNode: CRProofNode,
                    expertClause: Clause): Unit = {
-    val index = indexByClause.getOrElseUpdate(expertClause, clauses.size)
-    if (index == clauses.size) {
-      clauses += ClauseInfo(expertClause, ListBuffer(crProofNode))
-
+    val globalClause = (expertClause, crProofNode.nonExpertDecisions.toClause)
+    if (!propagatedClauses.contains(globalClause)) {
+      propagatedClauses.add(globalClause)
       if (expertClause.isUnit) {
-        unificator.addB(expertClause.literal)
-        provedLiterals.update(expertClause.literal, clauses.size - 1)
-      } else {
-        expertClause.literals.foreach(unificator.addA)
+        lastPropagatedLiterals.append((expertClause.literal, crProofNode))
       }
-    } else {
-      clauses(index).proofs.append(crProofNode)
+
+      val index = indexByClause.getOrElseUpdate(expertClause, clauses.size)
+      if (index == clauses.size) {
+        clauses += ClauseInfo(expertClause, ListBuffer(crProofNode))
+
+        if (expertClause.isUnit) {
+          unificator.addB(expertClause.literal)
+          provedLiterals.update(expertClause.literal, clauses.size - 1)
+        } else {
+          expertClause.literals.foreach(unificator.addA)
+        }
+      } else {
+        clauses(index).proofs.append(crProofNode)
+      }
     }
   }
 
   def addInitialClauses(newClauses: Seq[Clause]): Unit = {
     newClauses.foreach { clause =>
-      val (expertLiterals, nonExpertLiterals) = clause.literals.partition(literal => literal.unit match {
-        case AppRec(p: Sym, _) =>
-          predicates.contains(p)
-      } )
-      if (expertLiterals.nonEmpty) {
-        addNewClause(new InitialStatement(expertLiterals.toClause, nonExpertLiterals.toSet), expertLiterals.toClause)
-      }
+      val initialStatement = new InitialStatement(clause)
+      val node = Expertise(initialStatement, predicates)
+      addNewClause(node, node.conclusion)
     }
   }
 
-  def resolveUnitPropagation: Unit = {
+  def addClauses(nodes: Seq[CRProofNode]): Unit = {
+    nodes.foreach { globalNode =>
+      val localNode = Expertise(globalNode, predicates)
+      addNewClause(localNode, localNode.conclusion)
+    }
+  }
+
+  def resolveUnitPropagation(): Unit = {
     clauses.collect { case ClauseInfo(clause, proofs) if proofs.nonEmpty => if (!clause.isUnit)
       for (clauseNode <- proofs) {
         // TODO: Think about to shuffle literals to avoid worst case in the bruteforce.
@@ -69,31 +81,23 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
                                globalSubst: Substitution,
                                usedVars: mutable.Set[Var]): Unit = {
               // TODO: Or is it better to iterate over all possible proofNodes?
-              val unifierNodes = chosenUnifiers.map {
-                l =>
-                  val proofNodes = clauses(indexByClause(l.toClause)).proofs
-                  val randomIndex = rnd.nextInt(proofNodes.size)
-                  proofNodes(randomIndex)
-              }
+              for (unifierNodes <- combinations(chosenUnifiers.map(l => clauses(indexByClause(l.toClause)).proofs))) {
 
-              if (!withSetOfSupport || unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
-                // TODO: Why this is never used?
-                val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
-                val unitPropagationNode =
-                  UnitPropagationResolution(
-                    unifierNodes,
-                    clauseNode,
-                    shuffledLiterals(conclusionId), // TODO: maybe we should apply curSubst???
-                    literals,
-                    subs,
-                    globalSubst
-                  )
-                val newLiteral = unitPropagationNode.conclusion.literal
-                if (!provedLiterals.contains(newLiteral)) {
+                if (!withSetOfSupport || unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
+                  // FIXME: Why this is never used?
+                  val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
+                  val unitPropagationNode =
+                    UnitPropagationResolution(
+                      unifierNodes,
+                      clauseNode,
+                      shuffledLiterals(conclusionId),
+                      literals,
+                      subs,
+                      globalSubst
+                    )
+                  val newLiteral = unitPropagationNode.conclusion.literal
                   addNewClause(unitPropagationNode, newLiteral)
                 }
-//                provedLiterals.getOrElseUpdate(newLiteral, mutable.ListBuffer.empty).append(unitPropagationNode)
-                lastPropagatedLiterals.append((newLiteral, unitPropagationNode))
               }
             }
 
@@ -171,6 +175,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
   def resolveCDCL: Seq[CRProofNode] = {
     val provedLiteralBuckets: mutable.Map[String, ListBuffer[Literal]] = mutable.Map.empty
     val cdclNodes: mutable.ListBuffer[CRProofNode] = mutable.ListBuffer.empty
+    val wasCDCL: mutable.Set[Clause] = mutable.Set.empty
     for ((literal, conflictNode) <- lastPropagatedLiterals) {
       val bucketName = getBucketByExpr(literal.unit)
 
@@ -182,9 +187,12 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
         conflict = Conflict(conflictNode, otherNode)
       } {
         val cdclNode = ConflictDrivenClauseLearning(conflict)
-        cdclNodes += cdclNode
-        if (cdclNode.conclusion == Clause.empty) {
-          return cdclNodes
+        if (!wasCDCL.contains(cdclNode.conclusion)) {
+          wasCDCL.add(cdclNode.conclusion)
+          cdclNodes += cdclNode
+          if (cdclNode.conclusion == Clause.empty) {
+            return cdclNodes
+          }
         }
       }
       provedLiteralBuckets.getOrElseUpdate(bucketName, ListBuffer.empty).append(literal)
@@ -218,9 +226,13 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
       val available = clauses
         .filterNot(_.expertClause.literals.exists(provedLiterals.contains))
         .flatMap(_.expertClause.literals)
-      val newDecision = decisionsMaker.makeDecision(available)
-      println(newDecision)
-      addNewClause(Decision(newDecision), newDecision)
+      if (available.nonEmpty) {
+        val newDecision = decisionsMaker.makeDecision(available)
+        println(newDecision)
+        addNewClause(Decision(newDecision), newDecision)
+      } else {
+
+      }
     }
 
   }

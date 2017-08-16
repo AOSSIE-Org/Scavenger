@@ -13,7 +13,7 @@ class ConflictDrivenClauseLearning(val conflict: Conflict)
     conflict.nonExpertDecisions,
     Set.empty
   ) {
-  val conflictDrivenClause: Clause = (conflict.decisions ++ conflict.nonExpertDecisions).map(!_).toClause
+  val conflictDrivenClause: Clause = (conflict.decisions.map(!_) ++ conflict.nonExpertDecisions).toClause
   override def conclusion: Clause = conflictDrivenClause
   override def premises: Seq[CRProofNode] = Seq(conflict)
 }
