@@ -134,8 +134,10 @@ object CLI {
               c.output.write(m)
               c.output.write("\n")
               c.output.write(s"% SZS output end Model for $problemName\n")
+              sys.exit(0)
             case _ =>
               c.output.write(s"% SZS status GaveUp for $input")
+              sys.exit(0)
           }
           case _ => 
         }

@@ -220,7 +220,6 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
                              usedVars: Set[Var]): Unit = {
             val unifierNodes = chosenUnifiers.map(l => rnd.shuffle(proofNodesByClause(l.toClause)).head)
             if (!withSetOfSupport || unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
-              val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
               val unitPropagationNode =
                 UnitPropagationResolution(
                   unifierNodes,
