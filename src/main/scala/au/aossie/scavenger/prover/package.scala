@@ -1,12 +1,13 @@
 package au.aossie.scavenger
 
-import au.aossie.scavenger.structure.immutable.{Literal, Clause}
-import au.aossie.scavenger.unification.{MartelliMontanari => unify, tools}
+import au.aossie.scavenger.structure.immutable.{Clause, Literal}
+import au.aossie.scavenger.unification.{tools, MartelliMontanari => unify}
 import au.aossie.scavenger.expression.substitution.immutable.Substitution
 import au.aossie.scavenger.expression._
 
 import scala.collection.mutable
 import scala.language.implicitConversions
+import scala.util.Random
 
 /**
   * @author Daniyar Itegulov
@@ -41,7 +42,7 @@ package object prover {
     * @param usedVars already used variables
     * @return proper substitution to rename without variable collisions
     */
-  def renameVars(left: E, usedVars: mutable.Set[Var]): Substitution = {
+  def renameVars(left: E, usedVars: Set[Var]): Substitution = {
     // TODO: check that modifications done in this function due to Sym to Var refactoring did not intriduce bugs
 
     //val sharedVars = unifiableVars(left) intersect usedVars // Variables which should be renamed
@@ -49,9 +50,10 @@ package object prover {
 
     val kvs = for (v <- sharedVars) yield {
       val replacement = {
-        var newVar = Var(v + "'")
+        val rnd = new Random()
+        var newVar = Var(v + rnd.nextInt(1000).toString)
         while (usedVars contains newVar) {
-          newVar = Var(newVar + "'")
+          newVar = Var(newVar + rnd.nextInt(1000).toString)
         }
         newVar
       }
@@ -84,11 +86,11 @@ package object prover {
     } else if (left.zip(right).exists{ case (l, r) => tools.disunifiableQuickCheck(l, r)}) {
       None
     } else {
-      var usedVars: mutable.Set[Var] = mutable.Set(right map {
+      var usedVars: Set[Var] = right map {
         _.variables
       } reduce {
         _ ++ _
-      }: _*)
+      } toSet
       val newLeftWithSub = for (oneLeft <- left) yield {
         val substitution = renameVars(oneLeft, usedVars)
         val newLeft = substitution(oneLeft)

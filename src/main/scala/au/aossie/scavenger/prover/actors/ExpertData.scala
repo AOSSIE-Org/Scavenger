@@ -24,7 +24,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
 
   def addNewClause(crProofNode: CRProofNode,
                    expertClause: Clause): Unit = {
-    val globalClause = (expertClause, crProofNode.nonExpertDecisions.toClause)
+    val globalClause = (expertClause, (crProofNode.nonExpertDecisions ++ crProofNode.decisions).toClause)
     if (!propagatedClauses.contains(globalClause)) {
       propagatedClauses.add(globalClause)
       if (expertClause.isUnit) {
@@ -67,109 +67,109 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
   }
 
   def resolveUnitPropagation(): Unit = {
-    clauses.collect { case ClauseInfo(clause, proofs) if proofs.nonEmpty => if (!clause.isUnit)
-      for (clauseNode <- rnd.shuffle(proofs)) {
-        // TODO: Think about to shuffle literals to avoid worst case in the bruteforce.
-        val shuffledLiterals = clause.literals
+    clauses.collect { case clauseInfo@ClauseInfo(expertClause, proofs) if proofs.nonEmpty && !expertClause.isUnit => {
+      val unifiers = expertClause.literals.map(
+        literal =>
+          unificator
+            .getUnifications(literal)
+            .filter(otherLiteral => indexByClause.get(otherLiteral) match {
+              case Some(index) =>
+                clauses(index).proofs.nonEmpty
+              case None =>
+                false
+            } )
+      )
+      val conclusionCandidateIds = {
+        val emptyLiterals = unifiers.zipWithIndex.filter(_._1.isEmpty)
+        if (emptyLiterals.isEmpty) {
+          unifiers.indices
+        } else if (emptyLiterals.size == 1) {
+          emptyLiterals.map(_._2)
+        } else {
+          Seq.empty
+        }
+      }
 
-        val unifyCandidates = shuffledLiterals.map(literal => rnd.shuffle(unificator.getUnifications(literal)))
-        val emptyCandidates = unifyCandidates.indices.filter(unifyCandidates(_).isEmpty)
-        if (emptyCandidates.size < 2) {
-          val candidateIndices = if (emptyCandidates.isEmpty) unifyCandidates.indices else emptyCandidates
-          for (conclusionId <- candidateIndices) {
-            val unifiers: Seq[Seq[Literal]] = unifyCandidates.take(conclusionId) ++ unifyCandidates.drop(conclusionId + 1)
-            val literals: Seq[Literal] = shuffledLiterals.take(conclusionId) ++ shuffledLiterals.drop(conclusionId + 1)
+      conclusionCandidateIds.foreach(
+        conclusionId =>
+          resolveUnitPropagationByClause(clauseInfo, unifiers, conclusionId)
+      )
+    } }
+  }
 
-            def newPropagation(chosenUnifiers: mutable.Seq[Literal],
-                               subs: mutable.Seq[Substitution],
-                               globalSubst: Substitution,
-                               usedVars: mutable.Set[Var]): Unit = {
-              // TODO: Or is it better to iterate over all possible proofNodes?
-              for (unifierNodes <- combinations(chosenUnifiers.map(l => clauses(indexByClause(l.toClause)).proofs))) {
+  def resolveUnitPropagationByClause(clauseInfo: ClauseInfo, unifiers: Seq[mutable.ListBuffer[Literal]], conclusionId: Int): Unit =
+    clauseInfo match { case ClauseInfo(clause, proofs) => {
+      val unifyCandidates = unifiers.take(conclusionId) ++ unifiers.drop(conclusionId + 1)
+      val propagatingLiterals = clause.literals.take(conclusionId) ++ clause.literals.drop(conclusionId + 1)
 
-                if (!withSetOfSupport || unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
-                  // FIXME: Why this is never used?
-                  val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
-                  val unitPropagationNode =
-                    UnitPropagationResolution(
-                      unifierNodes,
-                      clauseNode,
-                      shuffledLiterals(conclusionId),
-                      literals,
-                      subs,
-                      globalSubst
-                    )
-                  val newLiteral = unitPropagationNode.conclusion.literal
-                  addNewClause(unitPropagationNode, newLiteral)
-                }
-              }
+      def generateNewPropagations(choosenUnifiers: Seq[Literal],
+                                 substitutions: Seq[Substitution],
+                                 globalSubstitution: Substitution,
+                                 usedVariables: Set[Var]): Unit = {
+        for (clauseNode <- proofs) {
+          for (nodes <- combinations(choosenUnifiers.map(literal => clauses(indexByClause(literal)).proofs))) {
+            if (!withSetOfSupport || nodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
+              val unitPropagationNode = UnitPropagationResolution(
+                nodes,
+                clauseNode,
+                clause.literals(conclusionId),
+                propagatingLiterals,
+                substitutions,
+                globalSubstitution
+              )
+              val newLiteral = unitPropagationNode.conclusion
+              addNewClause(unitPropagationNode, newLiteral)
             }
-
-            /**
-              * Recursively generates UnitPropagationResolution and verifies unification on each step.
-              *
-              * @param chosenUnifiers    chosen literals
-              * @param subs              substitutions for literals to ensure that variables in different literals are different
-              * @param literalsWithSubst literals with unique variables
-              * @param globalSubst       same global MGU for all literals
-              * @param cur               number of chosen literals
-              */
-            def go(chosenUnifiers: mutable.Seq[Literal],
-                   unifierWithSub: Seq[E],
-                   subs: mutable.Seq[Substitution],
-                   literalsWithSubst: Seq[Literal],
-                   globalSubst: Substitution,
-                   usedVars: mutable.Set[Var],
-                   cur: Int): Unit = {
-
-              if (cur == unifiers.size) {
-                newPropagation(chosenUnifiers, subs, globalSubst, usedVars)
-                return
-              }
-
-              // NOTE: Looking at all possible unifications turns to large complexity of this part of resolving
-              // TODO: Think about to check only random K unifiers
-              val candidates = {
-                //                rnd.shuffle(unifiers(cur)).take(maxCountCandidates)
-                unifiers(cur)
-              }
-              for (curUni <- candidates) if (clauses(indexByClause(curUni.toClause)).proofs.nonEmpty) {
-                val substitution = renameVars(curUni.unit, usedVars)
-                val newSubs = subs :+ substitution(globalSubst)
-                val leftWithSubst = globalSubst(substitution(curUni.unit))
-                val newUnifierWithSubst = unifierWithSub :+ leftWithSubst
-
-                // NOTE: Very dangerous to call pure unify method
-                val unificationSubst = unify(leftWithSubst, literalsWithSubst(cur).unit)
-                unificationSubst match {
-                  case Some(uniSubst) =>
-                    go(chosenUnifiers :+ curUni,
-                      newUnifierWithSubst.map(uniSubst(_)),
-                      newSubs.map(_ (uniSubst)),
-                      literalsWithSubst.map(uniSubst(_)),
-                      globalSubst(uniSubst),
-                      usedVars ++ leftWithSubst.variables,
-                      cur + 1
-                    )
-                  case None =>
-                }
-              }
-            }
-
-            go(mutable.Seq.empty,
-              Seq.empty,
-              mutable.Seq.empty,
-              literals,
-              Substitution.empty,
-              mutable.Set[Var](literals.map(_.unit.variables).reduce {
-                _ ++ _
-              }: _*),
-              0)
           }
         }
       }
-    }
-  }
+
+      def rec(choosenUnifiers: Seq[Literal],
+              choosenUnifiersWithSubst: Seq[Literal],
+              substitutions: Seq[Substitution],
+              usedVariables: Set[Var],
+              globalSubstitution: Substitution,
+              curId: Int): Unit = {
+        if (curId < unifyCandidates.size) {
+          val candidates = {
+            // TODO: we could try to take some part of available unifiers
+            unifyCandidates(curId)
+          }
+          candidates.foreach { literalCandidate =>
+            val substitution = renameVars(literalCandidate.unit, usedVariables)
+            val newSubstitutions = substitutions :+ substitution(globalSubstitution)
+            val literalWithSubstitution = Literal(globalSubstitution(substitution(literalCandidate.unit)), literalCandidate.polarity)
+            val newChoosenUnifiersWithSubst = choosenUnifiersWithSubst :+ literalWithSubstitution
+
+            // NOTE: pure call of unify
+            unify(literalWithSubstitution.unit, globalSubstitution(propagatingLiterals(curId).unit)) match {
+              case Some(localSubstitution) =>
+                rec(
+                  choosenUnifiers :+ literalCandidate,
+                  newChoosenUnifiersWithSubst.map(localSubstitution(_)),
+                  newSubstitutions.map(sub => sub(localSubstitution)),
+                  usedVariables ++ literalWithSubstitution.unit.variables,
+                  globalSubstitution(localSubstitution),
+                  curId + 1
+                )
+              case None =>
+            }
+          }
+
+        } else {
+          generateNewPropagations(choosenUnifiers, substitutions, globalSubstitution, usedVariables)
+        }
+      }
+
+      rec(Seq.empty,
+          Seq.empty,
+          Seq.empty,
+          clause.literals.map(_.unit.variables).reduce {
+            _ ++ _
+          }.toSet,
+          Substitution.empty,
+          0)
+    } }
 
   def getBucketByExpr(expr: E): String = expr match {
     case AppRec(Sym(name), _) =>
@@ -225,6 +225,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
   }
 
   def makeDecision(wasNewCDCLs: Boolean): Unit = {
+    println("making decision")
     decisionsMaker.incCounter
     if (!wasNewCDCLs || decisionsMaker.counterExpired) {
       val available = clauses
@@ -233,9 +234,10 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
         .flatMap(_.expertClause.literals)
       if (available.nonEmpty) {
         val newDecision = decisionsMaker.makeDecision(available)
+        println(s"newDecision = $newDecision")
         addNewClause(Decision(newDecision), newDecision)
       } else {
-
+        println("WARNING!!! available is empty!!!")
       }
     }
 
