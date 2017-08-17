@@ -127,6 +127,7 @@ object CLI {
               c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
               new TPTPExporter(c.output).write(p)
               c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
+              sys.exit(0)
             case Satisfiable(m) =>
               val status = if (hasConjecture(input)) "CounterSatisfiable" else "Satisfiable"  
               c.output.write(s"% SZS status $status for $problemName\n")
