@@ -12,5 +12,5 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="prover" level="debug" />
+    <logger name="prover" level="info" />
 </configuration>

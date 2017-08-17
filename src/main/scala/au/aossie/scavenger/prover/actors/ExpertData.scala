@@ -225,7 +225,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
   }
 
   def makeDecision(wasNewCDCLs: Boolean): Unit = {
-    println("making decision")
+//    println("making decision")
     decisionsMaker.incCounter
     if (!wasNewCDCLs || decisionsMaker.counterExpired) {
       val available = clauses
@@ -234,10 +234,11 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
         .flatMap(_.expertClause.literals)
       if (available.nonEmpty) {
         val newDecision = decisionsMaker.makeDecision(available)
-        println(s"newDecision = $newDecision")
+//        println(s"newDecision = $newDecision")
         addNewClause(Decision(newDecision), newDecision)
       } else {
-        println("WARNING!!! available is empty!!!")
+        // FIXME: think about when this case occures
+//        println("WARNING!!! available is empty!!!")
       }
     }
 
