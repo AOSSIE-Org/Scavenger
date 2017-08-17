@@ -51,24 +51,28 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
     newClauses.foreach { clause =>
       val initialStatement = new InitialStatement(clause)
       val node = Expertise(initialStatement, predicates)
-      addNewClause(node, node.conclusion)
+      if (node.conclusion != Clause.empty) {
+        addNewClause(node, node.conclusion)
+      }
     }
   }
 
   def addClauses(nodes: Seq[CRProofNode]): Unit = {
     nodes.foreach { globalNode =>
       val localNode = Expertise(globalNode, predicates)
-      addNewClause(localNode, localNode.conclusion)
+      if (localNode.conclusion != Clause.empty) {
+        addNewClause(localNode, localNode.conclusion)
+      }
     }
   }
 
   def resolveUnitPropagation(): Unit = {
     clauses.collect { case ClauseInfo(clause, proofs) if proofs.nonEmpty => if (!clause.isUnit)
-      for (clauseNode <- proofs) {
+      for (clauseNode <- rnd.shuffle(proofs)) {
         // TODO: Think about to shuffle literals to avoid worst case in the bruteforce.
         val shuffledLiterals = clause.literals
 
-        val unifyCandidates = shuffledLiterals.map(literal => unificator.getUnifications(literal))
+        val unifyCandidates = shuffledLiterals.map(literal => rnd.shuffle(unificator.getUnifications(literal)))
         val emptyCandidates = unifyCandidates.indices.filter(unifyCandidates(_).isEmpty)
         if (emptyCandidates.size < 2) {
           val candidateIndices = if (emptyCandidates.isEmpty) unifyCandidates.indices else emptyCandidates
@@ -224,11 +228,11 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
     decisionsMaker.incCounter
     if (!wasNewCDCLs || decisionsMaker.counterExpired) {
       val available = clauses
-        .filterNot(_.expertClause.literals.exists(provedLiterals.contains))
+        .filterNot(clauseInfo =>
+          clauseInfo.proofs.isEmpty || clauseInfo.expertClause.literals.exists(provedLiterals.contains))
         .flatMap(_.expertClause.literals)
       if (available.nonEmpty) {
         val newDecision = decisionsMaker.makeDecision(available)
-        println(newDecision)
         addNewClause(Decision(newDecision), newDecision)
       } else {
 

@@ -1,8 +1,10 @@
 package au.aossie.scavenger.prover
 import akka.actor.{ActorSystem, Props}
 import au.aossie.scavenger.expression.Sym
+import au.aossie.scavenger.proof.cr.{CRProof, InitialStatement}
 import au.aossie.scavenger.prover.actors.{ExpertActor, Start}
-import au.aossie.scavenger.structure.immutable.CNF
+import au.aossie.scavenger.structure.immutable.{CNF, Clause}
+import com.typesafe.config.ConfigFactory
 
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
@@ -16,8 +18,13 @@ class ExpertProver(numActors: Int, withSetOfSupport: Boolean, maxIterationsWitho
 
   implicit val rnd = new Random(107)
 
+  implicit val system = ActorSystem("default", ConfigFactory.load)
+
   def prove(cnf: CNF): ProblemStatus = {
-    implicit val system = ActorSystem()
+    if (cnf.clauses.contains(Clause.empty)) {
+      return Unsatisfiable(Some(CRProof(InitialStatement(Clause.empty))))
+    }
+
     val occurenciesCount = cnf.clauses
       .flatMap(_.predicates.map(_._1))
       .groupBy(identity)
@@ -34,7 +41,10 @@ class ExpertProver(numActors: Int, withSetOfSupport: Boolean, maxIterationsWitho
     val promise = Promise[ProblemStatus]()
     val experts = Seq.tabulate(numActors) {
       id =>
-        system.actorOf(Props(new ExpertActor(predicatesPerActor(id)._1, withSetOfSupport, promise, maxIterationsWithoutDecision)))
+        system.actorOf(
+          Props(
+            new ExpertActor(predicatesPerActor(id)._1, withSetOfSupport, promise, maxIterationsWithoutDecision)
+          ).withDispatcher("prio-dispatcher")  )
     }
     experts.foreach { expertActor =>
       expertActor ! Start(cnf.clauses, experts)
