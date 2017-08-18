@@ -3,6 +3,7 @@ package au.aossie.scavenger.unification
 import au.aossie.scavenger.expression.{AppRec, Sym}
 import au.aossie.scavenger.structure.immutable.Literal
 import au.aossie.scavenger.unification.{MartelliMontanari => unify}
+import au.aossie.scavenger.prover._
 
 import scala.collection.mutable
 
@@ -31,7 +32,7 @@ class Unificator {
           byPredicateA.getOrElseUpdate(predicate, mutable.ListBuffer.empty).append(listA.size - 1)
 
           for (index <- byPredicateB.getOrElse(predicate, mutable.ListBuffer.empty)) if (literal.polarity != listB(index).polarity) {
-            unify(literal.unit, listB(index).unit) match {
+            unifyWithRename(Seq(literal.unit), Seq(listB(index).unit)) match {
               case Some(_) =>
                 unifications.last.append(index)
               case None =>
@@ -51,7 +52,7 @@ class Unificator {
           byPredicateB.getOrElseUpdate(predicate, mutable.ListBuffer.empty).append(listB.size - 1)
 
           for (index <- byPredicateA.getOrElse(predicate, mutable.ListBuffer.empty)) if (literal.polarity != listA(index).polarity) {
-            unify(literal.unit, listA(index).unit) match {
+            unifyWithRename(Seq(literal.unit), Seq(listA(index).unit)) match {
               case Some(_) =>
                 unifications(index).append(listB.size - 1)
               case None =>

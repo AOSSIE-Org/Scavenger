@@ -117,8 +117,9 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
                 substitutions,
                 globalSubstitution
               )
-              val newLiteral = unitPropagationNode.conclusion
-              addNewClause(unitPropagationNode, newLiteral)
+              if (unitPropagationNode.decisions.size <= 10) {
+                addNewClause(unitPropagationNode, unitPropagationNode.conclusion)
+              }
             }
           }
         }

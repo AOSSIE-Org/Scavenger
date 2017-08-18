@@ -10,7 +10,6 @@ import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Promise}
 import scala.util.{Random, Success}
-import scala.concurrent.duration._
 
 /**
   * Created by vlad107 on 7/27/17.
@@ -53,9 +52,6 @@ class ExpertProver(numActors: Int, withSetOfSupport: Boolean, maxIterationsWitho
     Await.result(promise.future, Duration.Inf)
     promise.future.value match {
       case Some(Success(problemStatus)) =>
-        experts.foreach(expertActor => expertActor ! Kill)
-        system.terminate
-        Await.result(system.whenTerminated, 300 second)
         problemStatus
     }
   }

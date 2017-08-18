@@ -1,6 +1,6 @@
 package au.aossie.scavenger.prover.actors
 
-import akka.actor.{Actor, ActorRef, ActorSystem}
+import akka.actor.{Actor, ActorRef, ActorSystem, Kill}
 import akka.dispatch.{PriorityGenerator, UnboundedPriorityMailbox}
 import au.aossie.scavenger.expression.Sym
 import au.aossie.scavenger.proof.cr.{CRProof, CRProofNode, ConflictDrivenClauseLearning}

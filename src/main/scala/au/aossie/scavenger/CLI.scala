@@ -30,7 +30,7 @@ object CLI {
     "EP" -> Seq(new EPCR(100, 10, 1.0, 0.99, 1e10, 10, false),
                 new EPCR(100, 10, 1.0, 0.99, 1e10, 5, true)),
     "TD" -> Seq(TDCR),
-    "Expert" -> Seq(new ExpertProver(4, true, 10))
+    "Expert" -> Seq(new ExpertProver(1, true, 4))
   )
 
   val parser = new scopt.OptionParser[Config]("scavenger") {
