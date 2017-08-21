@@ -3,7 +3,7 @@ package au.aossie.scavenger.prover.actors
 import akka.actor.{Actor, ActorRef, ActorSystem}
 import akka.dispatch.{PriorityGenerator, UnboundedPriorityMailbox}
 import au.aossie.scavenger.expression.Sym
-import au.aossie.scavenger.proof.cr.{CRProof, CRProofNode, ConflictDrivenClauseLearning}
+import au.aossie.scavenger.proof.cr.{CRProof, CRProofNode, ConflictDrivenClauseLearning, InitialStatement}
 import au.aossie.scavenger.prover.{ProblemStatus, Unsatisfiable}
 import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 import com.typesafe.config.Config
@@ -53,7 +53,7 @@ class ExpertActor(predicates: Seq[Sym],
 
       friendActors ++= actors
       predicates.foreach { case Sym(name) => logger.debug(name) }
-      expertData.addInitialClauses(initialClauses)
+      expertData.addClauses(initialClauses.map(new InitialStatement(_)))
       self ! ResolveUnitPropagation
     case ResolveUnitPropagation =>
       logger.debug("ResolveUnitPropagation")

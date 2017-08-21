@@ -48,11 +48,11 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
   val unificator: Unificator = new Unificator()
   val decisionsMaker = new DecisionsMaker(maxIterationsWithoutDecision)
 
-  def addNewClause(crProofNode: CRProofNode,
-                   expertClause: Clause): Unit = {
-    val globalClause = (expertClause, (crProofNode.nonExpertDecisions ++ crProofNode.decisions).toClause)
-    if (!memorizedClauses.contains(globalClause)) {
-      memorizedClauses.add(globalClause)
+  def addNewClause(crProofNode: CRProofNode): Unit = {
+    val expertClause = crProofNode.conclusion
+    val clause = (expertClause, (crProofNode.nonExpertDecisions ++ crProofNode.decisions).toClause)
+    if (!memorizedClauses.contains(clause)) {
+      memorizedClauses.add(clause)
       if (expertClause.isUnit) {
         lastPropagatedLiterals.append((expertClause.literal, crProofNode))
       }
@@ -73,21 +73,11 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
     }
   }
 
-  def addInitialClauses(newClauses: Seq[Clause]): Unit = {
-    newClauses.foreach { clause =>
-      val initialStatement = new InitialStatement(clause)
-      val node = Expertise(initialStatement, predicates)
-      if (node.conclusion != Clause.empty) {
-        addNewClause(node, node.conclusion)
-      }
-    }
-  }
-
   def addClauses(nodes: Seq[CRProofNode]): Unit = {
     nodes.foreach { globalNode =>
       val localNode = Expertise(globalNode, predicates)
       if (localNode.conclusion != Clause.empty) {
-        addNewClause(localNode, localNode.conclusion)
+        addNewClause(localNode)
       }
     }
   }
@@ -143,8 +133,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
                 substitutions,
                 globalSubstitution
               )
-              val newLiteral = unitPropagationNode.conclusion
-              addNewClause(unitPropagationNode, newLiteral)
+              addNewClause(unitPropagationNode)
             }
           }
         }
@@ -261,7 +250,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
       if (available.nonEmpty) {
         val newDecision = decisionsMaker.makeDecision(available)
 //        println(s"newDecision = $newDecision")
-        addNewClause(Decision(newDecision), newDecision)
+        addNewClause(Decision(newDecision))
       } else {
         // FIXME: think about when this case occures
 //        println("WARNING!!! available is empty!!!")
