@@ -28,8 +28,7 @@ class UnitPropagationResolution (
         case (node, sub) =>
           node.nonExpertDecisions.map(literal => sub(literal))
       }(collection.breakOut).toSet ++ right.nonExpertDecisions.map(literal => rightMgu(literal)),
-      left.flatMap(_.decisionsWithoutSubst)(collection.breakOut).toSet ++
-        right.decisionsWithoutSubst
+      left.flatMap(_.decisionsWithoutSubst)(collection.breakOut)
     ) {
   assert(left.forall(_.conclusion.width == 1), "All left conclusions should be unit")
   assert(left.size + 1 == right.conclusion.width,

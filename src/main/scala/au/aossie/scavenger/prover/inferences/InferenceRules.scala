@@ -217,10 +217,9 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
           def newPropagation(chosenUnifiers: mutable.Seq[Literal],
                              subs: mutable.Seq[Substitution],
                              globalSubst: Substitution,
-                             usedVars: mutable.Set[Var]): Unit = {
+                             usedVars: Set[Var]): Unit = {
             val unifierNodes = chosenUnifiers.map(l => rnd.shuffle(proofNodesByClause(l.toClause)).head)
             if (!withSetOfSupport || unifierNodes.exists(!_.isAxiom) || !clauseNode.isAxiom) {
-              val curSubst = renameVars(shuffledLiterals(conclusionId).unit, usedVars)
               val unitPropagationNode =
                 UnitPropagationResolution(
                   unifierNodes,
@@ -252,7 +251,7 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
                  subs: mutable.Seq[Substitution],
                  literalsWithSubst: Seq[Literal],
                  globalSubst: Substitution,
-                 usedVars: mutable.Set[Var],
+                 usedVars: Set[Var],
                  cur: Int): Unit = {
 
             if (cur == unifiers.size) {
@@ -294,9 +293,9 @@ class InferenceRules(initialClauses: ListBuffer[Clause],
             mutable.Seq.empty,
             literals,
             Substitution.empty,
-            mutable.Set[Var](literals.map(_.unit.variables).reduce {
+            literals.map(_.unit.variables).reduce {
               _ ++ _
-            }: _*),
+            } toSet,
             0)
         }
       }
