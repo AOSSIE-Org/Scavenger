@@ -39,7 +39,7 @@ class TPTPExporter(out: Output) extends BasicFileExporter(out) {
           "axiom"
         case Decision(_) =>
           "decision"
-        case Expertise(_) =>
+        case Expertise(_, _) =>
           "expertise"
       }
       val status = node match {
