@@ -47,7 +47,6 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
 
   val unificator: Unificator = new Unificator()
   val decisionsMaker = new DecisionsMaker(maxIterationsWithoutDecision)
-  val propagatedLiteralsBuffer = mutable.ListBuffer.empty[CRProofNode]
 
   def addNewClause(crProofNode: CRProofNode): Unit = {
     val expertClause = crProofNode.conclusion
@@ -55,7 +54,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
     if (!memorizedClauses.contains(clause)) {
       memorizedClauses.add(clause)
       if (expertClause.isUnit) {
-        propagatedLiteralsBuffer.append(crProofNode)
+        lastPropagatedLiterals.append((expertClause.literal, crProofNode))
       }
 
       val index = indexByClause.getOrElseUpdate(expertClause, clauses.size)
@@ -74,16 +73,6 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
     }
   }
 
-  def addInitialClauses(newClauses: Seq[Clause]): Unit = {
-    newClauses.foreach { clause =>
-      val initialStatement = new InitialStatement(clause)
-      val node = Expertise(initialStatement, predicates)
-      if (node.conclusion != Clause.empty) {
-        addNewClause(node)
-      }
-    }
-  }
-
   def addClauses(nodes: Seq[CRProofNode]): Unit = {
     nodes.foreach { globalNode =>
       val localNode = Expertise(globalNode, predicates)
@@ -94,7 +83,6 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
   }
 
   def resolveUnitPropagation(): Unit = {
-    propagatedLiteralsBuffer.clear();
     clauses.collect { case clauseInfo@ClauseInfo(expertClause, proofs) if proofs.nonEmpty && !expertClause.isUnit => {
       val unifiers = expertClause.literals.map(
         literal =>
@@ -123,7 +111,6 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
           resolveUnitPropagationByClause(clauseInfo, unifiers, conclusionId)
       )
     } }
-    propagatedLiteralsBuffer.foreach(addNewClause)
   }
 
   def resolveUnitPropagationByClause(clauseInfo: ClauseInfo, unifiers: Seq[mutable.ListBuffer[Literal]], conclusionId: Int): Unit =
@@ -146,9 +133,8 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
                 substitutions,
                 globalSubstitution
               )
-              // FIXME: should be as arguments
-              if ((unitPropagationNode.decisions.size <= 3) && (unitPropagationNode.conclusion.literal.unit.logicalSize <= 5)) {
-                propagatedLiteralsBuffer.append(unitPropagationNode)
+              if (unitPropagationNode.decisions.size <= 10) {
+                addNewClause(unitPropagationNode)
               }
             }
           }
