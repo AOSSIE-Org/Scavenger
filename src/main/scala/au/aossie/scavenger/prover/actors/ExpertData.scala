@@ -13,20 +13,46 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsWithoutDecision: Int)(implicit rnd: Random, implicit val system: ActorSystem) {
+
+/**
+  * Every expertActor stores this data structure to store clauses and to derive new clauses.
+  *
+  * @param predicates Set of predicates supported by the actor.
+  * @param withSetOfSupport Flag indicating to use "Set of support" strategy.
+  * @param maxIterationsWithoutDecision Maximum number of iterations without making a new decision.
+  * @param rnd Implicit structure to generate random numbers
+  */
+class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsWithoutDecision: Int)(implicit rnd: Random) {
+
   val clauses: ListBuffer[ClauseInfo] = ListBuffer.empty
   val indexByClause: mutable.Map[Clause, Int] = mutable.Map.empty
-  val propagatedClauses: mutable.Set[(Clause, Clause)] = mutable.Set.empty
+
+  /**
+    * Every node of the proof-graph can be uniquely identified by the current clause and the list of decisions
+    * which will be used in ConflictResolution inference rule.
+    * This Set memorizes all possible pairs of (currentClause, decisionsClause).
+    */
+  val memorizedClauses: mutable.Set[(Clause, Clause)] = mutable.Set.empty
+
+  /**
+    * Position in [[clauses]] for every derived unit clause(i. e. literal).
+    */
   val provedLiterals: mutable.Map[Literal, Int] = mutable.Map.empty
+
+  /**
+    * Buffers new proved literals to process it in [[resolveCDCL]] phase.
+    * Cleared in [[resolveCDCL]]
+    */
   val lastPropagatedLiterals: mutable.ListBuffer[(Literal, CRProofNode)] = mutable.ListBuffer.empty
+
   val unificator: Unificator = new Unificator()
   val decisionsMaker = new DecisionsMaker(maxIterationsWithoutDecision)
 
-  def addNewClause(crProofNode: CRProofNode,
-                   expertClause: Clause): Unit = {
-    val globalClause = (expertClause, (crProofNode.nonExpertDecisions ++ crProofNode.decisions).toClause)
-    if (!propagatedClauses.contains(globalClause)) {
-      propagatedClauses.add(globalClause)
+  def addNewClause(crProofNode: CRProofNode): Unit = {
+    val expertClause = crProofNode.conclusion
+    val clause = (expertClause, (crProofNode.nonExpertDecisions ++ crProofNode.decisions).toClause)
+    if (!memorizedClauses.contains(clause)) {
+      memorizedClauses.add(clause)
       if (expertClause.isUnit) {
         lastPropagatedLiterals.append((expertClause.literal, crProofNode))
       }
@@ -61,7 +87,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
     nodes.foreach { globalNode =>
       val localNode = Expertise(globalNode, predicates)
       if (localNode.conclusion != Clause.empty) {
-        addNewClause(localNode, localNode.conclusion)
+        addNewClause(localNode)
       }
     }
   }
@@ -117,9 +143,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
                 substitutions,
                 globalSubstitution
               )
-              if (unitPropagationNode.decisions.size <= 10) {
-                addNewClause(unitPropagationNode, unitPropagationNode.conclusion)
-              }
+              addNewClause(unitPropagationNode)
             }
           }
         }

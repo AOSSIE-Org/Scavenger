@@ -1,16 +1,12 @@
 package au.aossie.scavenger
 
 import ammonite.ops._
-import au.aossie.scavenger.structure.immutable.CNF
 import au.aossie.scavenger.prover.{EPCR, ExpertProver, PDCR, ProblemStatus, Satisfiable, TDCR, Unsatisfiable}
-import au.aossie.scavenger.parser.{Parser, TPTPCNFParser, TPTPFOFParser}
-import au.aossie.scavenger.expression.{Abs, App, E, Sym}
+import au.aossie.scavenger.parser.{TPTPCNFParser, TPTPFOFParser}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
 import au.aossie.scavenger.exporter.tptp.TPTPExporter
-import au.aossie.scavenger.proof.Proof
 
-import scala.util.{Failure, Success, Try}
-import scala.collection.mutable
+import scala.util.Success
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 

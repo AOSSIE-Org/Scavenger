@@ -4,9 +4,9 @@ import java.io.File
 import java.io.FileReader
 import java.io.BufferedReader
 
-import scalax.chart.api._
-import org.jfree.chart.renderer.xy._
-import org.jfree.chart.axis._
+//import scalax.chart.api._
+//import org.jfree.chart.renderer.xy._
+//import org.jfree.chart.axis._
 import java.awt.Color
 import ammonite.ops._
 
@@ -159,19 +159,19 @@ object StarExecOutputAnalysis {
 
         
         // Plot number of problems solved under a given time. Each prover is a different line in the chart.
-        val chart = XYLineChart( ppt filter { e => e._2.nonEmpty } sortWith { (e1, e2) => e1._2.length < e2._2.length } map { case (p, pt) => (p -> pt) } )
-        for (i <- 0 until chart.plot.getDataset.getSeriesCount) {
-          val name = chart.plot.getDataset.getSeriesKey(i).asInstanceOf[String]
-          chart.plot.getRenderer.setSeriesPaint(i, colorer(name))
-        }
-        chart.plot.getDomainAxis.setLabel("Number of Problems")
-        chart.plot.getRangeAxis.setLabel("Time (seconds)")
-        chart.plot.setBackgroundPaint(Color.WHITE)
-        chart.plot.setDomainGridlinePaint(Color.BLACK)
-        chart.plot.setRangeGridlinePaint(Color.BLACK)
-        if (c.displayCharts) chart.show()
-        val date = new java.text.SimpleDateFormat("yyyy-MM-dd--HH-mm-ss").format(new java.util.Date())
-        chart.saveAsPNG(s"${d}chart--${date}.png", (720,450))
+//        val chart = XYLineChart( ppt filter { e => e._2.nonEmpty } sortWith { (e1, e2) => e1._2.length < e2._2.length } map { case (p, pt) => (p -> pt) } )
+//        for (i <- 0 until chart.plot.getDataset.getSeriesCount) {
+//          val name = chart.plot.getDataset.getSeriesKey(i).asInstanceOf[String]
+//          chart.plot.getRenderer.setSeriesPaint(i, colorer(name))
+//        }
+//        chart.plot.getDomainAxis.setLabel("Number of Problems")
+//        chart.plot.getRangeAxis.setLabel("Time (seconds)")
+//        chart.plot.setBackgroundPaint(Color.WHITE)
+//        chart.plot.setDomainGridlinePaint(Color.BLACK)
+//        chart.plot.setRangeGridlinePaint(Color.BLACK)
+//        if (c.displayCharts) chart.show()
+//        val date = new java.text.SimpleDateFormat("yyyy-MM-dd--HH-mm-ss").format(new java.util.Date())
+//        chart.saveAsPNG(s"${d}chart--${date}.png", (720,450))
    
         
         // Rank problems by difficulty
@@ -213,18 +213,18 @@ object StarExecOutputAnalysis {
         val data = igpfjpa flatMap { p => p._3 map { jp => (jp,p._1,jp.cpuTime) } } groupBy { _._1.prover } map { case (p, pjps) => (p -> (pjps map { case (jp, pnumber, time) => (pnumber,time) })) } toSeq    
         
         // Scatter plot of solving time per problem
-        val scatter = XYLineChart( data sortWith { (pd1, pd2) => (c.solvers contains pd1._1) || (pd1._1 compareTo pd2._1) < 0 } )
-        scatter.plot.setRenderer(new XYLineAndShapeRenderer(false, true))
-        scatter.plot.setRangeAxis(new LogAxis("Time (seconds)"))
-        scatter.plot.getRangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits())
-        scatter.plot.getRangeAxis.setLabel("Time (seconds)")
-        scatter.plot.getDomainAxis.setLabel("Problems (ordered by decreasing difficulty)")
-        scatter.plot.getRangeAxis.setLabelFont(scatter.plot.getDomainAxis.getLabelFont)
-        scatter.plot.setBackgroundPaint(Color.WHITE)
-        scatter.plot.setDomainGridlinePaint(Color.BLACK)
-        scatter.plot.setRangeGridlinePaint(Color.BLACK)
-        if (c.displayCharts) scatter.show()
-        scatter.saveAsPNG(s"${d}scatter--${date}.png", (720,450))
+//        val scatter = XYLineChart( data sortWith { (pd1, pd2) => (c.solvers contains pd1._1) || (pd1._1 compareTo pd2._1) < 0 } )
+//        scatter.plot.setRenderer(new XYLineAndShapeRenderer(false, true))
+//        scatter.plot.setRangeAxis(new LogAxis("Time (seconds)"))
+//        scatter.plot.getRangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits())
+//        scatter.plot.getRangeAxis.setLabel("Time (seconds)")
+//        scatter.plot.getDomainAxis.setLabel("Problems (ordered by decreasing difficulty)")
+//        scatter.plot.getRangeAxis.setLabelFont(scatter.plot.getDomainAxis.getLabelFont)
+//        scatter.plot.setBackgroundPaint(Color.WHITE)
+//        scatter.plot.setDomainGridlinePaint(Color.BLACK)
+//        scatter.plot.setRangeGridlinePaint(Color.BLACK)
+//        if (c.displayCharts) scatter.show()
+//        scatter.saveAsPNG(s"${d}scatter--${date}.png", (720,450))
         
         // Rank solvers by number of problems solved
         println()
