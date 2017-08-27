@@ -1,20 +1,33 @@
 # What I've done in [Scavenger-EP](https://gitlab.com/aossie/Scavenger)
 
- * Fixed some ideological bugs in the EP version of the prover
- * Implemented VSIDS heuristic, set-of-support heuristic, and some other heuristics used for SAT-solver
- * Supported TPTP style, prepared to CASC competition
+ * Fixed some performance bugs in the EP version of the prover
+ * Implemented the VSIDS heuristic, the set-of-support heuristic, and some other heuristics used for SAT-solver
+ * Supported TPTP style, prepared the solver to CASC competition
  * Generalized prover for FOF 
  * Supported equality reasoning
  * Implemented parallelization for EP version of the prover
 
+# List of Merge Requests:
+ * [Internal TPTP Clausifier](https://gitlab.com/aossie/Scavenger/merge_requests/2)
+ * [Develop](https://gitlab.com/aossie/Scavenger/merge_requests/4)
+ * [Implement VSIDS](https://gitlab.com/aossie/Scavenger/merge_requests/5)
+ * [CASC](https://gitlab.com/aossie/Scavenger/merge_requests/6)
+ * [FOF part](https://gitlab.com/aossie/Scavenger/merge_requests/7)
+ * [Minor fixes before CASC](https://gitlab.com/aossie/Scavenger/merge_requests/8)
+ * [Fix bug in forAllOut](https://gitlab.com/aossie/Scavenger/merge_requests/10)
+ * [rename all variables to unique X_<number>](https://gitlab.com/aossie/Scavenger/merge_requests/11)
+ * [refactor EPCR](https://gitlab.com/aossie/Scavenger/merge_requests/9)
+ * [ExpertProver](https://gitlab.com/aossie/Scavenger/merge_requests/12)
+
 # Technical details
 ## Details about ExpertProver
-We use N actors where every actor works on a specific list of predicates. 
-When actor derives new CDCL rule it sends the clause to all other actors.
-When actor receives new clause it applies rule Expertise(predicates) so it now works on 
-it's own predicates and consider another predicats as decisions.
+We use N actors, where every actor works on a specific list of predicates. 
+When an actor derives new CDCL rule, it sends the clause to all other actors.
+When an actor receives a new clause, it applies rule Expertise(predicates) so it now works on 
+its own predicates and consider another predicates as decisions.
 ## Details about Equality reasoning
-Implemented the dumbest version of the equality reasoning: we just add 3+N+K new inference rules, where N is the number of unique predicate symbols and K is the nubmer of unique function symbols.
+Implemented the naive version of the equality reasoning: we just add 3+N+K new axioms, where N 
+is the number of unique predicate symbols and K is the number of unique function symbols.
 ### Axioms:
  * `A=B => B=A`
  * `A=A`
@@ -32,15 +45,4 @@ Implemented the dumbest version of the equality reasoning: we just add 3+N+K new
  * [parallelization](http://profs.sci.univr.it/~bonacina/papers/LNCS-2017PTP.pdf)
 
 
-# List of Merge Requests:
- * [Internal TPTP Clausifier](https://gitlab.com/aossie/Scavenger/merge_requests/2)
- * [Develop](https://gitlab.com/aossie/Scavenger/merge_requests/4)
- * [Implement VSIDS](https://gitlab.com/aossie/Scavenger/merge_requests/5)
- * [CASC](https://gitlab.com/aossie/Scavenger/merge_requests/6)
- * [FOF part](https://gitlab.com/aossie/Scavenger/merge_requests/7)
- * [Minor fixes before CASC](https://gitlab.com/aossie/Scavenger/merge_requests/8)
- * [Fix bug in forAllOut](https://gitlab.com/aossie/Scavenger/merge_requests/10)
- * [rename all variables to unique X_<number>](https://gitlab.com/aossie/Scavenger/merge_requests/11)
- * [refactor EPCR](https://gitlab.com/aossie/Scavenger/merge_requests/9)
- * [ExpertProver](https://gitlab.com/aossie/Scavenger/merge_requests/12)
 
