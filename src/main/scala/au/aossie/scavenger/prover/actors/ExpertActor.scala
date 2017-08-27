@@ -3,7 +3,7 @@ package au.aossie.scavenger.prover.actors
 import akka.actor.{Actor, ActorRef, ActorSystem, Kill}
 import akka.dispatch.{PriorityGenerator, UnboundedPriorityMailbox}
 import au.aossie.scavenger.expression.Sym
-import au.aossie.scavenger.proof.cr.{CRProof, CRProofNode, ConflictDrivenClauseLearning, InitialStatement}
+import au.aossie.scavenger.proof.cr._
 import au.aossie.scavenger.prover.{ProblemStatus, Unsatisfiable}
 import au.aossie.scavenger.structure.immutable.{Clause, Literal}
 import com.typesafe.config.Config
@@ -70,8 +70,12 @@ class ExpertActor(predicates: Seq[Sym],
             promise.success(Unsatisfiable(Some(CRProof(conflict))))
         }
 
-        if (cdclNodes.nonEmpty) {
-          friendActors.foreach(_ ! NewCDCLClauses(cdclNodes))
+        val (localNodes, globalNodes) = cdclNodes.partition(node => Expertise(node, predicates.toSet).conclusion != Clause.empty)
+        if (globalNodes.nonEmpty) {
+          friendActors.foreach(_ ! NewCDCLClauses(globalNodes))
+        }
+        if (localNodes.nonEmpty) {
+          self ! NewCDCLClauses(localNodes)
         }
         self ! RemoveCDCLPremises(cdclNodes.flatMap {
           case ConflictDrivenClauseLearning(conflict) =>

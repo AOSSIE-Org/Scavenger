@@ -47,7 +47,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
 
   val unificator: Unificator = new Unificator()
   val decisionsMaker = new DecisionsMaker(maxIterationsWithoutDecision)
-  val propagatedLiteralsBuffer = mutable.ListBuffer.empty[CRProofNode]
+  val propagatedLiteralsBuffer: ListBuffer[CRProofNode] = mutable.ListBuffer.empty[CRProofNode]
 
   def addNewClause(crProofNode: CRProofNode): Unit = {
     val expertClause = crProofNode.conclusion
@@ -55,7 +55,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
     if (!memorizedClauses.contains(clause)) {
       memorizedClauses.add(clause)
       if (expertClause.isUnit) {
-        propagatedLiteralsBuffer.append(crProofNode)
+        lastPropagatedLiterals.append((crProofNode.conclusion.literal, crProofNode))
       }
 
       val index = indexByClause.getOrElseUpdate(expertClause, clauses.size)
@@ -94,7 +94,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
   }
 
   def resolveUnitPropagation(): Unit = {
-    propagatedLiteralsBuffer.clear();
+    propagatedLiteralsBuffer.clear()
     clauses.collect { case clauseInfo@ClauseInfo(expertClause, proofs) if proofs.nonEmpty && !expertClause.isUnit => {
       val unifiers = expertClause.literals.map(
         literal =>
@@ -146,8 +146,8 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
                 substitutions,
                 globalSubstitution
               )
-              // FIXME: should be as arguments
-              if ((unitPropagationNode.decisions.size <= 3) && (unitPropagationNode.conclusion.literal.unit.logicalSize <= 5)) {
+              // FIXME: should be arguments
+              if ((unitPropagationNode.decisions.size <= 5) && (unitPropagationNode.conclusion.literal.unit.logicalSize <= 50)) {
                 propagatedLiteralsBuffer.append(unitPropagationNode)
               }
             }
@@ -211,9 +211,12 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
     val provedLiteralBuckets: mutable.Map[String, ListBuffer[Literal]] = mutable.Map.empty
     val cdclNodes: mutable.ListBuffer[CRProofNode] = mutable.ListBuffer.empty
     val wasCDCL: mutable.Set[Clause] = mutable.Set.empty
+    provedLiterals.foreach{
+      case (literal, _) =>
+        provedLiteralBuckets.getOrElseUpdate(getBucketByExpr(literal.unit), ListBuffer.empty).append(literal)
+    }
     for ((literal, conflictNode) <- lastPropagatedLiterals) {
       val bucketName = getBucketByExpr(literal.unit)
-
       val candidateLiterals = provedLiteralBuckets.getOrElse(bucketName, ListBuffer.empty[Literal])
 
       for {
@@ -230,7 +233,6 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
           }
         }
       }
-      provedLiteralBuckets.getOrElseUpdate(bucketName, ListBuffer.empty).append(literal)
     }
 
 

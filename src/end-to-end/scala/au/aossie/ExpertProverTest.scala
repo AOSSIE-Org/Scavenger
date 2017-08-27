@@ -18,5 +18,6 @@ object ExpertProverTest {
       case Satisfiable(model) =>
         println(model)
     }
+    sys.exit(0)
   }
 }
