@@ -1,11 +1,12 @@
 # What I've done in [Scavenger-EP](https://gitlab.com/aossie/Scavenger)
-
  * Fixed some performance bugs in the EP version of the prover
  * Implemented the VSIDS heuristic, the set-of-support heuristic, and some other heuristics used for SAT-solver
  * Supported TPTP style, prepared the solver to CASC competition
  * Generalized prover for FOF 
  * Supported equality reasoning
  * Implemented parallelization for EP version of the prover
+
+# Link to the [latest tag](https://gitlab.com/vlad10795/Scavenger/tags/GSoC-2017)
 
 # List of Merge Requests:
  * [Internal TPTP Clausifier](https://gitlab.com/aossie/Scavenger/merge_requests/2)
