@@ -1,8 +1,14 @@
 package au.aossie.scavenger.proof.cr
 
-import au.aossie.scavenger.structure.immutable.{AxiomClause, Clause}
+import au.aossie.scavenger.structure.immutable.{AxiomClause, Clause, Literal}
 
-class InitialStatement(override val conclusion: Clause) extends CRProofNode(conclusion.tp == AxiomClause) {
+class InitialStatement(override val conclusion: Clause)
+  extends CRProofNode(
+    conclusion.tp == AxiomClause,
+    Set.empty,
+    Set.empty,
+    Set.empty
+  ) {
   def auxFormulasMap = Map()
   def premises       = Seq()
 }

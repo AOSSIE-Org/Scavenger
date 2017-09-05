@@ -5,7 +5,7 @@ import java.io.Writer
 import au.aossie.scavenger.exporter.BasicFileExporter
 import au.aossie.scavenger.expression.E
 import au.aossie.scavenger.proof.Proof
-import au.aossie.scavenger.proof.cr.{InitialStatement, CRProofNode, Conflict, ConflictDrivenClauseLearning, Decision, UnitPropagationResolution}
+import au.aossie.scavenger.proof.cr._
 import au.aossie.scavenger.structure.immutable.Clause
 import au.aossie.scavenger.util.io.Output
 
@@ -39,6 +39,8 @@ class TPTPExporter(out: Output) extends BasicFileExporter(out) {
           "axiom"
         case Decision(_) =>
           "decision"
+        case Expertise(_, _) =>
+          "expertise"
       }
       val status = node match {
         case p: InitialStatement => "status(thm)"

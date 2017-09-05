@@ -1,16 +1,12 @@
 package au.aossie.scavenger
 
 import ammonite.ops._
-import au.aossie.scavenger.structure.immutable.CNF
-import au.aossie.scavenger.prover.{EPCR, PDCR, ProblemStatus, Satisfiable, TDCR, Unsatisfiable}
-import au.aossie.scavenger.parser.{Parser, TPTPCNFParser, TPTPFOFParser}
-import au.aossie.scavenger.expression.{Abs, App, E, Sym}
+import au.aossie.scavenger.prover.{EPCR, ExpertProver, PDCR, ProblemStatus, Satisfiable, TDCR, Unsatisfiable}
+import au.aossie.scavenger.parser.{TPTPCNFParser, TPTPFOFParser}
 import au.aossie.scavenger.util.io.{Output, StandardOutput}
 import au.aossie.scavenger.exporter.tptp.TPTPExporter
-import au.aossie.scavenger.proof.Proof
 
-import scala.util.{Try,Success,Failure}
-import scala.collection.mutable
+import scala.util.Success
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -29,7 +25,8 @@ object CLI {
     "PD" -> Seq(PDCR),
     "EP" -> Seq(new EPCR(100, 10, 1.0, 0.99, 1e10, 10, false),
                 new EPCR(100, 10, 1.0, 0.99, 1e10, 5, true)),
-    "TD" -> Seq(TDCR)
+    "TD" -> Seq(TDCR),
+    "Expert" -> Seq(new ExpertProver(4, true, 6))
   )
 
   val parser = new scopt.OptionParser[Config]("scavenger") {
@@ -126,6 +123,7 @@ object CLI {
               c.output.write(s"% SZS output start CNFRefutation for $problemName\n")
               new TPTPExporter(c.output).write(p)
               c.output.write(s"% SZS output end CNFRefutation for $problemName\n")
+              sys.exit(0)
             case Satisfiable(m) =>
               val status = if (hasConjecture(input)) "CounterSatisfiable" else "Satisfiable"  
               c.output.write(s"% SZS status $status for $problemName\n")
@@ -133,8 +131,10 @@ object CLI {
               c.output.write(m)
               c.output.write("\n")
               c.output.write(s"% SZS output end Model for $problemName\n")
+              sys.exit(0)
             case _ =>
               c.output.write(s"% SZS status GaveUp for $input")
+              sys.exit(0)
           }
           case _ => 
         }
