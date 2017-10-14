@@ -4,7 +4,7 @@ organization := "au.aossie"
 
 version := "0.2"
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.3"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-optimize", "-Xdisable-assertions")
 
@@ -34,3 +34,16 @@ logBuffered := false
 licenses := Seq("CC BY-NC-SA" -> url("http://creativecommons.org/licenses/by-nc-sa/4.0/"))
 
 homepage := Some(url("https://www.gitlab.com/aossie/Scavenger"))
+
+val scavenger = InputKey[Unit]("scavenger", "The Scavenger Theorem Prover")
+
+lazy val project = Project(id = "scavenger", base = file("."))
+  .configs(Testing.configs: _*)
+  .settings(Testing.settings: _*)
+  .settings(
+    mainClass in assembly := Some("au.aossie.scavenger.CLI"),
+    fullRunInputTask(scavenger, Runtime, "au.aossie.scavenger.CLI"),
+    trapExit in scavenger := true,
+    fork in scavenger := false,
+    traceLevel in scavenger := 0
+  )

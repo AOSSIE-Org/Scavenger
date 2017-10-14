@@ -42,19 +42,19 @@ object Testing {
 
   lazy val testAllQuickSettings = Seq(
     testAll := (),
-    testAll <<= testAll.dependsOn(test in EndToEndTest),
-    testAll <<= testAll.dependsOn(test in IntegrationTest),
-    testAll <<= testAll.dependsOn(test in Test)
+    testAll := testAll.dependsOn(test in EndToEndTest),
+    testAll := testAll.dependsOn(test in IntegrationTest),
+    testAll := testAll.dependsOn(test in Test)
   )
 
   lazy val testAll = TaskKey[Unit]("test-all")
 
   lazy val testAllSettings = Seq(
     testAll := (),
-    testAll <<= testAll.dependsOn(test in EndToEndTest),
-    testAll <<= testAll.dependsOn(test in IntegrationTest),
-    testAll <<= testAll.dependsOn(test in PerformanceTest),
-    testAll <<= testAll.dependsOn(test in Test)
+    testAll := testAll.dependsOn(test in EndToEndTest),
+    testAll := testAll.dependsOn(test in IntegrationTest),
+    testAll := testAll.dependsOn(test in PerformanceTest),
+    testAll := testAll.dependsOn(test in Test)
   )
 
   lazy val settings = integrationTestSettings ++
