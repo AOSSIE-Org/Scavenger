@@ -60,6 +60,8 @@ The calculus behind Scavenger is described in the [Conflict Resolution paper](ht
  * [Bruno Woltzenlogel Paleo](https://github.com/Ceilican/)
  * [Daniyar Itegulov](https://github.com/itegulov)
  * [Ezequiel Postan](https://github.com/EzequielPostan)
+ * [Padtsiolkin Uladzislau](https://github.com/vlad10795)
+
 
 ### Support
  
