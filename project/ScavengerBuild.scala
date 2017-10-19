@@ -5,6 +5,7 @@ import sbtassembly.AssemblyKeys._
 
 object ScavengerBuild {
   lazy val commonSettings = Seq(
+    isSnapshot := true,
     organization := "org.aossie",
     version := "0.2",
     scalaVersion := "2.12.3",
@@ -31,18 +32,16 @@ object ScavengerBuild {
 
   lazy val commonDeps = Seq(
     libraryDependencies ++= Seq(
-      "ch.qos.logback" % "logback-classic" % "1.2.3",
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
-      "org.specs2" %% "specs2-core" % "3.8.6" % Test
+      "ch.qos.logback"             % "logback-classic" % "1.2.3",
+      "com.typesafe.scala-logging" %% "scala-logging"  % "3.5.0",
+      "org.specs2"                 %% "specs2-core"    % "3.8.6" % Test
     )
   )
 
   lazy val publishSettings = Seq(
     PgpKeys.useGpg := true,
     homepage := Some(url("https://www.gitlab.com/aossie/Scavenger")),
-    licenses := Seq(
-      "CC BY-NC-SA" -> url(
-        "http://creativecommons.org/licenses/by-nc-sa/4.0/")),
+    licenses := Seq("CC BY-NC-SA" -> url("http://creativecommons.org/licenses/by-nc-sa/4.0/")),
     publishArtifact in Test := false,
     publishMavenStyle := true,
     scmInfo := Some(
@@ -97,8 +96,8 @@ object ScavengerBuild {
     .settings(
       name := "scavenger-prover",
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %% "ammonite-ops" % "1.0.2",
-        "com.typesafe.akka" %% "akka-actor" % "2.5.6",
+        "com.lihaoyi"            %% "ammonite-ops"             % "1.0.2",
+        "com.typesafe.akka"      %% "akka-actor"               % "2.5.6",
         "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
       )
     )
@@ -128,8 +127,8 @@ object ScavengerBuild {
       mainClass in assembly := Some("org.aossie.scavenger.CLI"),
       assemblyJarName in assembly := "scavenger.jar",
       libraryDependencies ++= Seq(
-        "org.specs2" %% "specs2-core" % "3.8.6" % "integration,end-to-end,bench",
-        "com.storm-enroute" %% "scalameter" % "0.8.2"
+        "org.specs2"        %% "specs2-core" % "3.8.6" % "integration,end-to-end,bench",
+        "com.storm-enroute" %% "scalameter"  % "0.8.2"
       )
     )
     .configs(Testing.configs: _*)
