@@ -5,7 +5,7 @@ import sbtassembly.AssemblyKeys._
 
 object ScavengerBuild {
   lazy val commonSettings = Seq(
-    organization := "au.aossie",
+    organization := "org.aossie",
     version := "0.2",
     scalaVersion := "2.12.3",
     scalacOptions := Seq(
@@ -108,7 +108,7 @@ object ScavengerBuild {
     .settings(commonSettings ++ commonDeps)
     .settings(
       name := "scavenger-cli",
-      fullRunInputTask(scavenger, Runtime, "au.aossie.scavenger.CLI"),
+      fullRunInputTask(scavenger, Runtime, "org.aossie.scavenger.CLI"),
       trapExit in scavenger := true,
       fork in scavenger := false,
       traceLevel in scavenger := 0,
@@ -125,7 +125,7 @@ object ScavengerBuild {
     .settings(publishSettings)
     .settings(
       name := "Scavenger",
-      mainClass in assembly := Some("au.aossie.scavenger.CLI"),
+      mainClass in assembly := Some("org.aossie.scavenger.CLI"),
       assemblyJarName in assembly := "scavenger.jar",
       libraryDependencies ++= Seq(
         "org.specs2" %% "specs2-core" % "3.8.6" % "integration,end-to-end,bench",
