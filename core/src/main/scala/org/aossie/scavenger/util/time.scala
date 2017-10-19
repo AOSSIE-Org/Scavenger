@@ -3,7 +3,7 @@ package org.aossie.scavenger.util
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-package object pretty {
+package object time {
   case class Timed[+R](result: R, time: FiniteDuration)
 
   def timed[R](f: => R): Timed[R] = {

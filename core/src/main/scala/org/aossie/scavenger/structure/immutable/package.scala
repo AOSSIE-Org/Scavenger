@@ -5,9 +5,8 @@ import org.aossie.scavenger.expression.E
 package object immutable {
   implicit class LiteralsAreSequent(val literals: Iterable[Literal]) extends AnyVal {
     def toClause: Clause = {
-      val ant = literals.flatMap(l => if (!l.polarity) Some(l.unit) else None)
-      val suc = literals.flatMap(l => if (!l.polarity) None else Some(l.unit))
-      Clause(ant.toSeq: _*)(suc.toSeq: _*)
+      val (ant, suc) = literals.partition(_.polarity)
+      Clause(ant.map(_.unit).toSeq: _*)(suc.map(_.unit).toSeq: _*)
     }
   }
 

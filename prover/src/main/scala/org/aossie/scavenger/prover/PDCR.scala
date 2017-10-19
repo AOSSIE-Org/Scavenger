@@ -4,6 +4,7 @@ import org.aossie.scavenger.structure.immutable.{ Literal, CNF, Clause }
 import org.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 import org.aossie.scavenger.model.Assignment
 import org.aossie.scavenger.unification.tools._
+import org.aossie.scavenger.util.pretty._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
