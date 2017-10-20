@@ -13,3 +13,4 @@ before_script:
 test:
   script:
     - sbt clean coverage test end-to-end:test scalastyle coverageReport
+    - sbt coverageAggregate
