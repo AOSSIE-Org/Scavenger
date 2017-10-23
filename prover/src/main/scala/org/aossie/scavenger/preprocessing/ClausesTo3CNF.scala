@@ -37,7 +37,7 @@ object ClausesTo3CNF {
         val nlits = ArrayBuffer.empty[Literal]
         for (idx <- 0 until lits.length / 2) {
           val tmpSym = genNewSym(usedSyms)
-          val args = (lits(idx * 2).unit.variables ++ lits(idx * 2 + 1).unit.variables).distinct
+          val args = lits(idx * 2).unit.variables ++ lits(idx * 2 + 1).unit.variables
           val fun = Literal(AppRec(tmpSym, args), true)
           nClauses += literalsToClause(!fun, lits(idx * 2), lits(idx * 2 + 1))(clause.tp)
           nClauses += literalsToClause(!lits(idx * 2), fun)(clause.tp)
