@@ -15,7 +15,7 @@ import org.aossie.scavenger.expression.formula.{
   Or,
   True
 }
-import org.aossie.scavenger.expression.term._
+import org.aossie.scavenger.parser._
 import org.aossie.scavenger.parser.TPTP.TPTPAST._
 
 import scala.collection.immutable.Nil

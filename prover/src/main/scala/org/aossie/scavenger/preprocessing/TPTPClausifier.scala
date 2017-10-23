@@ -2,7 +2,7 @@ package org.aossie.scavenger.preprocessing
 
 import org.aossie.scavenger.expression._
 import org.aossie.scavenger.expression.formula._
-import org.aossie.scavenger.expression.term.FunctionTerm
+import org.aossie.scavenger.parser.FunctionTerm
 import org.aossie.scavenger.structure.immutable.{CNF, Clause, ClauseType}
 
 import scala.collection.mutable.ListBuffer
@@ -149,7 +149,7 @@ class TPTPClausifier {
         indexPredicate += 1
         val l1 = toCNFRec(a)
         val l2 = toCNFRec(b)
-        l1.map(_.+(z)) ++ l2.map(_.+:(z))
+        l1.map(_ + z) ++ l2.map(_.+:(z))
       case Neg(a) =>
         val l = toCNFRec(a)
         l.map((c: Clause) => new Clause(c.suc, c.ant, clauseType))
