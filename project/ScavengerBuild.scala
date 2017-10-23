@@ -89,10 +89,12 @@ object ScavengerBuild {
 
   lazy val core = Project(id = "core", base = file("core"))
     .settings(commonSettings ++ commonDeps)
+    .settings(publishSettings)
     .settings(name := "scavenger-core")
 
   lazy val prover = Project(id = "prover", base = file("prover"))
     .settings(commonSettings ++ commonDeps)
+    .settings(publishSettings)
     .settings(
       name := "scavenger-prover",
       libraryDependencies ++= Seq(
@@ -105,6 +107,7 @@ object ScavengerBuild {
 
   lazy val commandLine = Project(id = "cli", base = file("cli"))
     .settings(commonSettings ++ commonDeps)
+    .settings(publishSettings)
     .settings(
       name := "scavenger-cli",
       fullRunInputTask(scavenger, Runtime, "org.aossie.scavenger.CLI"),
