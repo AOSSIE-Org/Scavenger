@@ -62,7 +62,7 @@ pick-and-choose from amongst these modules:
 
 The calculus behind Scavenger is described in the [Conflict Resolution paper](https://arxiv.org/abs/1602.04568).
 
-
+The Scavenger's main algorithm ideas are described in the [Scavenger 0.1 paper](https://arxiv.org/abs/1704.03275).
 
 ### Stats
 
