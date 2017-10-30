@@ -40,8 +40,8 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
   val provedLiterals: mutable.Map[Literal, Int] = mutable.Map.empty
 
   /**
-    * Buffers new proved literals to process it in [[resolveCDCL]] phase.
-    * Cleared in [[resolveCDCL]]
+    * Buffers new proved literals to process it in [[resolveCdcl]] phase.
+    * Cleared in [[resolveCdcl]]
     */
   val lastPropagatedLiterals: mutable.ListBuffer[(Literal, CRProofNode)] = mutable.ListBuffer.empty
 
@@ -95,7 +95,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
 
   def resolveUnitPropagation(): Unit = {
     propagatedLiteralsBuffer.clear()
-    clauses.collect { case clauseInfo@ClauseInfo(expertClause, proofs) if proofs.nonEmpty && !expertClause.isUnit => {
+    clauses.collect { case clauseInfo@ClauseInfo(expertClause, proofs) if proofs.nonEmpty && !expertClause.isUnit =>
       val unifiers = expertClause.literals.map(
         literal =>
           unificator
@@ -122,12 +122,12 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
         conclusionId =>
           resolveUnitPropagationByClause(clauseInfo, unifiers, conclusionId)
       )
-    } }
+    }
     propagatedLiteralsBuffer.foreach(addNewClause)
   }
 
   def resolveUnitPropagationByClause(clauseInfo: ClauseInfo, unifiers: Seq[mutable.ListBuffer[Literal]], conclusionId: Int): Unit =
-    clauseInfo match { case ClauseInfo(clause, proofs) => {
+    clauseInfo match { case ClauseInfo(clause, proofs) =>
       val unifyCandidates = unifiers.take(conclusionId) ++ unifiers.drop(conclusionId + 1)
       val propagatingLiterals = clause.literals.take(conclusionId) ++ clause.literals.drop(conclusionId + 1)
 
@@ -155,8 +155,8 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
         }
       }
 
-      def rec(choosenUnifiers: Seq[Literal],
-              choosenUnifiersWithSubst: Seq[Literal],
+      def rec(chosenUnifiers: Seq[Literal],
+              chosenUnifiersWithSubst: Seq[Literal],
               substitutions: Seq[Substitution],
               usedVariables: Set[Var],
               globalSubstitution: Substitution,
@@ -169,15 +169,16 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
           candidates.foreach { literalCandidate =>
             val substitution = renameVars(literalCandidate.unit, usedVariables)
             val newSubstitutions = substitutions :+ substitution(globalSubstitution)
-            val literalWithSubstitution = Literal(globalSubstitution(substitution(literalCandidate.unit)), literalCandidate.polarity)
-            val newChoosenUnifiersWithSubst = choosenUnifiersWithSubst :+ literalWithSubstitution
+            val literalWithSubstitution = 
+              Literal(globalSubstitution(substitution(literalCandidate.unit)), literalCandidate.polarity)
+            val newChosenUnifiersWithSubst = chosenUnifiersWithSubst :+ literalWithSubstitution
 
             // NOTE: pure call of unify
             unify(literalWithSubstitution.unit, globalSubstitution(propagatingLiterals(curId).unit)) match {
               case Some(localSubstitution) =>
                 rec(
-                  choosenUnifiers :+ literalCandidate,
-                  newChoosenUnifiersWithSubst.map(localSubstitution(_)),
+                  chosenUnifiers :+ literalCandidate,
+                  newChosenUnifiersWithSubst.map(localSubstitution(_)),
                   newSubstitutions.map(sub => sub(localSubstitution)),
                   usedVariables ++ literalWithSubstitution.unit.variables,
                   globalSubstitution(localSubstitution),
@@ -188,29 +189,29 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
           }
 
         } else {
-          generateNewPropagations(choosenUnifiers, substitutions, globalSubstitution, usedVariables)
+          generateNewPropagations(chosenUnifiers, substitutions, globalSubstitution, usedVariables)
         }
       }
 
-      rec(Seq.empty,
-          Seq.empty,
-          Seq.empty,
-          clause.literals.map(_.unit.variables).reduce {
-            _ ++ _
-          }.toSet,
-          Substitution.empty,
-          0)
-    } }
+      rec(
+        Seq.empty,
+        Seq.empty,
+        Seq.empty,
+        clause.literals.map(_.unit.variables).reduce {_ ++ _},
+        Substitution.empty,
+        0
+      )
+    }
 
   def getBucketByExpr(expr: E): String = expr match {
     case AppRec(Sym(name), _) =>
       name
   }
 
-  def resolveCDCL: Seq[CRProofNode] = {
+  def resolveCdcl: Seq[CRProofNode] = {
     val provedLiteralBuckets: mutable.Map[String, ListBuffer[Literal]] = mutable.Map.empty
     val cdclNodes: mutable.ListBuffer[CRProofNode] = mutable.ListBuffer.empty
-    val wasCDCL: mutable.Set[Clause] = mutable.Set.empty
+    val wasCdcl: mutable.Set[Clause] = mutable.Set.empty
     provedLiterals.foreach{
       case (literal, _) =>
         provedLiteralBuckets.getOrElseUpdate(getBucketByExpr(literal.unit), ListBuffer.empty).append(literal)
@@ -225,8 +226,8 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
         conflict = Conflict(conflictNode, otherNode)
       } {
         val cdclNode = ConflictDrivenClauseLearning(conflict)
-        if (!wasCDCL.contains(cdclNode.conclusion)) {
-          wasCDCL.add(cdclNode.conclusion)
+        if (!wasCdcl.contains(cdclNode.conclusion)) {
+          wasCdcl.add(cdclNode.conclusion)
           cdclNodes += cdclNode
           if (cdclNode.conclusion == Clause.empty) {
             return cdclNodes
@@ -241,7 +242,7 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
     cdclNodes
   }
 
-  def removeCDCLPremises(premises: Set[Literal]): Unit = {
+  def removeCdclPremises(premises: Set[Literal]): Unit = {
     provedLiterals.foreach {
       case (_, index) =>
         val nonValidProofs = clauses(index).proofs.filter {
@@ -257,10 +258,10 @@ class ExpertData(predicates: Set[Sym], withSetOfSupport: Boolean, maxIterationsW
     provedLiterals --= nonValidLiterals
   }
 
-  def makeDecision(wasNewCDCLs: Boolean): Unit = {
+  def makeDecision(wasNewCdcls: Boolean): Unit = {
 //    println("making decision")
     decisionsMaker.incCounter
-    if (!wasNewCDCLs || decisionsMaker.counterExpired) {
+    if (!wasNewCdcls || decisionsMaker.counterExpired) {
       val available = clauses
         .filterNot(clauseInfo =>
           clauseInfo.proofs.isEmpty || clauseInfo.expertClause.literals.exists(provedLiterals.contains))
