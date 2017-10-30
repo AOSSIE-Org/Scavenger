@@ -40,6 +40,23 @@ The generated jar file can be deployed and used like any other java jar file:
   $ java -jar scavenger.jar -a EP -f cnfp -o refutation.proof examples/problems/CNF/SET006-1.cnfp
 ```
 
+### Using Scavenger as a Library
+
+Scavenger is currently available for Scala 2.12 only.
+
+To import Scavenger as library in your Scala (or any other JVM-based language) project, just create the Scavenger
+dependency by adding the following to your `build.sbt`:
+
+```scala
+libraryDependencies += "org.aossie" %% "scavenger" % "0.2"
+```
+
+This will pull in every single Scavenger module. If you only require some of the functionality, you can
+pick-and-choose from amongst these modules:
+
+ * `scavenger-core`: Data structures for the logic and lambda calculus in general
+ * `scavenger-prover`: Various algorithms for the theorem proving for first-order logic
+ * `scavenger-cli`: Command Line Interface (as described above) which you probably do not need in your project
 
 ### Documentation
 
