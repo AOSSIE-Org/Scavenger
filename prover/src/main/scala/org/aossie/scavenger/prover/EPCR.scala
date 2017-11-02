@@ -1,8 +1,10 @@
 package org.aossie.scavenger.prover
 
+import java.util.concurrent.TimeUnit
+
 import org.aossie.scavenger.expression._
 import org.aossie.scavenger.model.Assignment
-import org.aossie.scavenger.preprocessing.{AddEqualityReasoningAxioms, ClausesTo3CNF}
+import org.aossie.scavenger.preprocessing.AddEqualityReasoningAxioms
 import org.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 import org.aossie.scavenger.prover.inferences.InferenceRules
 import org.aossie.scavenger.prover.heuristic.DecisionMaker
@@ -12,7 +14,8 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
+
+import scala.concurrent.duration.Duration
 
 
 /**
@@ -28,15 +31,17 @@ class EPCR(maxCountCandidates: Int = 1000,
   //   TODO: Do research about these constants
 
   //   TODO: Think about every usage of randomness
-  implicit val rnd = new Random(107)
+  private implicit val rnd: Random = new Random(107)
+
+  private val logger = Logger[this.type]
 
   // scalastyle:off
-  override def prove(cnf: CNF): ProblemStatus = {
-    implicit val logger = Logger(LoggerFactory.getLogger("prover"))
-
+  override def prove(cnf: CNF, timeout: Duration = Duration.Inf): ProblemStatus = {
     if (cnf.clauses.contains(Clause.empty)) {
       return Unsatisfiable(Some(Proof(InitialStatement(Clause.empty))))
     }
+    
+    val startTime = System.currentTimeMillis
 
     val initialClauses = cnf.clauses.to[ListBuffer]
 
@@ -116,6 +121,12 @@ class EPCR(maxCountCandidates: Int = 1000,
       } else {
         // TODO: think about that case...
         cntWithoutDecisions += 1
+      }
+
+      val endTime = System.currentTimeMillis
+      val time = Duration.apply(endTime - startTime, TimeUnit.MILLISECONDS)
+      if (time >= timeout) {
+        return Timeout
       }
     }
 

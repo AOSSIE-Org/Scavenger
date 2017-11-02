@@ -25,7 +25,7 @@ class ExpertProver(
 
   implicit private val system: ActorSystem = ActorSystem("default", ConfigFactory.load)
 
-  def prove(cnf: CNF): ProblemStatus = {
+  def prove(cnf: CNF, duration: Duration = Duration.Inf): ProblemStatus = {
     if (cnf.clauses.contains(Clause.empty)) {
       return Unsatisfiable(Some(CRProof(InitialStatement(Clause.empty))))
     }

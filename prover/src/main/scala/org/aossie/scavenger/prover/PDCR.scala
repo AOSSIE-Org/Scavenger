@@ -1,6 +1,6 @@
 package org.aossie.scavenger.prover
 
-import org.aossie.scavenger.structure.immutable.{ Literal, CNF, Clause }
+import org.aossie.scavenger.structure.immutable.{CNF, Clause, Literal}
 import org.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 import org.aossie.scavenger.model.Assignment
 import org.aossie.scavenger.unification.tools._
@@ -8,6 +8,7 @@ import org.aossie.scavenger.util.pretty._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 import scala.util.Random
 
@@ -18,7 +19,7 @@ object PDCR extends Prover {
 
   // TODO: refactor this class and enable scalastyle
   // scalastyle:off
-  def prove(cnf: CNF): ProblemStatus = {
+  def prove(cnf: CNF, timeout: Duration = Duration.Inf): ProblemStatus = {
     if (cnf.clauses.contains(Clause.empty)) {
       return Unsatisfiable(Some(Proof(InitialStatement(Clause.empty))))
     }

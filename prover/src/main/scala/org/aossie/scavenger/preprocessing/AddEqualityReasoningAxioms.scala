@@ -10,7 +10,9 @@ import scala.collection.mutable
   * Created by vlad107 on 7/12/17.
   */
 object AddEqualityReasoningAxioms {
-  def add(clauses: mutable.ListBuffer[Clause])(implicit logger: Logger) = {
+  private val logger = Logger[this.type]
+  
+  def add(clauses: mutable.ListBuffer[Clause]) = {
     /**
       * symmetry axiom
       */

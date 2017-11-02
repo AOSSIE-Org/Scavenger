@@ -2,11 +2,12 @@ package org.aossie.scavenger.prover
 
 import org.aossie.scavenger.model.Assignment
 import org.aossie.scavenger.proof.cr.{CRProof => Proof, _}
-import org.aossie.scavenger.structure.immutable.{CNF, Literal, Clause}
+import org.aossie.scavenger.structure.immutable.{CNF, Clause, Literal}
 import org.aossie.scavenger.unification.tools._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.Duration
 import scala.util.Random
 
 /**
@@ -17,7 +18,7 @@ object TDCR extends Prover {
   val rnd = new Random(132374)
 
   // scalastyle:off
-  override def prove(cnf: CNF): ProblemStatus = {
+  override def prove(cnf: CNF, timeout: Duration = Duration.Inf): ProblemStatus = {
     if (cnf.clauses.contains(Clause.empty)) {
       return Unsatisfiable(Some(Proof(InitialStatement(Clause.empty))))
     }
