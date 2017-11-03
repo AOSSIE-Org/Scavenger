@@ -7,7 +7,7 @@ object ScavengerBuild {
   lazy val commonSettings = Seq(
     isSnapshot := true,
     organization := "org.aossie",
-    version := "0.2",
+    version := "0.2.1-SNAPSHOT",
     scalaVersion := "2.12.3",
     scalacOptions := Seq(
       "-encoding",
