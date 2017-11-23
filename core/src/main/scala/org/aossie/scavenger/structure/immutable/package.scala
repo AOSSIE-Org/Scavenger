@@ -6,7 +6,7 @@ package object immutable {
   implicit class LiteralsAreSequent(val literals: Iterable[Literal]) extends AnyVal {
     def toClause: Clause = {
       val (ant, suc) = literals.partition(_.polarity)
-      Clause(ant.map(_.unit).toSeq: _*)(suc.map(_.unit).toSeq: _*)
+      Clause(suc.map(_.unit).toSeq: _*)(ant.map(_.unit).toSeq: _*)
     }
   }
 
