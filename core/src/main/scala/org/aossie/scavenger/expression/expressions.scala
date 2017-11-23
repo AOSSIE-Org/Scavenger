@@ -107,6 +107,20 @@ sealed abstract class E {
     rec(this, syms)
     syms
   }
+
+  lazy val constantSymbols: mutable.HashSet[Sym] = {
+    def rec(e: E, syms: mutable.HashSet[Sym]): Unit =
+      e match {
+        case Var(_) =>
+        case sym @ Sym(_) =>
+          syms.add(sym)
+        case AppRec(_: Sym, args) =>
+          args.foreach(rec(_, syms))
+      }
+    val syms = mutable.HashSet.empty[Sym]
+    rec(this, syms)
+    syms
+  }
 }
 
 case class Sym(name: String) extends E {

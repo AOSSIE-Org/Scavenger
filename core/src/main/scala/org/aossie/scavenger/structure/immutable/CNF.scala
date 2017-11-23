@@ -1,6 +1,8 @@
 package org.aossie.scavenger.structure.immutable
 
+import org.aossie.scavenger.expression.Sym
 import org.aossie.scavenger.structure.mutable
+
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -12,6 +14,7 @@ case class CNF(clauses: Seq[Clause]) {
   lazy val variables = clauses.flatMap(_.literals.map(_.unit))
   lazy val predicates = clauses.flatMap(_.predicates).distinct
   lazy val functionSymbols = clauses.flatMap(_.functionSymbols).distinct
+  lazy val constantSymbols: Set[Sym] = clauses.flatMap(_.constantSymbols).toSet
 
   def +(that: CNF): CNF = CNF(clauses ++ that.clauses)
 

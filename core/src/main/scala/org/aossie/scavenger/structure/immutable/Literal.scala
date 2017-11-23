@@ -1,11 +1,21 @@
 package org.aossie.scavenger.structure.immutable
 
-import org.aossie.scavenger.expression.E
+import org.aossie.scavenger.expression.{AppRec, E, Sym}
 
 /**
-  * Created by itegulov on 28.07.16.
-  */
+ * @author Daniyar Itegulov
+ */
 case class Literal(unit: E, polarity: Boolean) {
+  val arguments: List[E] =
+    unit match {
+      case AppRec(_, args) => args.toList
+    }
+
+  lazy val predicate: Sym =
+    unit match {
+      case AppRec(predicateSymbol: Sym, _) => predicateSymbol
+    }
+
   def unary_! = Literal(unit, !polarity)
 
   def toClause: Clause = if (!polarity) Clause(unit)() else Clause()(unit)

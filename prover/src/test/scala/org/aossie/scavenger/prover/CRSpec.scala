@@ -15,9 +15,16 @@ class CRSpec extends Specification {
   val z = Var("z")
   val a = Sym("a")
   val b = Sym("b")
+  val c = Sym("c")
   val d = Sym("d")
-  val P = Sym("P")
+  val e = Sym("e")
   val f = Sym("f")
+  val g = Sym("g")
+  val h = Sym("h")
+  val P = Sym("P")
+  val Q = Sym("Q")
+  val R = Sym("R")
+  val S = Sym("S")
   val Pa = App(P, a)
   val Pb = App(P, b)
   val Pd = App(P, d)
@@ -25,32 +32,37 @@ class CRSpec extends Specification {
   val Py = App(P, y)
   val Pz = App(P, z)
 
-  private def test(clauses: Clause*) = PDCR.prove(CNF(ArrayBuffer(clauses: _*)))
+  private def test(clauses: Clause*) = TDCR.prove(CNF(ArrayBuffer(clauses: _*)))
 
   private def clause(ant: E*)(suc: E*) = Clause(ant.toSeq: _*)(suc.toSeq: _*)
 
   "CR" should {
-    "find satisfiable" in {
-      test(
-        clause()(App(P, x)),
-        clause()(App(P, a))
-      ).isInstanceOf[Satisfiable] shouldEqual true
-    }
-
     "find unsatisfiable" in {
       test(
-        clause(App(P, a))(), // P(a)
-        clause(App(P, App(f, x)))(App(P, x)), // ∀x.(P(x) or !P(f(x))
-        clause()(App(P, App(f, App(f, a)))) // P(f(f(a)))
-      ).isInstanceOf[Unsatisfiable] shouldEqual true
-
-      test(
-        clause()(Pa, Pb),
-        clause(Pa)(Px),
-        clause(Pb)(Py),
-        clause(Pa, Pb)(),
-        clause()(Pd),
-        clause(Pz)(App(P, App(f, z)))
+        clause()(App(S, x), App(P, x), App(Q, x), App(R, x)),
+        clause(App(R, x))(App(S, x), App(P, x), App(Q, x)),
+        clause(App(Q, x))(App(S, x), App(P, x), App(R, x)),
+        clause(App(Q, x), App(R, x))(App(S, x), App(P, x)),
+        clause(App(P, x))(App(S, x), App(Q, x), App(R, x)),
+        clause(App(P, x), App(R, x))(App(S, x), App(Q, x)),
+        clause(App(P, x), App(Q, x))(App(S, x), App(R, x)),
+        clause(App(P, x), App(Q, x), App(R, x))(App(S, x)),
+        clause(App(S, x))(App(P, x), App(Q, x), App(R, x)),
+        clause(App(S, x), App(R, x))(App(P, x), App(Q, x)),
+        clause(App(S, x), App(Q, x))(App(P, x), App(R, x)),
+        clause(App(S, x), App(Q, x), App(R, x))(App(P, x)),
+        clause(App(S, x), App(P, x))(App(Q, x), App(R, x)),
+        clause(App(S, x), App(P, x), App(R, x))(App(Q, x)),
+        clause(App(S, x), App(P, x), App(Q, x))(App(R, x)),
+        clause(App(S, x), App(P, x), App(Q, x), App(R, x))(),
+        clause()(App(P, a)),
+        clause()(App(Q, b)),
+        clause()(App(R, c)),
+        clause()(App(S, d)),
+        clause(App(P, e))(),
+        clause(App(Q, f))(),
+        clause(App(R, g))(),
+        clause(App(S, h))(),
       ).isInstanceOf[Unsatisfiable] shouldEqual true
     }
   }

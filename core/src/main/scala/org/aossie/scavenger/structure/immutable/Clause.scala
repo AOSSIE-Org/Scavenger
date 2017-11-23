@@ -40,6 +40,13 @@ class Clause(val ant: ListSet[E], val suc: ListSet[E], val tp: ClauseType = Unde
       case AppRec(_: Sym, args) => args.flatMap(_.functionSymbols)
     }).toSeq
   }
+  def constantSymbols: Seq[Sym] = {
+    (ant.flatMap {
+      case AppRec(_: Sym, args) => args.flatMap(_.constantSymbols)
+    } ++ suc.flatMap {
+      case AppRec(_: Sym, args) => args.flatMap(_.constantSymbols)
+    }).toSeq
+  }
 
   lazy val toTPTPString: String = {
     if (ant.isEmpty && suc.isEmpty) {

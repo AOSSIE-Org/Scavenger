@@ -1,5 +1,6 @@
 package org.aossie.scavenger.prover
 
+import org.aossie.scavenger.expression.{App, AppRec, Sym, Var}
 import org.aossie.scavenger.model.Assignment
 import org.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 import org.aossie.scavenger.structure.immutable.{CNF, Clause, Literal}
@@ -31,7 +32,7 @@ object TDCR extends Prover {
     val decisions = ArrayBuffer.empty[Literal]
     val conflictClauses = mutable.Set.empty[CRProofNode]
     val resolvedCache = mutable.Set.empty[(Clause, Int, Seq[Literal])]
-    var termDepthThreshold = 0
+    var termDepthThreshold = 1
     val maxInitialTermDepth = cnf.clauses.flatMap(_.literals).map(_.depth).max
 
     def updateUnifiableUnits(newLiterals: Seq[Literal]): Unit = {
@@ -160,18 +161,35 @@ object TDCR extends Prover {
         reset(CDCLClauses.toSet)
       } else if (result.isEmpty) {
         if (rnd.nextInt(100) > 10) {
-          val available = rnd.shuffle((literals -- propagatedLiterals -- propagatedLiterals.map(!_)).toSeq)
-          if (available.isEmpty) {
-            reset(Set.empty)
-          } else {
-            val decisionLiteral = available.head
-            decisions += decisionLiteral
-            if (decisions.contains(!decisionLiteral)) {
-              removeDecisionLiteral(!decisionLiteral)
+          var chosen = false
+          while (!chosen) {
+            val (predicate, predicateArity) = rnd.shuffle(cnf.predicates).head
+            val polarity = rnd.nextBoolean()
+            val blockingLiterals = propagatedLiterals.filter(literal => literal.polarity != polarity && literal.predicate == predicate)
+            val safeArgumentPositions = (0 until predicateArity).filter(i => !blockingLiterals.exists(_.arguments(i).isInstanceOf[Var]))
+            
+            rnd.shuffle(safeArgumentPositions).headOption match {
+              case None =>
+                // Choose another decisions
+              case Some(position) =>
+                val decisionLiteral = 
+                  if (blockingLiterals.isEmpty) {
+                    val predicateArguments = List.tabulate(predicateArity)(i => Var("x" + i))
+                    Literal(AppRec(predicate, predicateArguments), polarity)
+                  } else {
+                    val blockingConstants = blockingLiterals.map(_.arguments(position).asInstanceOf[Sym])
+                    val constant = rnd.shuffle(cnf.constantSymbols -- blockingConstants).head
+                    val predicateArguments = List.tabulate(predicateArity)(i => if (i == position) constant else Var("x" + i))
+                    Literal(AppRec(predicate, predicateArguments), polarity) 
+                  }
+                decisions += decisionLiteral
+                if (decisions.contains(!decisionLiteral)) {
+                  removeDecisionLiteral(!decisionLiteral)
+                }
+                reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
+                updateUnifiableUnits(Seq(decisionLiteral))
+                chosen = true
             }
-//            println("Decision: " + decisionLiteral)
-            reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
-            updateUnifiableUnits(Seq(decisionLiteral))
           }
         } else {
           termDepthThreshold += 1
