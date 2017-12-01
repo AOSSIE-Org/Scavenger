@@ -11,9 +11,9 @@ case class Literal(unit: E, polarity: Boolean) {
       case AppRec(_, args) => args.toList
     }
 
-  lazy val predicate: Sym =
+  lazy val predicate: (Sym, Int) =
     unit match {
-      case AppRec(predicateSymbol: Sym, _) => predicateSymbol
+      case AppRec(predicateSymbol: Sym, args) => (predicateSymbol, args.size)
     }
 
   def unary_! = Literal(unit, !polarity)
