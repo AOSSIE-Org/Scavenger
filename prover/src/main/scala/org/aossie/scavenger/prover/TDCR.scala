@@ -5,6 +5,7 @@ import org.aossie.scavenger.expression.{AppRec, Var}
 import org.aossie.scavenger.model.Assignment
 import org.aossie.scavenger.parser.TPTPCNFParser
 import org.aossie.scavenger.proof.cr.{CRProof => Proof, _}
+import org.aossie.scavenger.prover.heuristic.DecisionMaker
 import org.aossie.scavenger.structure.immutable.{CNF, Clause, Literal}
 import org.aossie.scavenger.unification.tools._
 
@@ -18,7 +19,7 @@ import scala.util.Random
   */
 object TDCR extends Prover {
 
-  val rnd = new Random(132374)
+  implicit val rnd = new Random(132374)
 
   // scalastyle:off
   override def prove(cnf: CNF, timeout: Duration = Duration.Inf): ProblemStatus = {
@@ -36,6 +37,8 @@ object TDCR extends Prover {
     val resolvedCache = mutable.Set.empty[(Clause, Int, Seq[Literal])]
     var termDepthThreshold = 1
     val maxInitialTermDepth = cnf.clauses.flatMap(_.literals).map(_.depth).max
+
+    val decisionMaker: DecisionMaker = new DecisionMaker(1.0, 0.99, 1e10, 5.0)
 
     def updateUnifiableUnits(newLiterals: Seq[Literal]): Unit = {
       literals ++= newLiterals
@@ -209,8 +212,9 @@ object TDCR extends Prover {
         if (decisions.size > 10) {
           fullReset(Set.empty)
         } else if (rnd.nextInt(100) > 10) {
-          var chosen = false
-          while (!chosen) {
+          var chosen = 0
+          val chosenLiterals = mutable.ArrayBuffer.empty[Literal]
+          while (chosen < 10) {
             val provedPredicates = propagatedLiterals.filter { literal =>
               literal.unit match {
                 case AppRec(_, args) => args.forall(_.isInstanceOf[Var]) && args.toSet.size == args.size
@@ -235,15 +239,18 @@ object TDCR extends Prover {
 
             if (blockingLiterals.isEmpty) {
               val decisionLiteral = Literal(AppRec(predicate, predicateArguments), polarity)
-              decisions += decisionLiteral
-              if (decisions.contains(!decisionLiteral)) {
-                removeDecisionLiteral(!decisionLiteral)
-              }
-              reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
-              updateUnifiableUnits(Seq(decisionLiteral))
-              chosen = true 
+              chosenLiterals += decisionLiteral
+              chosen += 1 
             }
           }
+
+          val decisionLiteral = decisionMaker.makeDecision(chosenLiterals)
+          decisions += decisionLiteral
+          if (decisions.contains(!decisionLiteral)) {
+            removeDecisionLiteral(!decisionLiteral)
+          }
+          reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
+          updateUnifiableUnits(Seq(decisionLiteral))
         } else {
           termDepthThreshold += 1
           updateUnifiableUnits(propagatedLiterals.filter(_.depth == termDepthThreshold).toSeq)
