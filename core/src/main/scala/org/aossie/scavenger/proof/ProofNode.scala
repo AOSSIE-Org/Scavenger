@@ -24,7 +24,7 @@ abstract class ProofNode[+J <: Clause, +P <: ProofNode[J,P]]
         visited += prem
         todo.push(prem)
       }
-    pushPremises(self)
+    todo.push(self)
 
     @tailrec def visit(): Boolean =
       if (todo.isEmpty)

@@ -1,7 +1,9 @@
 package org.aossie.scavenger.prover
 
-import org.aossie.scavenger.expression.{App, AppRec, Sym, Var}
+import ammonite.ops.pwd
+import org.aossie.scavenger.expression.{AppRec, Var}
 import org.aossie.scavenger.model.Assignment
+import org.aossie.scavenger.parser.TPTPCNFParser
 import org.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 import org.aossie.scavenger.structure.immutable.{CNF, Clause, Literal}
 import org.aossie.scavenger.unification.tools._
@@ -81,8 +83,52 @@ object TDCR extends Prover {
         }
       }
     }
-
+    
     def reset(newClauses: Set[CRProofNode]): Unit = {
+      val removedDecision = decisions.last
+      decisions.remove(decisions.size - 1)
+      
+      conflictClauses ++= newClauses
+      resolvedCache.clear()
+      literals -= removedDecision
+      literals ++= cnf.clauses.flatMap(_.literals) ++ conflictClauses.flatMap(_.conclusion.literals)
+      var badLiterals = mutable.Set.empty[Literal]
+      for (literal <- propagatedLiterals) {
+        reverseImplicationGraph(literal) = reverseImplicationGraph(literal).filterNot {
+          _.existsAmongAncestors {
+            case decision: Decision if decision.literal == removedDecision => true
+            case _ => false
+          }
+        }
+        if (reverseImplicationGraph(literal).isEmpty) {
+          badLiterals += literal
+        }
+      }
+      propagatedLiterals --= badLiterals
+      reverseImplicationGraph --= badLiterals.map(_.toClause)
+      for ((_, toUnify) <- unifiableUnits) {
+        toUnify --= badLiterals
+      }
+      newClauses.foreach { node =>
+        reverseImplicationGraph.getOrElseUpdate(node.conclusion, ArrayBuffer.empty) += node
+      }
+      val newLiterals = newClauses.map(_.conclusion).filter(_.isUnit).map(_.literal)
+      if (newLiterals.nonEmpty) {
+        propagatedLiterals ++= newLiterals
+        updateUnifiableUnits(newLiterals.toList)
+      }
+      for (literal <- newClauses.flatMap(_.conclusion.literals)) {
+        val set = unifiableUnits.getOrElseUpdate(literal, mutable.Set.empty)
+        for (newLiteral <- propagatedLiterals) if (newLiteral.depth <= termDepthThreshold && newLiteral.polarity != literal.polarity) {
+          unifyWithRename(Seq(literal.unit), Seq(newLiteral.unit)) match {
+            case Some(_) => set += newLiteral
+            case None    =>
+          }
+        }
+      }
+    }
+
+    def fullReset(newClauses: Set[CRProofNode]): Unit = {
       resolvedCache.clear()
       conflictClauses ++= newClauses
       unifiableUnits.clear()
@@ -93,10 +139,13 @@ object TDCR extends Prover {
       reverseImplicationGraph.clear()
       cnf.clauses.foreach(clause =>
         reverseImplicationGraph.getOrElseUpdate(clause, ArrayBuffer.empty) += InitialStatement(clause))
+      decisions.foreach(decision =>
+        reverseImplicationGraph.getOrElseUpdate(decision, ArrayBuffer.empty) += Decision(decision))
       conflictClauses.foreach(node =>
         reverseImplicationGraph.getOrElseUpdate(node.conclusion, ArrayBuffer.empty) += node)
       propagatedLiterals ++= cnf.clauses.filter(_.isUnit).map(_.literal)
       propagatedLiterals ++= conflictClauses.map(_.conclusion).filter(_.isUnit).map(_.literal)
+      propagatedLiterals ++= decisions
       updateUnifiableUnits(propagatedLiterals.toSeq)
     }
 
@@ -137,8 +186,6 @@ object TDCR extends Prover {
         resolve(conflictClause.conclusion, result)
       }
 
-//      println("Resolved:\n" + result.mkString("\n"))
-
       updateUnifiableUnits(result.toSeq)
 
       val CDCLClauses = mutable.Set.empty[CRProofNode]
@@ -157,38 +204,44 @@ object TDCR extends Prover {
       }
 
       if (CDCLClauses.nonEmpty) {
-//        println("Resetting with:\n" + CDCLClauses.map(_.conclusion).mkString("\n"))
         reset(CDCLClauses.toSet)
       } else if (result.isEmpty) {
-        if (rnd.nextInt(100) > 10) {
+        if (decisions.size > 10) {
+          fullReset(Set.empty)
+        } else if (rnd.nextInt(100) > 10) {
           var chosen = false
           while (!chosen) {
-            val (predicate, predicateArity) = rnd.shuffle(cnf.predicates).head
+            val provedPredicates = propagatedLiterals.filter { literal =>
+              literal.unit match {
+                case AppRec(_, args) => args.forall(_.isInstanceOf[Var]) && args.toSet.size == args.size
+              }
+            }.map(_.predicate)
+            val (predicate, predicateArity) = rnd.shuffle((cnf.predicates.toSet -- provedPredicates).toList).head
             val polarity = rnd.nextBoolean()
-            val blockingLiterals = propagatedLiterals.filter(literal => literal.polarity != polarity && literal.predicate == predicate)
-            val safeArgumentPositions = (0 until predicateArity).filter(i => !blockingLiterals.exists(_.arguments(i).isInstanceOf[Var]))
+            var blockingLiterals = propagatedLiterals.filter(literal => literal.polarity != polarity && literal.predicate._1 == predicate)
+            var symbols = cnf.constantSymbols.toList
             
-            rnd.shuffle(safeArgumentPositions).headOption match {
-              case None =>
-                // Choose another decisions
-              case Some(position) =>
-                val decisionLiteral = 
-                  if (blockingLiterals.isEmpty) {
-                    val predicateArguments = List.tabulate(predicateArity)(i => Var("x" + i))
-                    Literal(AppRec(predicate, predicateArguments), polarity)
-                  } else {
-                    val blockingConstants = blockingLiterals.map(_.arguments(position).asInstanceOf[Sym])
-                    val constant = rnd.shuffle(cnf.constantSymbols -- blockingConstants).head
-                    val predicateArguments = List.tabulate(predicateArity)(i => if (i == position) constant else Var("x" + i))
-                    Literal(AppRec(predicate, predicateArguments), polarity) 
-                  }
-                decisions += decisionLiteral
-                if (decisions.contains(!decisionLiteral)) {
-                  removeDecisionLiteral(!decisionLiteral)
-                }
-                reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
-                updateUnifiableUnits(Seq(decisionLiteral))
-                chosen = true
+            
+            val predicateArguments = for (i <- 0 until predicateArity) yield {
+              val qVar = Var("X" + i)
+              val symbol = rnd.shuffle(qVar :: symbols).head
+              if (symbol.isInstanceOf[Var]) {
+                symbols = qVar :: symbols
+              } else {
+                blockingLiterals = blockingLiterals.filter(_.arguments(i) == symbol)
+              }
+              symbol
+            }
+
+            if (blockingLiterals.isEmpty) {
+              val decisionLiteral = Literal(AppRec(predicate, predicateArguments), polarity)
+              decisions += decisionLiteral
+              if (decisions.contains(!decisionLiteral)) {
+                removeDecisionLiteral(!decisionLiteral)
+              }
+              reverseImplicationGraph(decisionLiteral) = ArrayBuffer(Decision(decisionLiteral))
+              updateUnifiableUnits(Seq(decisionLiteral))
+              chosen = true 
             }
           }
         } else {
