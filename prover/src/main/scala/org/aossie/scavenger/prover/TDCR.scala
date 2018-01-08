@@ -1,9 +1,7 @@
 package org.aossie.scavenger.prover
 
-import ammonite.ops.pwd
-import org.aossie.scavenger.expression.{AppRec, Var}
+import org.aossie.scavenger.expression.{AppRec, E, Var}
 import org.aossie.scavenger.model.Assignment
-import org.aossie.scavenger.parser.TPTPCNFParser
 import org.aossie.scavenger.proof.cr.{CRProof => Proof, _}
 import org.aossie.scavenger.prover.heuristic.DecisionMaker
 import org.aossie.scavenger.structure.immutable.{CNF, Clause, Literal}
@@ -35,7 +33,8 @@ object TDCR extends Prover {
     val decisions = ArrayBuffer.empty[Literal]
     val conflictClauses = mutable.Set.empty[CRProofNode]
     val resolvedCache = mutable.Set.empty[(Clause, Int, Seq[Literal])]
-    var termDepthThreshold = 1
+    var termDepthThreshold = cnf.maxDepth
+    var decisionDepthThreshold = 1
     val maxInitialTermDepth = cnf.clauses.flatMap(_.literals).map(_.depth).max
 
     val decisionMaker: DecisionMaker = new DecisionMaker(1.0, 0.99, 1e10, 5.0)
@@ -175,6 +174,31 @@ object TDCR extends Prover {
       propagatedLiterals --= nonValidLiterals
       unifiableUnits.values.foreach(_ --= nonValidLiterals)
     }
+    
+    def chooseRandomExpression(depth: Int, startVariableCounter: Int, variableCounter: Int): (E, Int) = {
+      if (depth == decisionDepthThreshold) {
+        val variables = (startVariableCounter to variableCounter).map(i => Var("X" + i))
+        val symbols = (cnf.constantSymbols ++ variables).toList
+        (symbols(rnd.nextInt(symbols.size)), variableCounter + 1)
+      } else {
+        val variables = (startVariableCounter to variableCounter).map(i => Var("X" + i))
+        val symbols = (cnf.constantSymbols ++ variables).toList
+        val functionalSymbols = cnf.functionSymbols.toList
+        val chosen = rnd.nextInt(symbols.size + functionalSymbols.size)
+        if (chosen < symbols.size) {
+          (symbols(chosen), variableCounter + 1)
+        } else {
+          val (functionalSymbol, arity) = functionalSymbols(chosen)
+          var ansCounter = variableCounter
+          val arguments = for (_ <- 0 until arity) yield {
+            val (res, newCounter) = chooseRandomExpression(depth + 1, startVariableCounter, ansCounter)
+            ansCounter = newCounter
+            res
+          }
+          (AppRec(functionalSymbol, arguments), ansCounter)
+        }
+      }
+    }
 
     updateUnifiableUnits(propagatedLiterals.toSeq)
 
@@ -223,24 +247,19 @@ object TDCR extends Prover {
             val (predicate, predicateArity) = rnd.shuffle((cnf.predicates.toSet -- provedPredicates).toList).head
             val polarity = rnd.nextBoolean()
             var blockingLiterals = propagatedLiterals.filter(literal => literal.polarity != polarity && literal.predicate._1 == predicate)
-            var symbols = cnf.constantSymbols.toList
-            
+            var variableCounter = 0
             
             val predicateArguments = for (i <- 0 until predicateArity) yield {
-              val qVar = Var("X" + i)
-              val symbol = rnd.shuffle(qVar :: symbols).head
-              if (symbol.isInstanceOf[Var]) {
-                symbols = qVar :: symbols
-              } else {
-                blockingLiterals = blockingLiterals.filter(_.arguments(i) == symbol)
-              }
-              symbol
+              val (res, newCounter) = chooseRandomExpression(1, 0, variableCounter)
+              variableCounter = newCounter
+              blockingLiterals = blockingLiterals.filter(lit => unifyWithRename(List(lit.arguments(i)), List(res)).isDefined)
+              res
             }
 
-            if (blockingLiterals.isEmpty) {
+            if (blockingLiterals.forall(lit => unifyWithRename(lit.arguments, predicateArguments).isEmpty)) {
               val decisionLiteral = Literal(AppRec(predicate, predicateArguments), polarity)
               chosenLiterals += decisionLiteral
-              chosen += 1 
+              chosen += 1
             }
           }
 
@@ -253,6 +272,7 @@ object TDCR extends Prover {
           updateUnifiableUnits(Seq(decisionLiteral))
         } else {
           termDepthThreshold += 1
+          decisionDepthThreshold += 1
           updateUnifiableUnits(propagatedLiterals.filter(_.depth == termDepthThreshold).toSeq)
         }
       } else if (termDepthThreshold >= maxInitialTermDepth &&

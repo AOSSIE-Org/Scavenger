@@ -21,5 +21,7 @@ case class CNF(clauses: Seq[Clause]) {
   def -(that: CNF): CNF = CNF(clauses.filterNot(that.clauses.toSet))
 
   def toMutableCNF: mutable.CNF = new mutable.CNF(clauses.to[ArrayBuffer])
+  
+  def maxDepth: Int = clauses.map(_.maxDepth).max
 }
 

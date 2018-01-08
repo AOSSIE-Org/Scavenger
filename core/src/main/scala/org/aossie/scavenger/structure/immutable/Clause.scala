@@ -63,6 +63,8 @@ class Clause(val ant: ListSet[E], val suc: ListSet[E], val tp: ClauseType = Unde
     }
   }
 
+  def maxDepth: Int = (ant.map(_.depth) ++ suc.map(_.depth)).max
+
   def +(f:E) = new Clause(ant, suc + f, tp)
   def +:(f:E) = new Clause(ant + f, suc, tp)
   def -(f:E) =  new Clause(ant, suc - f, tp)
